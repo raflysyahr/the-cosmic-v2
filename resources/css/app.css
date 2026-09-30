@@ -1,0 +1,164 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+    font-family: 'BitcountGridDouble';
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url('/fonts/BitcountGridDouble-Variable.woff2') format('woff2-variations');
+}
+@font-face {
+    font-family: 'BitcountGridDouble';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/fonts/BitcountGridDouble-Regular.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'BitcountGridDouble';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('/fonts/BitcountGridDouble-Bold.woff2') format('woff2');
+}
+
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    html {
+        scroll-behavior: smooth;
+    }
+}
+
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #333;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+::selection {
+    background: #333;
+    color: #fff;
+}
+
+img {
+    -webkit-user-drag: none;
+    user-select: none;
+}
+
+.message-bubble-other {
+    background-color: #2A2A2A;
+    border-radius: 2px 12px 12px 12px;
+}
+
+.message-bubble-self {
+    background-color: #222222;
+    color: #fff;
+    border-radius: 12px 12px 2px 12px;
+}
+
+/* ── Reaction animations ── */
+@keyframes reaction-pop {
+  0%   { transform: scale(0.3); opacity: 0; }
+  60%  { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes reaction-bump {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+/* ── Jump-to-message highlight (tapping a reply quote scrolls here) ── */
+@keyframes message-flash {
+  0%, 100% { background-color: transparent; }
+  25% { background-color: rgba(255, 255, 255, 0.12); }
+}
+.message-flash {
+  animation: message-flash 1.2s ease-out;
+  border-radius: 14px;
+}
+
+.animate-reaction-pop {
+  animation: reaction-pop 0.3s ease-out;
+}
+
+.animate-reaction-bump {
+  animation: reaction-bump 0.25s ease-out;
+}
+
+/* ── Message action popup (Telegram-style) ── */
+@keyframes popup-menu-in {
+  0%   { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-popup-menu {
+  animation: popup-menu-in 0.12s ease-out;
+  transform-origin: top;
+}
+
+/* ── Cultivation gain toast (pojok kiri bawah) ── */
+@keyframes cultivation-toast-in {
+  0%   { transform: translateY(8px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.animate-cultivation-toast-in {
+  animation: cultivation-toast-in 0.2s ease-out;
+}
+
+.modal-realm {
+
+  /* 1. Ketebalan bingkai */
+  border: 30px solid transparent;
+
+  /* 2. Potong bingkai dan atur perulangannya */
+  border-image-slice: 30;
+  border-image-repeat: round;
+
+  /* 3. Atur background image */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  /* 4. KUNCI UTAMA: Memaksa background di dalam area transparan */
+  background-clip: padding-box;
+
+  /* Pengaturan tata letak konten di dalam */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+
