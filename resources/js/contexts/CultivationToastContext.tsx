@@ -4,11 +4,17 @@ export interface CultivationGain {
   id: string
   amount: number
   resourceName: string
+  // 'cp' = Contribution Points dari Discuss. Berbagi antrian & tampilan
+  // toast yang sama dengan XP Cultivation; bedanya hanya warna + catatan
+  // multiplier event (mis. "x2 Weekend Boost").
+  kind: 'cultivation' | 'cp'
+  note?: string
 }
 
 interface CultivationToastContextValue {
   gains: CultivationGain[]
   showGain: (amount: number, resourceName: string) => void
+  showCp: (amount: number, note?: string) => void
   dismissGain: (id: string) => void
 }
 
@@ -33,14 +39,22 @@ export function CultivationToastProvider({ children }: { children: ReactNode }) 
     setGains((prev) => prev.filter((g) => g.id !== id))
   }, [])
 
-  const showGain = useCallback((amount: number, resourceName: string) => {
+  const push = useCallback((gain: Omit<CultivationGain, 'id'>) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`
-    setGains((prev) => [...prev, { id, amount, resourceName }])
+    setGains((prev) => [...prev, { id, ...gain }])
     setTimeout(() => dismissGain(id), AUTO_DISMISS_MS)
   }, [dismissGain])
 
+  const showGain = useCallback((amount: number, resourceName: string) => {
+    push({ amount, resourceName, kind: 'cultivation' })
+  }, [push])
+
+  const showCp = useCallback((amount: number, note?: string) => {
+    push({ amount, resourceName: 'CP', kind: 'cp', note })
+  }, [push])
+
   return (
-    <CultivationToastContext.Provider value={{ gains, showGain, dismissGain }}>
+    <CultivationToastContext.Provider value={{ gains, showGain, showCp, dismissGain }}>
       {children}
     </CultivationToastContext.Provider>
   )

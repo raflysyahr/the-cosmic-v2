@@ -459,3 +459,51 @@ Direct message tidak menambah tabel baru — sepenuhnya reuse `discuss_rooms` + 
 | 🔑 | Primary Key |
 | ⚿ | Unique Key |
 | ⟶ | Referensi logis (no FK constraint) |
+
+---
+
+## Contribution Points (CP) — Modul Discuss
+
+### `discuss_cp_logs`
+*Ledger CP. Saldo per-room tetap di `discuss_members.xp_points`; leaderboard dihitung dari `SUM(amount)` tabel ini.*
+
+| Kolom | Tipe | Catatan |
+|---|---|---|
+| `id` | `ULID` | PK |
+| `user_id` ⟶ | `ULID` | → `users.id` *(logis)* |
+| `room_id` ⟶ | `ULID` | → `discuss_rooms.id` *(logis, nullable)* |
+| `source` | `VARCHAR(30)` | `message` \| `reply` \| `reaction_received` \| `reply_received` \| `revoke` |
+| `reference` | `VARCHAR(120)` | Kunci dedupe: id pesan, atau `{messageId}:{reactorId}`, atau `revoke:{logId}` |
+| `subject_id` ⟶ | `ULID` | → `discuss_messages.id` *(logis, nullable)* — pesan penyebab CP |
+| `base_amount` | `INT` | Poin dasar sebelum multiplier (dasar perhitungan batas harian/per-pesan) |
+| `multiplier_pct` | `SMALLINT` | 100 = x1, 200 = x2 |
+| `amount` | `INT` | Poin yang masuk; negatif untuk entri pencabutan |
+| `event_id` ⟶ | `ULID` | → `discuss_cp_events.id` *(logis, nullable)* |
+| `created_at` | `TIMESTAMP` | |
+
+**Index:** `UNIQUE(user_id, source, reference)`, `INDEX(user_id, created_at)`, `INDEX(source, created_at)`, `INDEX(subject_id)`, `INDEX(created_at)`
+
+### `discuss_cp_events`
+*Event multiplier yang diatur admin.*
+
+| Kolom | Tipe | Catatan |
+|---|---|---|
+| `id` | `ULID` | PK |
+| `name` | `VARCHAR(100)` | |
+| `multiplier_pct` | `SMALLINT` | 200 = x2 |
+| `sources` | `JSON` | Nullable; null = semua source |
+| `room_id` ⟶ | `ULID` | Nullable; null = semua room |
+| `starts_at` / `ends_at` | `TIMESTAMP` | |
+| `is_active` | `BOOLEAN` | Saklar manual |
+| `created_by` ⟶ | `ULID` | → `users.id` *(logis)* |
+
+### `discuss_cp_settings`
+*Override admin atas `config/discuss_cp.php`; satu baris per key.*
+
+| Kolom | Tipe | Catatan |
+|---|---|---|
+| `key` | `VARCHAR(60)` | PK |
+| `value` | `JSON` | `{"v": <nilai>}` |
+| `updated_by` ⟶ | `ULID` | → `users.id` *(logis)* |
+| `updated_at` | `TIMESTAMP` | |
+

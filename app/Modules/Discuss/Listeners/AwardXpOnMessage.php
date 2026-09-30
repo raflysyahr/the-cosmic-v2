@@ -3,34 +3,22 @@
 namespace App\Modules\Discuss\Listeners;
 
 use App\Modules\Discuss\Events\MessageSent;
-use App\Modules\Discuss\Models\Member;
-use App\Modules\Discuss\Models\Room;
-use App\Modules\Discuss\Services\RankService;
+use App\Modules\Discuss\Services\ContributionService;
 
+/**
+ * Nama class dipertahankan (sudah dirujuk di PROJECT.md/MODULE_STRUCTURE.md),
+ * tapi XP flat `room.settings.xp_per_message` diganti aturan Contribution
+ * Points — lihat ContributionService. `xp_per_message = 0` di settings room
+ * tetap berfungsi sebagai saklar untuk mematikan CP di room itu.
+ */
 class AwardXpOnMessage
 {
     public function __construct(
-        private readonly RankService $rankService,
+        private readonly ContributionService $contribution,
     ) {}
 
     public function handle(MessageSent $event): void
     {
-        $room = Room::find($event->message->room_id);
-
-        if (! $room) {
-            return;
-        }
-
-        $xpPerMessage = $room->settings['xp_per_message'] ?? 5;
-
-        $member = Member::where('room_id', $event->message->room_id)
-            ->where('user_id', $event->message->user_id)
-            ->first();
-
-        if (! $member) {
-            return;
-        }
-
-        $this->rankService->awardXp($member, $xpPerMessage);
+        $this->contribution->awardForMessage($event->message);
     }
 }

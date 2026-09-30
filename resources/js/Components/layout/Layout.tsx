@@ -6,6 +6,7 @@ import Popup from '../ui/Popup'
 import ModalHost from '../ui/Modal'
 import CultivationToastStack from '../cultivation/CultivationToastStack'
 import { usePopup } from '../../contexts/PopupContext'
+import { useCultivationToast } from '../../contexts/CultivationToastContext'
 import { useAuth } from '../../contexts/AuthContext'
 
 function PopupLayer() {
@@ -18,6 +19,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     const { auth } = usePage().props as { auth: { user: Record<string, unknown> | null } }
     const { setUser, user } = useAuth()
     const { showPopup } = usePopup()
+    const { showCp } = useCultivationToast()
 
     useEffect(() => {
         if (auth?.user) setUser(auth.user as never)
@@ -32,7 +34,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         const channel = window.Echo.private(`user.${user.id}`)
 
-        channel.listen('MemberRankUpgraded', (e: { rank_name: string; rank_color?: string }) => {
+        channel.listen('.App\\Modules\\Discuss\\Events\\MemberRankUpgraded', (e: { rank_name: string; rank_color?: string }) => {
             showPopup({
                 type: 'notification',
                 title: 'Rank Up!',
@@ -40,10 +42,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             })
         })
 
+        // "+N CP" dari Discuss (kirim pesan, dapat reaksi/reply) — masuk ke
+        // antrian toast yang sama dengan XP Cultivation. Nama event pakai
+        // FQCN berawalan titik (sama seperti listener di Room.tsx): tanpa
+        // titik, Echo menambah prefix "App.Events." dan tidak akan cocok
+        // dengan event di modul Discuss.
+        channel.listen('.App\\Modules\\Discuss\\Events\\ContributionAwarded', (e: { amount: number; multiplier?: number; event_name?: string | null }) => {
+            const note = e.multiplier && e.multiplier > 1
+                ? `x${e.multiplier}${e.event_name ? ` ${e.event_name}` : ''}`
+                : undefined
+            showCp(e.amount, note)
+        })
+
         return () => {
             window.Echo?.leave(`user.${user.id}`)
         }
-    }, [user?.id, showPopup])
+    }, [user?.id, showPopup, showCp])
 
     return (
         <>

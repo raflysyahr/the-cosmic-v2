@@ -24,7 +24,7 @@ Berlaku untuk `app/Modules/Auth/` dan `app/Modules/Discuss/`, dan untuk modul ba
 - **Tidak ada foreign key constraint** di level database antar modul. Relasi antar modul hanya lewat kolom ULID biasa (misalnya `user_id` di tabel `discuss_members`, tanpa FK ke tabel `users`).
 - **Tidak ada Eloquent relationship (`hasMany`, `belongsTo`, `belongsToMany`, dst.) yang melintasi batas modul**, dan sebagai konvensi project ini, **tidak ada Eloquent relationship sama sekali** bahkan untuk sesama model dalam satu modul (lihat pola `Message`, `Member`, `Room` — semuanya query manual `where(...)`, tidak ada satupun yang punya method relasi). Ikuti pola ini untuk model baru.
 - Komunikasi antar modul hanya lewat:
-  - **Laravel Events** (`event(new X($data))`, listener terdaftar di `$listen` milik `ServiceProvider` modul tersebut), atau
+  - **Laravel Events** (`event(new X($data))`, listener didaftarkan eksplisit lewat `Event::listen()` di `boot()` `ServiceProvider` modul tersebut — **bukan** `protected $listen` pada class yang `extends AuthServiceProvider`, karena properti itu diabaikan di sana; lihat `DiscussServiceProvider`), atau
   - **Query langsung dengan `select` kolom terbatas** ke model modul lain (lihat pola di bawah).
 
 ```php

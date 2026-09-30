@@ -9,6 +9,8 @@ use App\Modules\Discuss\Http\Controllers\EmoteController;
 use App\Modules\Discuss\Http\Controllers\RankController;
 use App\Modules\Discuss\Http\Controllers\PinnedMessageController;
 use App\Modules\Discuss\Http\Controllers\NotificationController;
+use App\Modules\Discuss\Http\Controllers\CpAdminController;
+use App\Modules\Discuss\Http\Controllers\LeaderboardController;
 
 Route::prefix('api')->middleware(['web', 'auth:sanctum'])->group(function () {
     // Rooms
@@ -50,6 +52,17 @@ Route::prefix('api')->middleware(['web', 'auth:sanctum'])->group(function () {
     Route::post('/rooms/{slug}/ranks', [RankController::class, 'store']);
     Route::put('/rooms/{slug}/ranks/{rankId}', [RankController::class, 'update']);
     Route::delete('/rooms/{slug}/ranks/{rankId}', [RankController::class, 'destroy']);
+
+    // Contribution Points (CP): leaderboard, event aktif, dan pengaturan admin
+    Route::get('/discuss/leaderboard', [LeaderboardController::class, 'global']);
+    Route::get('/rooms/{slug}/leaderboard', [LeaderboardController::class, 'room']);
+    Route::get('/cp/active-events', [CpAdminController::class, 'activeEvents']);
+    Route::get('/admin/cp/settings', [CpAdminController::class, 'showSettings']);
+    Route::put('/admin/cp/settings', [CpAdminController::class, 'updateSettings']);
+    Route::get('/admin/cp/events', [CpAdminController::class, 'listEvents']);
+    Route::post('/admin/cp/events', [CpAdminController::class, 'storeEvent']);
+    Route::put('/admin/cp/events/{eventId}', [CpAdminController::class, 'updateEvent']);
+    Route::delete('/admin/cp/events/{eventId}', [CpAdminController::class, 'destroyEvent']);
 
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index']);
