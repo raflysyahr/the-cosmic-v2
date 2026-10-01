@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link } from '@inertiajs/react'
 import Layout from '../../Components/layout/Layout'
 import DiscussRoomCard from '../../Components/discuss/DiscussRoomCard'
 import type { RoomCardData,DirectChatData } from '../../Components/discuss/DiscussRoomCard'
-import NavigationBar from '../../Components/discuss/NavigationBar'
 import ChatListItem from '../../Components/discuss/ChatListItem'
 import LayoutDiscuss from '../../Components/layout/LayoutDiscuss'
+import { Trophy } from 'lucide-react'
 
 interface PageProps {
   rooms: RoomCardData[],
@@ -14,13 +14,12 @@ interface PageProps {
 
 export default function DiscussIndex({ rooms,directChats }: PageProps) {
 
-  const [activeTab,setActiveTab] = useState("chats")
   const [groupTabChat,setGroupTabChat] = useState("direct");
   const [search,setSearch] = useState("")
 
   return (
 
-      <LayoutDiscuss>
+      <>
       <div className="mx-auto max-w-4xl px-2 pt-4 flex-1">
 
 
@@ -33,6 +32,14 @@ export default function DiscussIndex({ rooms,directChats }: PageProps) {
         placeholder="Search chats..."
         className="w-full rounded-full border border-neutral-800 bg-transparent py-2 pl-10 pr-4 text-sm text-neutral-200 placeholder-neutral-500 outline-none transition-colors focus:border-neutral-600 mb-3"
         />
+
+
+
+
+
+
+
+
 
         {/* Tabs */}
         <div className="mb-2 flex gap-1 border-b border-outline-variant/30">
@@ -71,7 +78,9 @@ export default function DiscussIndex({ rooms,directChats }: PageProps) {
         )}
         </div>
       </div>
-      </LayoutDiscuss>
+      </>
 
   )
 }
+
+DiscussIndex.layout = (page: ReactNode) => <LayoutDiscuss>{page}</LayoutDiscuss>

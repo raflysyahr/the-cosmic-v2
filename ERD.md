@@ -472,8 +472,8 @@ Direct message tidak menambah tabel baru — sepenuhnya reuse `discuss_rooms` + 
 | `id` | `ULID` | PK |
 | `user_id` ⟶ | `ULID` | → `users.id` *(logis)* |
 | `room_id` ⟶ | `ULID` | → `discuss_rooms.id` *(logis, nullable)* |
-| `source` | `VARCHAR(30)` | `message` \| `reply` \| `reaction_received` \| `reply_received` \| `revoke` |
-| `reference` | `VARCHAR(120)` | Kunci dedupe: id pesan, atau `{messageId}:{reactorId}`, atau `revoke:{logId}` |
+| `source` | `VARCHAR(30)` | `message` \| `reply` \| `reaction_received` \| `reply_received` \| `helpful` \| `best_answer` \| `daily_bonus` \| `streak` \| `achievement` \| `report_valid` \| `penalty` \| `revoke` |
+| `reference` | `VARCHAR(120)` | Kunci dedupe: id pesan (message/reply/helpful/best_answer), `{messageId}:{reactorId}`, tanggal `Y-m-d` (daily_bonus), `{panjang}:{hari pertama}` (streak), key achievement, id report (report_valid), `report:{id}` (penalty), atau `revoke:{logId}` |
 | `subject_id` ⟶ | `ULID` | → `discuss_messages.id` *(logis, nullable)* — pesan penyebab CP |
 | `base_amount` | `INT` | Poin dasar sebelum multiplier (dasar perhitungan batas harian/per-pesan) |
 | `multiplier_pct` | `SMALLINT` | 100 = x1, 200 = x2 |
@@ -506,4 +506,38 @@ Direct message tidak menambah tabel baru — sepenuhnya reuse `discuss_rooms` + 
 | `value` | `JSON` | `{"v": <nilai>}` |
 | `updated_by` ⟶ | `ULID` | → `users.id` *(logis)* |
 | `updated_at` | `TIMESTAMP` | |
+
+### `discuss_message_marks`
+*Tanda Helpful dan Best Answer pada pesan.*
+
+| Kolom | Tipe | Catatan |
+|---|---|---|
+| `id` | `ULID` | PK |
+| `room_id` ⟶ | `ULID` | → `discuss_rooms.id` *(logis)* |
+| `message_id` ⟶ | `ULID` | → `discuss_messages.id` *(logis)* |
+| `marked_by` ⟶ | `ULID` | → `users.id` *(logis)* |
+| `kind` | `VARCHAR(20)` | `helpful` \| `best_answer` |
+| `created_at` | `TIMESTAMP` | |
+
+**Index:** `UNIQUE(message_id, marked_by, kind)`, `INDEX(message_id, kind)`, `INDEX(marked_by, kind, created_at)`. Maks satu Best Answer per pertanyaan dijaga di `MarkService` (pertanyaan = pesan induk `reply_to_id`), bukan constraint database.
+
+### `discuss_reports`
+*Laporan pesan dan hasil peninjauan moderator.*
+
+| Kolom | Tipe | Catatan |
+|---|---|---|
+| `id` | `ULID` | PK |
+| `room_id` ⟶ | `ULID` | → `discuss_rooms.id` *(logis)* |
+| `message_id` ⟶ | `ULID` | → `discuss_messages.id` *(logis)* |
+| `message_author_id` ⟶ | `ULID` | → `users.id` *(logis)* — snapshot penulis saat dilaporkan |
+| `reporter_id` ⟶ | `ULID` | → `users.id` *(logis)* |
+| `reason` | `VARCHAR(30)` | `spam` \| `harassment` \| `inappropriate` \| `manipulation` \| `other` |
+| `note` | `VARCHAR(500)` | Nullable |
+| `status` | `VARCHAR(20)` | `pending` \| `valid` \| `dismissed` |
+| `penalty` | `VARCHAR(20)` | Nullable; `none` \| `spam` \| `manipulation` (diisi saat ditutup) |
+| `resolved_by` ⟶ | `ULID` | → `users.id` *(logis, nullable)* |
+| `resolved_at` | `TIMESTAMP` | Nullable |
+| `created_at` | `TIMESTAMP` | |
+
+**Index:** `UNIQUE(message_id, reporter_id)`, `INDEX(room_id, status, created_at)`, `INDEX(reporter_id, created_at)`
 

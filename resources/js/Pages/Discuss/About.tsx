@@ -1,7 +1,8 @@
 import { useState, useCallback, useMemo } from 'react'
 import { router, Link } from '@inertiajs/react'
-import { Shield, Crown, UserMinus, MicOff, Ban, Users, Image as ImageIcon, Link as LinkIcon } from 'lucide-react'
+import { Shield, Crown, UserMinus, MicOff, Ban, Users, Image as ImageIcon, Link as LinkIcon, Flag } from 'lucide-react'
 import { apiFetch } from '../../api/fetch'
+import { extractErrorMessage } from '../../utils/discuss'
 import {  useEffect, type FC } from 'react'
 import { usePopup } from '../../contexts/PopupContext'
 import Popup from '../../Components/ui/Popup'
@@ -255,6 +256,16 @@ export default function DiscussAbout(props: PageProps) {
           Media
         </button>
       </div>
+
+      {canModerate && !isDirectChat && (
+        <Link
+          href={`/discuss/${room.slug}/reports`}
+          className="flex items-center gap-2 border-b border-outline-variant/30 px-4 py-3 font-label-md text-label-md text-on-surface-variant transition-colors hover:text-on-surface"
+        >
+          <Flag size={16} />
+          Reports
+        </Link>
+      )}
 
       {/* Tab content */}
       <div className="flex-1 overflow-y-auto">

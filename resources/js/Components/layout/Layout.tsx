@@ -7,6 +7,7 @@ import ModalHost from '../ui/Modal'
 import CultivationToastStack from '../cultivation/CultivationToastStack'
 import { usePopup } from '../../contexts/PopupContext'
 import { useCultivationToast } from '../../contexts/CultivationToastContext'
+import { cpToastNote, type ContributionAwardedPayload } from '../../lib/cpToast'
 import { useAuth } from '../../contexts/AuthContext'
 
 function PopupLayer() {
@@ -47,11 +48,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         // FQCN berawalan titik (sama seperti listener di Room.tsx): tanpa
         // titik, Echo menambah prefix "App.Events." dan tidak akan cocok
         // dengan event di modul Discuss.
-        channel.listen('.App\\Modules\\Discuss\\Events\\ContributionAwarded', (e: { amount: number; multiplier?: number; event_name?: string | null }) => {
-            const note = e.multiplier && e.multiplier > 1
-                ? `x${e.multiplier}${e.event_name ? ` ${e.event_name}` : ''}`
-                : undefined
-            showCp(e.amount, note)
+        channel.listen('.App\\Modules\\Discuss\\Events\\ContributionAwarded', (e: ContributionAwardedPayload) => {
+            showCp(e.amount, cpToastNote(e))
         })
 
         return () => {

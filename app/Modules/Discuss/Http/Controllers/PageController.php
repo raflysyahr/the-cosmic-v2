@@ -13,6 +13,7 @@ use App\Modules\Discuss\Services\PinnedMessageService;
 use App\Modules\Discuss\Services\RoomService;
 use App\Modules\Auth\Models\User;
 use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Discuss\Models\Member;
 use Illuminate\Validation\ValidationException;
 
 class PageController
@@ -31,6 +32,45 @@ class PageController
         return Inertia::render('Discuss/Index', [
             'rooms' => $this->roomService->roomsForUser(auth()->id()),
             'directChats' => $this->roomService->getDirectChatsForUser(auth()->id())
+        ]);
+    }
+
+    /** Leaderboard + achievement CP. Datanya diambil halaman lewat API. */
+    public function leaderboard()
+    {
+        $user = auth()->user();
+
+        return Inertia::render('Discuss/Leaderboard', [
+            'isAdmin' => $user && $user->role === UserRole::Admin,
+        ]);
+    }
+
+    /** Pengaturan & event CP — hanya admin platform (users.role = admin). */
+    public function cpAdmin()
+    {
+        $user = auth()->user();
+
+        abort_unless($user && $user->role === UserRole::Admin, 403);
+
+        return Inertia::render('Discuss/CpAdmin');
+    }
+
+    /** Antrian laporan — hanya moderator/admin room. */
+    public function reports(string $slug)
+    {
+        $room = $this->roomService->findBySlug($slug);
+
+        abort_unless($room, 404);
+
+        $member = Member::where('room_id', $room->id)->where('user_id', auth()->id())->first();
+
+        abort_unless(
+            $member && ! $member->is_banned && in_array($member->role->value, ['moderator', 'admin'], true),
+            403,
+        );
+
+        return Inertia::render('Discuss/Reports', [
+            'room' => ['slug' => $room->slug, 'name' => $room->name],
         ]);
     }
 

@@ -41,4 +41,59 @@ return [
     'burst_window_seconds' => 20,
     'duplicate_window_hours' => 24,
     'min_alnum_chars' => 2,
+
+    // --- Fase 2 -----------------------------------------------------------
+
+    // Helpful: member lain menandai pesan berguna. CP diberikan SEKALI per
+    // pesan (tanda pertama); tanda berikutnya hanya menambah hitungan.
+    'helpful_points' => 15,
+    // Penanda harus sudah jadi member room minimal sekian jam dan punya
+    // email terverifikasi; maks sekian tanda Helpful yang boleh diberikan
+    // satu orang per hari.
+    'helpful_min_member_hours' => 24,
+    'helpful_daily_give_limit' => 10,
+
+    // Best Answer: ditandai penulis pesan yang dibalas (penanya) atau
+    // moderator/admin room. Maks satu per pertanyaan.
+    'best_answer_points' => 25,
+
+    // Bonus harian: sekali per hari (semua room digabung). Memenuhi syarat
+    // kalau hari ini sudah punya >= min_replies reply valid ATAU
+    // >= min_messages pesan valid. Isi 0 untuk mematikan salah satu jalur;
+    // kalau keduanya 0, bonus tidak pernah diberikan.
+    'daily_bonus_points' => 10,
+    'daily_bonus_min_replies' => 1,
+    'daily_bonus_min_messages' => 5,
+
+    // Streak = hari berturut-turut yang mendapat bonus harian. Bonus
+    // diberikan sekali per milestone per rangkaian streak. Streak dihitung
+    // dari log bonus harian, jadi daily_bonus_points = 0 juga menghentikan
+    // streak.
+    'streak_3_points' => 10,
+    'streak_7_points' => 25,
+    'streak_14_points' => 50,
+    'streak_30_points' => 100,
+
+
+    // --- Fase 3 -----------------------------------------------------------
+
+    // Achievement: bonus sekali seumur hidup per user (semua room digabung).
+    // Ambang ada di AchievementService::DEFINITIONS; di sini hanya poinnya.
+    // Isi 0 untuk menonaktifkan satu achievement.
+    'achievement_first_reply_points' => 20,
+    'achievement_replies_100_points' => 50,
+    'achievement_likes_100_points' => 50,
+    'achievement_helpful_10_points' => 100,
+    'achievement_best_answer_10_points' => 100,
+    'achievement_active_30_points' => 100,
+
+    // Report: pelapor dapat poin HANYA jika moderator menilai laporannya
+    // valid. Maks report_daily_limit laporan per orang per hari.
+    'report_valid_points' => 5,
+    'report_daily_limit' => 5,
+
+    // Penalti yang bisa dijatuhkan moderator saat menutup laporan valid.
+    // Saldo tidak turun di bawah 0 dan rank tidak diturunkan.
+    'penalty_spam_points' => 10,
+    'penalty_manipulation_points' => 50,
 ];

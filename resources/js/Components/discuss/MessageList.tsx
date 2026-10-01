@@ -11,6 +11,8 @@ interface MessageListProps {
   onStartEdit?: (msg: Message) => void
   onReact: (msgId: string, emoteId: string) => void
   onPin?: (msgId: string) => void
+  onMark?: (msgId: string, kind: 'helpful' | 'best_answer') => void
+  onReport?: (msgId: string) => void
   onRetry?: (msg: Message) => void
   pinnedMessageIds?: Set<string>
   userRole?: 'member' | 'moderator' | 'admin' | null
@@ -44,7 +46,7 @@ const Skeleton: FC = () => (
   </div>
 )
 
-const MessageList: FC<MessageListProps> = ({ messages, currentUserId, emotes, onReply, onDelete, onStartEdit, onReact, onPin, onRetry, pinnedMessageIds, userRole, reactionAnimations, onReactionAnimationEnd, loading }) => {
+const MessageList: FC<MessageListProps> = ({ messages, currentUserId, emotes, onReply, onDelete, onStartEdit, onReact, onPin, onMark, onReport, onRetry, pinnedMessageIds, userRole, reactionAnimations, onReactionAnimationEnd, loading }) => {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -108,6 +110,8 @@ const MessageList: FC<MessageListProps> = ({ messages, currentUserId, emotes, on
               onStartEdit={onStartEdit}
               onReact={onReact}
               onPin={onPin}
+              onMark={onMark}
+              onReport={onReport}
               onRetry={onRetry}
               isPinned={pinnedMessageIds?.has(msg.id)}
               userRole={userRole}

@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FC } from 'react'
-import { Reply, Edit3, Pin, PinOff, Trash2, Save } from 'lucide-react'
+import { Reply, Edit3, Pin, PinOff, Trash2, Save, Lightbulb, BadgeCheck, Flag } from 'lucide-react'
 
 export interface MessageActionMenuProps {
   x: number
@@ -11,12 +11,22 @@ export interface MessageActionMenuProps {
   // File messages that have already been downloaded — offers a quick "Save"
   // (re-saves from the local cache, no re-download) from the long-press menu.
   canSave?: boolean
+  // Helpful: member lain (bukan penulis). Best Answer: hanya reply, oleh
+  // penanya atau moderator/admin — aturan sebenarnya dijaga server.
+  canHelpful?: boolean
+  isHelpful?: boolean
+  canBestAnswer?: boolean
+  isBestAnswer?: boolean
+  canReport?: boolean
   emotes: { id: string; code: string; image_url: string | null; unicode: string | null }[]
   onReply: () => void
   onEdit: () => void
   onDelete: () => void
   onPin: () => void
   onSave?: () => void
+  onHelpful?: () => void
+  onBestAnswer?: () => void
+  onReport?: () => void
   onReact: (emoteId: string) => void
   onClose: () => void
 }
@@ -35,7 +45,7 @@ const VIEWPORT_MARGIN = 8
  * setelah salah satu aksi dipilih.
  */
 const MessageActionMenu: FC<MessageActionMenuProps> = ({
-  x, y, align, canEdit, canPin, isPinned, canSave, emotes, onReply, onEdit, onDelete, onPin, onSave, onReact, onClose,
+  x, y, align, canEdit, canPin, isPinned, canSave, canHelpful, isHelpful, canBestAnswer, isBestAnswer, canReport, emotes, onReply, onEdit, onDelete, onPin, onSave, onHelpful, onBestAnswer, onReport, onReact, onClose,
 }) => {
   const ref = useRef<HTMLDivElement>(null)
 
@@ -142,6 +152,36 @@ const MessageActionMenu: FC<MessageActionMenuProps> = ({
             <Reply className="h-4 w-4 text-on-surface-variant" />
             Reply
           </button>
+
+          {canHelpful && onHelpful && (
+            <button
+              onClick={() => { onHelpful(); onClose() }}
+              className="flex items-center gap-3 px-4 py-2.5 text-left font-body-sm text-body-sm text-on-surface transition-colors hover:bg-surface-container-highest"
+            >
+              <Lightbulb className="h-4 w-4 text-on-surface-variant" />
+              {isHelpful ? 'Remove Helpful' : 'Mark Helpful'}
+            </button>
+          )}
+
+          {canBestAnswer && onBestAnswer && (
+            <button
+              onClick={() => { onBestAnswer(); onClose() }}
+              className="flex items-center gap-3 px-4 py-2.5 text-left font-body-sm text-body-sm text-on-surface transition-colors hover:bg-surface-container-highest"
+            >
+              <BadgeCheck className="h-4 w-4 text-on-surface-variant" />
+              {isBestAnswer ? 'Remove Best Answer' : 'Best Answer'}
+            </button>
+          )}
+
+          {canReport && onReport && (
+            <button
+              onClick={() => { onReport(); onClose() }}
+              className="flex items-center gap-3 px-4 py-2.5 text-left font-body-sm text-body-sm text-on-surface transition-colors hover:bg-surface-container-highest"
+            >
+              <Flag className="h-4 w-4 text-on-surface-variant" />
+              Report
+            </button>
+          )}
 
           {canSave && onSave && (
             <button

@@ -10,6 +10,9 @@ use App\Modules\Discuss\Http\Controllers\RankController;
 use App\Modules\Discuss\Http\Controllers\PinnedMessageController;
 use App\Modules\Discuss\Http\Controllers\NotificationController;
 use App\Modules\Discuss\Http\Controllers\CpAdminController;
+use App\Modules\Discuss\Http\Controllers\MarkController;
+use App\Modules\Discuss\Http\Controllers\ReportController;
+use App\Modules\Discuss\Http\Controllers\AchievementController;
 use App\Modules\Discuss\Http\Controllers\LeaderboardController;
 
 Route::prefix('api')->middleware(['web', 'auth:sanctum'])->group(function () {
@@ -37,6 +40,16 @@ Route::prefix('api')->middleware(['web', 'auth:sanctum'])->group(function () {
 
     // Reactions
     Route::post('/rooms/{slug}/messages/{messageId}/reactions', [ReactionController::class, 'store']);
+
+    // Helpful & Best Answer (toggle)
+    Route::post('/rooms/{slug}/messages/{messageId}/helpful', [MarkController::class, 'helpful']);
+    Route::post('/rooms/{slug}/messages/{messageId}/best-answer', [MarkController::class, 'bestAnswer']);
+
+    // Reports (moderasi) & achievements
+    Route::post('/rooms/{slug}/messages/{messageId}/report', [ReportController::class, 'store']);
+    Route::get('/rooms/{slug}/reports', [ReportController::class, 'index']);
+    Route::post('/rooms/{slug}/reports/{reportId}/resolve', [ReportController::class, 'resolve']);
+    Route::get('/discuss/achievements', [AchievementController::class, 'index']);
 
     // Pinned Messages
     Route::post('/rooms/{slug}/pin', [PinnedMessageController::class, 'store']);

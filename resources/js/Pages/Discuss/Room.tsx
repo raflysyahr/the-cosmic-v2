@@ -13,6 +13,7 @@ import type { VideoMeta } from '../../lib/media'
 import { putBlob } from '../../lib/mediaCache'
 import { usePopup } from '../../contexts/PopupContext'
 import Popup from '../../Components/ui/Popup'
+import ReportReasonPicker from '../../Components/discuss/ReportReasonPicker'
 import ModalHost from '../../Components/ui/Modal'
 import { ArrowLeft, Megaphone, Pin, PinOff, X, MicOff, User, Users } from 'lucide-react'
 
@@ -650,6 +651,49 @@ export default function DiscussRoom(props: PageProps) {
     }
   }, [pinnedMessageIds, handlePin, handleUnpin])
 
+  // Helpful / Best Answer. Tidak optimistik: aturan (penanya/moderator,
+  // batas harian, dll.) ada di server, jadi UI menunggu hasilnya lalu
+  // menimpa `marks` pesan dengan state dari server.
+  const handleMark = useCallback(async (messageId: string, kind: 'helpful' | 'best_answer') => {
+    try {
+      const path = kind === 'helpful' ? 'helpful' : 'best-answer'
+      const res = await client.post(`/rooms/${room.slug}/messages/${messageId}/${path}`)
+      const marks = res.data?.marks
+      if (marks) {
+        setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, marks } : m))
+      }
+    } catch (err) {
+      // api/client.ts sudah meratakan error menjadi Error(message) (untuk 422
+      // berisi pesan validasi pertama), jadi baca err.message — bukan err.response.
+      const reason = err instanceof Error && err.message ? err.message : 'Could not update this mark.'
+      showPopup({ type: 'warning', title: 'Not allowed', message: reason })
+    }
+  }, [room.slug, showPopup])
+
+  // Report pesan. Popup menutup dirinya 200ms setelah konfirmasi (lihat
+  // Popup.handleClose) — hasil request ditampilkan setelah jeda itu, kalau
+  // tidak popup hasil ikut tertutup oleh close yang tertunda.
+  const handleReport = useCallback((messageId: string) => {
+    const selected = { reason: 'spam' }
+    const showLater = (config: Parameters<typeof showPopup>[0]) => setTimeout(() => showPopup(config), 250)
+
+    showPopup({
+      type: 'confirm',
+      title: 'Report message',
+      confirmText: 'Report',
+      children: <ReportReasonPicker onChange={(reason) => { selected.reason = reason }} />,
+      onConfirm: async () => {
+        try {
+          await client.post(`/rooms/${room.slug}/messages/${messageId}/report`, { reason: selected.reason })
+          showLater({ type: 'notification', title: 'Report sent', message: 'Thanks. A moderator will review it.' })
+        } catch (err) {
+          const reason = err instanceof Error && err.message ? err.message : 'Could not send this report.'
+          showLater({ type: 'warning', title: 'Could not report', message: reason })
+        }
+      },
+    })
+  }, [room.slug, showPopup])
+
   const currentMemberRole = useMemo(
     () => members.find((m) => m.userId === currentUserId)?.role ?? null,
     [members, currentUserId],
@@ -743,6 +787,11 @@ export default function DiscussRoom(props: PageProps) {
           return { ...m, reactions }
         }),
       )
+    })
+
+    channel.listen('.App\\Modules\\Discuss\\Events\\MessageMarked', (e: { message_id: string; marks: NonNullable<Message['marks']> }) => {
+      // Payload membawa state lengkap — cukup timpa, aman kalau datang dobel.
+      setMessages((prev) => prev.map((m) => m.id === e.message_id ? { ...m, marks: e.marks } : m))
     })
 
     channel.listen('.App\\Modules\\Discuss\\Events\\PinnedMessageUpdated', (e: { room_id: string; message_ids: string[] }) => {
@@ -980,6 +1029,8 @@ export default function DiscussRoom(props: PageProps) {
           onStartEdit={handleStartEdit}
           onReact={handleReact}
           onPin={handleTogglePin}
+          onMark={handleMark}
+          onReport={handleReport}
           onRetry={handleRetry}
           pinnedMessageIds={pinnedMessageIds}
           userRole={currentMemberRole}

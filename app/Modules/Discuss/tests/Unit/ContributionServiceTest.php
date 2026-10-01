@@ -40,6 +40,17 @@ class ContributionServiceTest extends TestCase
         // Hanya ContributionAwarded yang di-fake; event lain tetap jalan.
         Event::fake([ContributionAwarded::class]);
 
+        // Bonus harian (Fase 2) dimatikan di sini supaya angka XP di test
+        // Fase 1 tetap murni; perilaku bonus & streak dites di
+        // ContributionPhase2Test.
+        config(['discuss_cp.daily_bonus_points' => 0]);
+        // Achievement (Fase 3) juga dimatikan: "First Reply" (+20) akan ikut
+        // menambah XP di setiap test reply dan mengacaukan angka Fase 1.
+        // Perilakunya dites di ContributionPhase3Test.
+        foreach (['first_reply', 'replies_100', 'likes_100', 'helpful_10', 'best_answer_10', 'active_30'] as $key) {
+            config(["discuss_cp.achievement_{$key}_points" => 0]);
+        }
+
         $this->service = app(ContributionService::class);
         $this->messages = app(MessageService::class);
         $this->room = Room::factory()->create();

@@ -91,7 +91,11 @@ use App\Http\Controllers\Api\ReadingHistoryController;
 
 Route::middleware(['auth'])->prefix('discuss')->name('discuss.')->group(function () {
     Route::get('/', [PageController::class, 'index'])->name('index');
+    // Harus di atas '/{slug}...' supaya tidak ditangkap sebagai slug room.
+    Route::get('/leaderboard', [PageController::class, 'leaderboard'])->name('leaderboard');
+    Route::get('/leaderboard/admin', [PageController::class, 'cpAdmin'])->name('leaderboard.admin');
     Route::get('/invite/{token}', [PageController::class, 'joinByInvite'])->name('invite');
+    Route::get('/{slug}/reports', [PageController::class, 'reports'])->name('reports');
     Route::get('/{slug}/about', [PageController::class, 'about'])->name('about');
     Route::get('/{slug}', [PageController::class, 'room'])->name('room');
 });

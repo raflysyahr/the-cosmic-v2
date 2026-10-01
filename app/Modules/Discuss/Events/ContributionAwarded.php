@@ -25,6 +25,8 @@ class ContributionAwarded implements ShouldBroadcastNow
         public readonly int $baseAmount,
         public readonly int $multiplierPct,
         public readonly ?string $eventName,
+        // Keterangan tambahan untuk toast, mis. nama achievement.
+        public readonly ?string $detail = null,
     ) {}
 
     public function broadcastOn(): PrivateChannel
@@ -44,6 +46,7 @@ class ContributionAwarded implements ShouldBroadcastNow
             'base_amount' => $this->baseAmount,
             'multiplier' => $this->multiplierPct / 100,
             'event_name' => $this->eventName,
+            'detail' => $this->detail,
         ];
     }
 }

@@ -154,6 +154,28 @@ class CpAdminControllerTest extends TestCase
             ->assertStatus(422);
     }
 
+    public function test_events_can_target_the_phase_two_sources(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin)
+            ->postJson('/api/admin/cp/events', $this->validEvent(['sources' => ['helpful', 'best_answer', 'daily_bonus', 'streak']]))
+            ->assertStatus(201)
+            ->assertJsonPath('event.sources.1', 'best_answer');
+    }
+
+    public function test_admin_can_tune_phase_two_settings(): void
+    {
+        $this->actingAs($this->admin())
+            ->putJson('/api/admin/cp/settings', ['helpful_points' => 30, 'streak_7_points' => 40, 'daily_bonus_points' => 0])
+            ->assertOk()
+            ->assertJsonPath('settings.helpful_points', 30)
+            ->assertJsonPath('settings.streak_7_points', 40)
+            ->assertJsonPath('settings.daily_bonus_points', 0)
+            ->assertJsonPath('defaults.helpful_points', 15)
+            ->assertJsonPath('defaults.best_answer_points', 25);
+    }
+
     public function test_non_admin_cannot_manage_events(): void
     {
         $reader = User::factory()->create();

@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect, type FC, type PointerEvent, type MouseEvent } from 'react'
 import ReactionBar from './ReactionBar'
+import MarkBadges, { type MessageMarks } from './MarkBadges'
 import MessageActionMenu from './MessageActionMenu'
 import EmojiText from '../../lib/emoji-renderer'
 import type { GroupedReaction } from './ReactionBar'
@@ -26,7 +27,7 @@ interface ReplyTo {
   /** Poster/preview for photo & video replies (resolved by the server). */
   thumbnail?: string | null
   file_name?: string | null
-  user: { display_name: string; avatar_url?: string | null }
+  user: { id?: string; display_name: string; avatar_url?: string | null }
 }
 
 interface Message {
@@ -39,6 +40,8 @@ interface Message {
   attachments: string[]
   metadata?: { file?: { name?: string; size?: number; mime?: string }; video?: VideoInfo; thumbnail?: string | null } | null
   reactions: GroupedReaction[]
+  /** Helpful / Best Answer. Opsional: pesan optimistik belum punya. */
+  marks?: MessageMarks
   is_edited: boolean
   is_deleted: boolean
   created_at: string
@@ -54,6 +57,8 @@ interface MessageItemProps {
   onStartEdit?: (msg: Message) => void
   onReact: (msgId: string, emoteId: string) => void
   onPin?: (msgId: string) => void
+  onMark?: (msgId: string, kind: 'helpful' | 'best_answer') => void
+  onReport?: (msgId: string) => void
   onRetry?: (msg: Message) => void
   isPinned?: boolean
   userRole?: 'member' | 'moderator' | 'admin' | null
@@ -73,7 +78,7 @@ function formatTime(iso: string): string {
   return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 }
 
-const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onReply, onDelete, onStartEdit, onReact, onPin, onRetry, isPinned = false, userRole, reactionAnimations, onReactionAnimationEnd, showAvatar = true }) => {
+const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onReply, onDelete, onStartEdit, onReact, onPin, onMark, onReport, onRetry, isPinned = false, userRole, reactionAnimations, onReactionAnimationEnd, showAvatar = true }) => {
   const [menu, setMenu] = useState<{ x: number; y: number; align: 'left' | 'right' } | null>(null)
   const [dragX, setDragX] = useState(0)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
@@ -91,6 +96,19 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
   const [fileDownloaded, setFileDownloaded] = useState(isOwner)
   const [fileDownloading, setFileDownloading] = useState(false)
   const canPin = userRole === 'admin' || userRole === 'moderator'
+  // Helpful/Best Answer: hanya kebijakan tampilan menu — server tetap
+  // memvalidasi ulang (MarkService). Pesan yang masih dikirim/gagal/sistem
+  // tidak bisa ditandai.
+  const isSettled = (!message.sendStatus || message.sendStatus === 'sent') && message.type !== 'system'
+  const questionAuthorId = message.reply_to?.user?.id
+  const canHelpful = !!onMark && isSettled && !isOwner
+  const canBestAnswer = !!onMark && isSettled && !isOwner
+    && !!questionAuthorId
+    && message.user?.id !== questionAuthorId
+    && (currentUserId === questionAuthorId || canPin)
+  const canReport = !!onReport && isSettled && !isOwner
+  const isHelpful = !!message.marks?.helpful_user_ids.includes(currentUserId)
+  const isBestAnswer = !!message.marks?.is_best_answer
   // Lightbox media (image or video): resolved from cache when possible, and
   // whether Save (three-dot menu) is currently actionable.
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
@@ -442,12 +460,20 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
           canPin={canPin}
           isPinned={isPinned}
           canSave={isFile && fileDownloaded}
+          canHelpful={canHelpful}
+          isHelpful={isHelpful}
+          canBestAnswer={canBestAnswer}
+          isBestAnswer={isBestAnswer}
+          canReport={canReport}
           emotes={emotes}
           onReply={() => onReply(message)}
           onEdit={startEdit}
           onDelete={() => onDelete(message.id)}
           onPin={() => onPin?.(message.id)}
           onSave={() => saveToDevice(fileUrl, fileName)}
+          onHelpful={() => onMark?.(message.id, 'helpful')}
+          onBestAnswer={() => onMark?.(message.id, 'best_answer')}
+          onReport={() => onReport?.(message.id)}
           onReact={(emoteId) => onReact(message.id, emoteId)}
           onClose={() => setMenu(null)}
         />
@@ -566,6 +592,7 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
                 messageId={message.id}
                 onAnimationEnd={onReactionAnimationEnd}
               />
+              <MarkBadges marks={message.marks} currentUserId={currentUserId} />
             </div>
             {message.is_edited && (
               <span className="font-label-sm text-label-sm text-on-surface-variant italic">(edited)</span>
@@ -736,6 +763,7 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
                   messageId={message.id}
                   onAnimationEnd={onReactionAnimationEnd}
                 />
+                <MarkBadges marks={message.marks} currentUserId={currentUserId} />
               </div>
               {message.is_edited && (
                 <span className="font-label-sm text-label-sm text-on-surface-variant italic">(edited)</span>

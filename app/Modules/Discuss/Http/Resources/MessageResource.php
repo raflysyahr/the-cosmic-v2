@@ -4,8 +4,10 @@ namespace App\Modules\Discuss\Http\Resources;
 
 use App\Modules\Auth\Models\User;
 use App\Modules\Cultivation\Services\CultivationService;
+use App\Modules\Discuss\Enums\MarkKind;
 use App\Modules\Discuss\Models\Emote;
 use App\Modules\Discuss\Models\Message;
+use App\Modules\Discuss\Models\MessageMark;
 use App\Modules\Discuss\Models\Reaction;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -59,6 +61,15 @@ class MessageResource extends JsonResource
             ->values()
             ->all();
 
+        // Helpful / Best Answer — satu query per pesan (pola sama dengan
+        // reaksi di atas; resource ini juga dipakai alur broadcast).
+        $markRows = MessageMark::where('message_id', $this->id)->select('kind', 'marked_by')->get();
+        $helpfulUserIds = $markRows
+            ->filter(fn ($row) => $row->kind === MarkKind::Helpful)
+            ->pluck('marked_by')
+            ->values()
+            ->all();
+
         $replyTo = null;
         if ($this->reply_to_id) {
             $replyToMsg = Message::select('id', 'user_id', 'body', 'type', 'attachments', 'metadata')
@@ -105,6 +116,11 @@ class MessageResource extends JsonResource
     ->distinct('user_id')
     ->count('user_id'),
             'reactions' => $reactions,
+            'marks' => [
+                'helpful_count' => count($helpfulUserIds),
+                'helpful_user_ids' => $helpfulUserIds,
+                'is_best_answer' => $markRows->contains(fn ($row) => $row->kind === MarkKind::BestAnswer),
+            ],
             'metadata' => $this->metadata,
             'is_edited' => $this->is_edited,
             'is_deleted' => $this->is_deleted,
