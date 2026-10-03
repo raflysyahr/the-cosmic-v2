@@ -29,20 +29,15 @@ class ProfileController
 
         $profile = UserProfile::where('user_id', $user->id)->first();
 
-        // Note: there is no server-side "bookmarks" stat. Bookmarks are
-        // stored entirely client-side (localStorage, see useBookmarks()
-        // hook) — there is no App\Models\Bookmark and no modular table for
-        // it. The frontend sources that count from the hook instead.
-        $stats = [
-            'messages'  => Message::where('user_id', $user->id)->count(),
-            'rooms'     => Member::where('user_id', $user->id)->count(),
-            'xp'        => Member::where('user_id', $user->id)->sum('xp_points'),
-            'member_since' => $user->created_at?->format('M Y'),
-        ];
-
+        // Halaman profil (Pages/Profile.tsx, tampil di layout Discuss) hanya
+        // butuh data milik user: bio/website/lokasi, tanggal bergabung, dan
+        // status verifikasi email. Status cultivation (realm, level, EXP)
+        // diambil frontend dari GET /api/cultivation, bukan lewat modul ini,
+        // supaya modul Auth tidak bergantung pada modul Cultivation.
         return Inertia::render('Profile', [
             'profile' => $profile ? $profile->only(['bio', 'website_url', 'location']) : null,
-            'stats'   => $stats,
+            'joined' => $user->created_at?->format('Y-m-d'),
+            'emailVerified' => $user->email_verified_at !== null,
         ]);
     }
 

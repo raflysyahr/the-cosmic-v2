@@ -10,6 +10,7 @@ use App\Modules\Cultivation\Models\UserCultivation;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
+
 /**
  * Logika bisnis inti Cosmic Cultivation System. Lihat dokumentasi ERD
  * yang menyertai fitur ini untuk penjelasan formula & struktur lengkap.
@@ -197,6 +198,7 @@ class CultivationService
                 'resource_slug' => $era->resource_slug,
             ],
             'is_max_level' => $realm->sort_order === 20 && $cultivation->stage === 10,
+            'badge' => $this->getRealmBadgeData([$user->id])[$user->id] ?? null,
         ];
     }
 

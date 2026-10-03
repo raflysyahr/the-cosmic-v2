@@ -13,6 +13,7 @@ use App\Modules\Discuss\Http\Controllers\CpAdminController;
 use App\Modules\Discuss\Http\Controllers\MarkController;
 use App\Modules\Discuss\Http\Controllers\ReportController;
 use App\Modules\Discuss\Http\Controllers\AchievementController;
+use App\Modules\Discuss\Http\Controllers\AnnouncementController;
 use App\Modules\Discuss\Http\Controllers\LeaderboardController;
 
 Route::prefix('api')->middleware(['web', 'auth:sanctum'])->group(function () {
@@ -44,6 +45,15 @@ Route::prefix('api')->middleware(['web', 'auth:sanctum'])->group(function () {
     // Helpful & Best Answer (toggle)
     Route::post('/rooms/{slug}/messages/{messageId}/helpful', [MarkController::class, 'helpful']);
     Route::post('/rooms/{slug}/messages/{messageId}/best-answer', [MarkController::class, 'bestAnswer']);
+
+    // Story = pemberitahuan dari admin (user hanya membaca)
+    Route::get('/discuss/story', [AnnouncementController::class, 'index']);
+    Route::get('/discuss/story/unread', [AnnouncementController::class, 'unread']);
+    Route::post('/discuss/story/seen', [AnnouncementController::class, 'seen']);
+    Route::get('/admin/story', [AnnouncementController::class, 'adminIndex']);
+    Route::post('/admin/story', [AnnouncementController::class, 'store']);
+    Route::put('/admin/story/{id}', [AnnouncementController::class, 'update']);
+    Route::delete('/admin/story/{id}', [AnnouncementController::class, 'destroy']);
 
     // Reports (moderasi) & achievements
     Route::post('/rooms/{slug}/messages/{messageId}/report', [ReportController::class, 'store']);

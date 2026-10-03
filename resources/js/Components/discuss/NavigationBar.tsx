@@ -1,6 +1,7 @@
-import type { ComponentType } from 'react'
+import { useEffect, useState, type ComponentType } from 'react'
 import { Link, usePage } from '@inertiajs/react'
-import { CircleFadingPlus, MessageCircle, Trophy, User } from 'lucide-react'
+import { Megaphone, MessageCircle, Trophy, User } from 'lucide-react'
+import client from '../../api/client'
 
 interface NavItem {
   id: string
@@ -22,16 +23,16 @@ const ITEMS: NavItem[] = [
   {
     id: 'story',
     label: 'Story',
-    icon: CircleFadingPlus,
-    url: null,
-    isActive: () => false,
+    icon: Megaphone,
+    url: '/discuss/story',
+    isActive: (path) => path === '/discuss/story',
   },
   {
     id: 'leaderboard',
     label: 'Leaderboard',
     icon: Trophy,
     url: '/discuss/leaderboard',
-    isActive: (path) => path.startsWith('/discuss/leaderboard'),
+    isActive: (path) => path === '/discuss/leaderboard',
   },
   {
     id: 'profile',
@@ -53,8 +54,27 @@ export default function NavigationBar() {
   // url dari Inertia memuat query string; buang itu dan trailing slash.
   const path = (url.split('?')[0].replace(/\/+$/, '') || '/')
 
+  // Jumlah pemberitahuan Story yang belum dibaca. Diambil ulang setiap
+  // pindah halaman (murah: satu COUNT) dan dikosongkan seketika saat halaman
+  // Story menandai sudah dibaca ('story:seen').
+  const [unread, setUnread] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+    client.get('/discuss/story/unread')
+      .then((res) => { if (!cancelled) setUnread(Number(res.data?.unread) || 0) })
+      .catch(() => { /* badge hanya tambahan */ })
+    return () => { cancelled = true }
+  }, [path])
+
+  useEffect(() => {
+    const clear = () => setUnread(0)
+    window.addEventListener('story:seen', clear)
+    return () => window.removeEventListener('story:seen', clear)
+  }, [])
+
   return (
-    <nav className="shrink-0 z-40 w-full max-w-md border-t border-neutral-900 bg-black/95 px-3 py-2.5 backdrop-blur-md">
+    <nav className="shrink-0 border-t border-neutral-900 bg-black/95 px-3 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-md">
       <div className="flex items-center justify-between">
         {ITEMS.map((item) => {
           const Icon = item.icon
@@ -62,11 +82,18 @@ export default function NavigationBar() {
 
           const content = (
             <>
-              <Icon
-                size={18}
-                strokeWidth={isActive ? 2 : 1.8}
-                className={isActive ? 'text-white' : 'text-neutral-500 transition-colors group-hover:text-neutral-300'}
-              />
+              <span className="relative">
+                <Icon
+                  size={18}
+                  strokeWidth={isActive ? 2 : 1.8}
+                  className={isActive ? 'text-white' : 'text-neutral-500 transition-colors group-hover:text-neutral-300'}
+                />
+                {item.id === 'story' && unread > 0 && (
+                  <span className="absolute -right-2 -top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-[999px] bg-white px-1 text-[9px] font-bold leading-none text-black">
+                    {unread > 9 ? '9+' : unread}
+                  </span>
+                )}
+              </span>
               <span className={`mt-1 text-[11px] font-medium ${isActive ? 'text-white' : 'text-neutral-500'}`}>
                 {item.label}
               </span>

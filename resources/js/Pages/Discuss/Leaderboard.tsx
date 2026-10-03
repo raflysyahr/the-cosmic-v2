@@ -69,7 +69,7 @@ export default function Leaderboard({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <>
-      <div className="mx-auto max-w-2xl px-2 pb-24 pt-4">
+      <div className="mx-auto max-w-2xl px-2 pb-6 pt-4">
         <div className="mb-2 flex items-center justify-between">
 
           {isAdmin && (
@@ -144,7 +144,7 @@ export default function Leaderboard({ isAdmin }: { isAdmin: boolean }) {
             )}
 
             {board && board.me !== null && (
-              <div className="mt-4 rounded-lg bg-surface-container-high px-3 py-2 font-label-md text-label-md text-on-surface-variant w-fit rounded-[99px]">
+              <div className="mt-4 rounded-[999px] bg-surface-container-high px-3 py-2 font-label-md text-label-md text-on-surface-variant w-fit rounded-[99px]">
                 Your points: <span className="font-semibold text-amber-300">{board.me} CP</span>
               </div>
             )}

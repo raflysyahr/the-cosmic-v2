@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('api')->middleware(['web', 'auth:sanctum'])->group(function () {
     Route::get('/cultivation', [CultivationController::class, 'show']);
     Route::post('/cultivation/chapter-complete', [CultivationController::class, 'completeChapter']);
+
+
 });
 
 // Badge realm & data panduan — publik, tidak butuh auth (pola sama dengan

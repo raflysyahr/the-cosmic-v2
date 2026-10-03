@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import { Link } from '@inertiajs/react'
-import { ArrowLeft } from 'lucide-react'
 import LayoutDiscuss from '../../Components/layout/LayoutDiscuss'
+import { useShellChrome } from '../../Components/layout/ShellChrome'
 import client from '../../api/client'
 
 type Status = 'pending' | 'valid' | 'dismissed'
@@ -120,6 +119,7 @@ function ReportCard({ report, slug, onResolved }: { report: ReportRow; slug: str
 }
 
 export default function Reports({ room }: { room: { slug: string; name: string } }) {
+  useShellChrome({ title: `Reports · ${room.name}` })
   const [status, setStatus] = useState<Status>('pending')
   const [reports, setReports] = useState<ReportRow[] | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -138,14 +138,7 @@ export default function Reports({ room }: { room: { slug: string; name: string }
 
   return (
     <>
-      <div className="mx-auto max-w-2xl px-2 pb-24 pt-4">
-        <div className="mb-3 flex items-center gap-2">
-          <Link href={`/discuss/${room.slug}/about`} className="text-on-surface-variant hover:text-on-surface">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <h1 className="truncate font-headline-sm text-headline-sm text-on-surface">Reports · {room.name}</h1>
-        </div>
-
+      <div className="mx-auto max-w-2xl px-2 pb-6 pt-4">
         <div className="mb-3 flex gap-2">
           {(Object.keys(STATUS_LABELS) as Status[]).map((key) => (
             <button

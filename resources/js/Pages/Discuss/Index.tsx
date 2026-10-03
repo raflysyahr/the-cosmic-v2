@@ -1,6 +1,5 @@
 import { useState, type ReactNode } from 'react'
 import { Link } from '@inertiajs/react'
-import Layout from '../../Components/layout/Layout'
 import DiscussRoomCard from '../../Components/discuss/DiscussRoomCard'
 import type { RoomCardData,DirectChatData } from '../../Components/discuss/DiscussRoomCard'
 import ChatListItem from '../../Components/discuss/ChatListItem'
@@ -20,7 +19,8 @@ export default function DiscussIndex({ rooms,directChats }: PageProps) {
   return (
 
       <>
-      <div className="mx-auto max-w-4xl px-2 pt-4 flex-1">
+      <div className="px-2 pb-4">
+        <div className="sticky top-0 z-10 bg-surface pt-4">
 
 
 
@@ -55,8 +55,9 @@ export default function DiscussIndex({ rooms,directChats }: PageProps) {
             Groups
           </button>
         </div>
+        </div>
 
-        <div className="h-[555px] overflow-y-scroll">
+        <div>
         {rooms.length === 0 ? (
           <p className="py-12 text-center font-body-sm text-body-sm text-on-surface-variant">
             No discussion rooms yet.

@@ -20,7 +20,7 @@ interface CultivationToastContextValue {
 
 const CultivationToastContext = createContext<CultivationToastContextValue | null>(null)
 
-const AUTO_DISMISS_MS = 2500
+const AUTO_DISMISS_MS = 3500
 
 /**
  * Antrian toast "+N Resource" (mis. "+10 Essence") yang dipicu dari mana

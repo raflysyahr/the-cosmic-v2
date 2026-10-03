@@ -541,3 +541,27 @@ Direct message tidak menambah tabel baru — sepenuhnya reuse `discuss_rooms` + 
 
 **Index:** `UNIQUE(message_id, reporter_id)`, `INDEX(room_id, status, created_at)`, `INDEX(reporter_id, created_at)`
 
+### `discuss_announcements`
+*Pemberitahuan dari admin untuk halaman Story. Dibuat/diubah hanya oleh admin platform.*
+
+| Kolom | Tipe | Catatan |
+|---|---|---|
+| `id` | `ULID` | PK |
+| `title` | `VARCHAR(120)` | |
+| `body` | `TEXT` | Teks biasa (dirender tanpa HTML) |
+| `link_url` | `VARCHAR(500)` | Nullable; hanya http/https |
+| `is_pinned` | `BOOLEAN` | Disematkan di atas |
+| `published_at` | `TIMESTAMP` | Nullable; masa depan = terjadwal, null = draf (tidak tampil) |
+| `created_by` ⟶ | `ULID` | → `users.id` *(logis)* |
+| `created_at` / `updated_at` | `TIMESTAMP` | |
+
+**Index:** `INDEX(published_at)`, `INDEX(is_pinned, published_at)`
+
+### `discuss_story_seen`
+*Satu baris per user: kapan terakhir membuka halaman Story (dasar badge "belum dibaca").*
+
+| Kolom | Tipe | Catatan |
+|---|---|---|
+| `user_id` ⟶ | `ULID` | PK; → `users.id` *(logis)* |
+| `seen_at` | `TIMESTAMP` | |
+

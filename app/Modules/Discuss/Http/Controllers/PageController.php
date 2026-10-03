@@ -45,6 +45,16 @@ class PageController
         ]);
     }
 
+    /** Story: pemberitahuan dari admin. Admin melihat panel kelola di halaman yang sama. */
+    public function story()
+    {
+        $user = auth()->user();
+
+        return Inertia::render('Discuss/Story', [
+            'isAdmin' => $user && $user->role === UserRole::Admin,
+        ]);
+    }
+
     /** Pengaturan & event CP — hanya admin platform (users.role = admin). */
     public function cpAdmin()
     {

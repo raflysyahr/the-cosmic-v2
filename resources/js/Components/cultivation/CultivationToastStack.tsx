@@ -11,10 +11,11 @@ import { useCultivationToast } from '../../contexts/CultivationToastContext'
 const CultivationToastStack: FC<{ className?: string }> = ({ className = 'bottom-4 left-4' }) => {
   const { gains } = useCultivationToast()
 
+
   if (gains.length === 0) return null
 
   return (
-    <div className={`fixed ${className} z-[60] flex flex-col gap-2 pointer-events-none`}>
+    <div className={`fixed ${className} z-[9999999] flex flex-col gap-2 pointer-events-none`}>
       {gains.map((gain) => {
         const isCp = gain.kind === 'cp'
         const tone = isCp ? 'text-amber-300' : 'text-green-400'
@@ -25,7 +26,7 @@ const CultivationToastStack: FC<{ className?: string }> = ({ className = 'bottom
             className="animate-cultivation-toast-in flex items-center gap-1.5 rounded-lg bg-black/30 px-3 py-1.5 backdrop-blur-sm"
           >
             <Icon className={`h-3.5 w-3.5 ${tone}`} />
-            <span className={`font-label-md text-label-md font-semibold ${tone}`}>
+ a           <span className={`font-label-md text-label-md font-semibold ${tone}`}>
               +{gain.amount} {gain.resourceName}
             </span>
             {gain.note && (

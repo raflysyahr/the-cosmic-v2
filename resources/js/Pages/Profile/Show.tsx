@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { router, usePage } from '@inertiajs/react'
-import { ArrowLeft, MessageSquare, Users, Trophy, Link as LinkIcon, MapPin } from 'lucide-react'
-import Layout from '../../Components/layout/Layout'
+import { MessageSquare, Users, Trophy, Link as LinkIcon, MapPin } from 'lucide-react'
+import LayoutDiscuss from '../../Components/layout/LayoutDiscuss'
 import Avatar from '../../Components/ui/Avatar'
 import { apiFetch } from '../../api/fetch'
 
@@ -57,15 +57,8 @@ export default function PublicProfileShow() {
   ]
 
   return (
-    <Layout>
-      <div className="mx-auto max-w-lg px-4 py-8">
-        <button
-          onClick={() => router.visit('/')}
-          className="mb-6 flex items-center gap-1 text-xs text-[#555] transition-colors hover:text-white"
-        >
-          <ArrowLeft className="h-3 w-3" /> Back
-        </button>
-
+    <>
+      <div className="px-4 py-6">
         <div className="mb-6 flex flex-col items-center gap-3">
           <Avatar src={profile.avatarUrl} alt={profile.displayName} size={120} border />
           <div>
@@ -126,6 +119,8 @@ export default function PublicProfileShow() {
           </p>
         )}
       </div>
-    </Layout>
+    </>
   )
 }
+
+PublicProfileShow.layout = (page: ReactNode) => <LayoutDiscuss>{page}</LayoutDiscuss>

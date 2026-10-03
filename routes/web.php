@@ -86,12 +86,14 @@ Route::fallback(function () {
 
 use App\Modules\Discuss\Http\Controllers\PageController;
 use App\Modules\Discuss\Http\Controllers\DirectController;
+use App\Modules\Discuss\Http\Controllers\ToastDemoController;
 use App\Http\Controllers\Api\BookmarkController;
 use App\Http\Controllers\Api\ReadingHistoryController;
 
 Route::middleware(['auth'])->prefix('discuss')->name('discuss.')->group(function () {
     Route::get('/', [PageController::class, 'index'])->name('index');
     // Harus di atas '/{slug}...' supaya tidak ditangkap sebagai slug room.
+    Route::get('/story', [PageController::class, 'story'])->name('story');
     Route::get('/leaderboard', [PageController::class, 'leaderboard'])->name('leaderboard');
     Route::get('/leaderboard/admin', [PageController::class, 'cpAdmin'])->name('leaderboard.admin');
     Route::get('/invite/{token}', [PageController::class, 'joinByInvite'])->name('invite');
@@ -99,6 +101,14 @@ Route::middleware(['auth'])->prefix('discuss')->name('discuss.')->group(function
     Route::get('/{slug}/about', [PageController::class, 'about'])->name('about');
     Route::get('/{slug}', [PageController::class, 'room'])->name('room');
 });
+
+// Demo toast (CP & Cultivation) — HANYA saat APP_ENV=local. Tidak ada di
+// staging/production karena rutenya tidak didaftarkan sama sekali.
+if (app()->environment('local')) {
+    Route::middleware(['auth'])->get('/dev/toast-demo', [ToastDemoController::class, 'page'])->name('dev.toast-demo');
+    Route::prefix('api')->middleware(['web', 'auth:sanctum'])
+        ->post('/dev/toast-demo/push', [ToastDemoController::class, 'push']);
+}
 
 Route::middleware(['auth'])->prefix('direct')->name('direct.')->group(function () {
     Route::get('/', [DirectController::class, 'index'])->name('index');

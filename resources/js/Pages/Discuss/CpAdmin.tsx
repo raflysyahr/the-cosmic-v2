@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import { Link } from '@inertiajs/react'
-import { ArrowLeft } from 'lucide-react'
 import LayoutDiscuss from '../../Components/layout/LayoutDiscuss'
 import client from '../../api/client'
 
@@ -196,14 +194,7 @@ export default function CpAdmin() {
 
   return (
     <>
-      <div className="mx-auto max-w-2xl px-2 pb-28 pt-4">
-        <div className="mb-3 flex items-center gap-2">
-          <Link href="/discuss/leaderboard" className="text-on-surface-variant hover:text-on-surface">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <h1 className="font-headline-sm text-headline-sm text-on-surface">Manage CP</h1>
-        </div>
-
+      <div className="mx-auto max-w-2xl px-2 pb-0 pt-4">
         {message && (
           <p className={`mb-3 rounded px-3 py-2 font-label-md text-label-md ${
             message.kind === 'ok' ? 'bg-green-500/15 text-green-300' : 'bg-red-500/15 text-red-300'
@@ -325,7 +316,7 @@ export default function CpAdmin() {
           </div>
         ))}
 
-        <div className="fixed inset-x-0 bottom-14 border-t border-outline-variant/30 bg-surface px-4 py-2">
+        <div className="sticky bottom-0 -mx-2 mt-4 border-t border-outline-variant/30 bg-surface px-4 py-2">
           <div className="mx-auto flex max-w-2xl items-center justify-between">
             <span className="font-label-md text-label-md text-on-surface-variant">
               {dirtyKeys.length === 0 ? 'No changes' : `${dirtyKeys.length} unsaved change${dirtyKeys.length > 1 ? 's' : ''}`}

@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import { usePage } from '@inertiajs/react'
-import HeaderDiscuss from './HeaderDiscuss'
+import { TabHeader, DetailHeader } from './ShellHeader'
+import { ShellChromeProvider, useShellChromeState } from './ShellChrome'
+import { defaultTitle, isTabRoot, normalizePath } from './shellRoutes'
 
 import Popup from '../ui/Popup'
 import { usePopup } from '../../contexts/PopupContext'
@@ -17,11 +19,17 @@ function PopupLayer() {
     return <Popup config={popup} onClose={closePopup} />
 }
 
-export default function LayoutDiscuss({ children }: { children: React.ReactNode }) {
+function Shell({ children }: { children: React.ReactNode }) {
     const { auth } = usePage().props as { auth: { user: Record<string, unknown> | null } }
     const { setUser, user } = useAuth()
     const { showPopup } = usePopup()
     const { showCp } = useCultivationToast()
+    const { url } = usePage()
+    const chrome = useShellChromeState()
+
+    // Tab utama = navbar bawah. Halaman lain = mode detail (tombol back saja).
+    const path = normalizePath(url)
+    const showNav = isTabRoot(path) && !chrome.hideNav
 
     useEffect(() => {
         if (auth?.user) setUser(auth.user as never)
@@ -60,14 +68,29 @@ export default function LayoutDiscuss({ children }: { children: React.ReactNode 
 
     return (
         <>
-            <div className="flex min-h-screen flex-col">
-                <HeaderDiscuss />
+            {/* Shell setinggi layar: header & navbar diam, hanya <main> yang scroll,
+                jadi navbar tidak pernah tertimbun konten panjang. */}
+            <div className="mx-auto flex h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-surface">
+                {showNav
+                    ? <TabHeader />
+                    : <DetailHeader path={path} title={chrome.title ?? defaultTitle(path)} onBack={chrome.onBack} />}
                 <CpEventBanner />
-                <main className="flex-1">{children}</main>
-                <NavigationBar />
+                {/* scroll-region: Inertia mengembalikan scroll ke atas saat pindah halaman */}
+                <main scroll-region="" className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                    {children}
+                </main>
+                {showNav && <NavigationBar />}
             </div>
             <PopupLayer />
-            <CultivationToastStack className="bottom-20 left-4" />
+            <CultivationToastStack className={showNav ? 'bottom-20 left-4' : 'bottom-4 left-4'} />
         </>
+    )
+}
+
+export default function LayoutDiscuss({ children }: { children: React.ReactNode }) {
+    return (
+        <ShellChromeProvider>
+            <Shell>{children}</Shell>
+        </ShellChromeProvider>
     )
 }

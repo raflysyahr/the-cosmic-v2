@@ -188,3 +188,25 @@ export async function saveToDevice(url: string, filename: string): Promise<boole
   setTimeout(() => URL.revokeObjectURL(objectUrl), 4000)
   return true
 }
+
+/** Ringkasan isi cache media di perangkat ini (dari indeks lokal, tanpa membaca isi cache). */
+export function getCacheUsage(): { count: number; bytes: number } {
+  const entries = Object.values(readIndex())
+  return { count: entries.length, bytes: entries.reduce((sum, entry) => sum + entry.size, 0) }
+}
+
+/**
+ * Hapus seluruh cache media (gambar/video/file Discuss). File yang sudah
+ * "disimpan" lewat saveToDevice() ikut hilang karena Save memang hanya
+ * membaca dari cache ini.
+ */
+export async function clearMediaCache(): Promise<void> {
+  cacheHandle = null
+  if (supported()) await caches.delete(CACHE_NAME)
+  try {
+    localStorage.removeItem(INDEX_KEY)
+  } catch {
+    // storage unavailable — nothing to clear
+  }
+}
+

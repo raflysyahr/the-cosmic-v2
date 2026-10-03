@@ -1,5 +1,6 @@
+import type { ReactNode } from 'react'
 import { Link } from '@inertiajs/react'
-import Layout from '../../Components/layout/Layout'
+import LayoutDiscuss from '../../Components/layout/LayoutDiscuss'
 import ChatListItem from '../../Components/discuss/ChatListItem'
 import type { DirectChatData } from '../../Components/discuss/ChatListItem'
 
@@ -9,8 +10,8 @@ interface PageProps {
 
 export default function DirectList({ directChats }: PageProps) {
   return (
-    <Layout>
-      <div className="mx-auto max-w-4xl px-2 py-4">
+    <>
+      <div className="px-2 py-4">
         <h1 className="mb-4 font-headline-sm text-headline-sm tracking-wider text-primary hidden">
           DIRECT MESSAGES
         </h1>
@@ -40,6 +41,8 @@ export default function DirectList({ directChats }: PageProps) {
           </div>
         )}
       </div>
-    </Layout>
+    </>
   )
 }
+
+DirectList.layout = (page: ReactNode) => <LayoutDiscuss>{page}</LayoutDiscuss>
