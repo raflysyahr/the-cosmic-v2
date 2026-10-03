@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { router, usePage } from '@inertiajs/react'
-import { CalendarDays, Database, FileText, Mail, ShieldCheck, User as UserIcon } from 'lucide-react'
+import { CalendarDays, Database, Download, FileText, Mail, ShieldCheck, User as UserIcon } from 'lucide-react'
 import LayoutDiscuss from '../Components/layout/LayoutDiscuss'
 import { useShellChrome } from '../Components/layout/ShellChrome'
 import ProfileHeader, { type CultivationStatus } from '../Components/profile/ProfileHeader'
@@ -10,6 +10,8 @@ import ProfileStoragePanel from '../Components/profile/ProfileStoragePanel'
 import { Card, InfoRow, MenuRow } from '../Components/profile/ProfileParts'
 import client from '../api/client'
 import { useAuth } from '../contexts/AuthContext'
+import { usePopup } from '../contexts/PopupContext'
+import { usePwaInstall } from '../lib/pwa'
 
 interface PageProps {
   profile: ProfileData | null
@@ -44,6 +46,8 @@ const ROLE_LABELS: Record<string, string> = {
 export default function Profile() {
   const { profile: initialProfile, joined, emailVerified } = usePage<PageProps>().props
   const { user } = useAuth()
+  const { showPopup } = usePopup()
+  const pwa = usePwaInstall()
 
   const [section, setSection] = useState<Section>('home')
   const [profile, setProfile] = useState<ProfileData>(
@@ -60,7 +64,7 @@ export default function Profile() {
     if (!user) return
     let cancelled = false
     client.get('/cultivation')
-      .then((res) => { if (!cancelled) setCultivation(res.data?.data ?? null) })
+      .then((res) => { if (!cancelled) setCultivation(res.data?.data ?? null);console.log(res) })
       .catch(() => { if (!cancelled) setCultivationFailed(true) })
     return () => { cancelled = true }
   }, [user?.id])
@@ -140,6 +144,25 @@ export default function Profile() {
             subtitle="Manage your files and cache"
             onClick={() => setSection('storage')}
           />
+          {(pwa.canPrompt || pwa.needsManualInstall) && (
+            <MenuRow
+              icon={Download}
+              title="Install app"
+              subtitle="Add The Cosmic to your home screen"
+              onClick={() => {
+                if (pwa.canPrompt) {
+                  void pwa.promptInstall()
+                  return
+                }
+                // iOS tidak punya prompt native.
+                showPopup({
+                  type: 'info',
+                  title: 'Install The Cosmic',
+                  message: 'Tap the Share button in Safari, then choose "Add to Home Screen".',
+                })
+              }}
+            />
+          )}
         </Card>
     </Frame>
   )

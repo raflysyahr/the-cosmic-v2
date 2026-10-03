@@ -267,3 +267,30 @@ php artisan queue:listen
 ```
 
 `composer run dev` menjalankan server, queue listener, log viewer (`pail`), dan Vite dev server sekaligus secara paralel.
+
+---
+
+## 11. Fitur — PWA (Lintas Modul)
+
+Aplikasi bisa dipasang ke home screen (Android/desktop lewat prompt native, iOS lewat Share → Add to Home Screen) dan membuka halaman offline saat jaringan putus. Bukan fitur satu modul, jadi dicatat terpisah.
+
+| Fitur | Status | Lokasi kode |
+|---|---|---|
+| Web app manifest (nama, ikon, `display: standalone`, shortcut Discuss & Bookmarks) | ✅ Ada | `public/manifest.json`, di-link dari `resources/views/app.blade.php` |
+| Ikon app (192, 512, maskable 512, apple-touch 180, favicon 32) — glyph "C" piksel putih di atas hitam | ✅ Ada (placeholder, bisa diganti logo final) | `public/icons/` |
+| Service worker (allowlist: navigasi → network-first + fallback offline; `/build/assets/*` cache-first; `/fonts/*` & `/icons/*` stale-while-revalidate) | ✅ Ada | `public/sw.js` |
+| Halaman offline | ✅ Ada | `public/offline.html` |
+| Registrasi SW (hanya build produksi) + tangkap `beforeinstallprompt` | ✅ Ada | `resources/js/lib/pwa.ts`, dipanggil di `resources/js/app.jsx` |
+| Menu "Install app" di Profile (muncul hanya bila bisa dipasang & belum terpasang; iOS menampilkan petunjuk manual) | ✅ Ada | `resources/js/Pages/Profile.tsx`, hook `usePwaInstall` di `lib/pwa.ts` |
+
+**Aturan yang harus dijaga:**
+- Service worker **tidak boleh** men-cache HTML, request `/api/*`, Inertia XHR, `/broadcasting/*`, atau request non-GET. Halaman membawa props user dan token CSRF; cache di sini akan membuat sesi/CSRF basi atau bocor antar akun di perangkat bersama.
+- Pembersihan cache lama di `activate` hanya menyentuh cache berawalan `cosmic-`. Jangan hapus cache lain — `lib/mediaCache.ts` memakai `discuss-media-v1` untuk media Discuss.
+- Mengubah isi `offline.html`, ikon, atau logika `sw.js` → naikkan `VERSION` di `public/sw.js` agar cache statis lama dibuang.
+- Service worker hanya aktif di HTTPS atau `localhost`. Lewat IP LAN `http://` tidak terdaftar dan app tidak bisa di-install; uji lewat tunnel HTTPS atau deploy.
+- Server web harus mengirim `sw.js` tanpa cache panjang (`Cache-Control: no-cache`), kalau tidak update SW tertunda.
+
+**Batasan yang diketahui:**
+- Offline hanya sampai halaman "You're offline". Navigasi Inertia (XHR) saat offline gagal tanpa pesan khusus, dan konten komik/chat tidak tersedia offline.
+- Font Google (Inter, Manrope, Material Symbols) dimuat dari domain lain dan tidak di-cache oleh SW.
+- Splash di `app.blade.php` (video, minimum 3 detik) tampil di setiap cold start, termasuk saat app dibuka dari home screen.

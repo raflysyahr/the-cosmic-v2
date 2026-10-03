@@ -8,11 +8,16 @@ import { PopupProvider } from './contexts/PopupContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { CultivationToastProvider } from './contexts/CultivationToastContext';
 import { ModalProvider } from './contexts/ModalContext';
+import { registerServiceWorker, initInstallPrompt } from './lib/pwa';
 import eruda from 'eruda';
 
 if (import.meta.env.DEV) {
   eruda.init()
 }
+
+// PWA: tangkap 'beforeinstallprompt' sebelum React mount, lalu daftarkan service worker.
+initInstallPrompt();
+registerServiceWorker();
 
 const appName = import.meta.env.VITE_APP_NAME || 'The Cosmic';
 
