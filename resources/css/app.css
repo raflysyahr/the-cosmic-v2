@@ -2,28 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@font-face {
-    font-family: 'BitcountGridDouble';
-    font-style: normal;
-    font-weight: 100 900;
-    font-display: swap;
-    src: url('/fonts/BitcountGridDouble-Variable.woff2') format('woff2-variations');
-}
-@font-face {
-    font-family: 'BitcountGridDouble';
-    font-style: normal;
-    font-weight: 400;
-    font-display: swap;
-    src: url('/fonts/BitcountGridDouble-Regular.woff2') format('woff2');
-}
-@font-face {
-    font-family: 'BitcountGridDouble';
-    font-style: normal;
-    font-weight: 700;
-    font-display: swap;
-    src: url('/fonts/BitcountGridDouble-Bold.woff2') format('woff2');
-}
-
 body {
     font-family: 'Inter', system-ui, sans-serif;
 }

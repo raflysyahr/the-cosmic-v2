@@ -16,7 +16,7 @@
  * tidak boleh dihapus di sini — pembersihan hanya menyentuh cache berawalan 'cosmic-'.
  */
 
-const VERSION = 'v1'
+const VERSION = 'v3'
 const STATIC_CACHE = `cosmic-static-${VERSION}`
 const ASSET_CACHE = 'cosmic-assets'
 const OFFLINE_URL = '/offline.html'
@@ -24,14 +24,32 @@ const MAX_ASSET_ENTRIES = 200
 
 // Wajib ada; install gagal kalau salah satu tidak bisa diambil.
 const PRECACHE_REQUIRED = [OFFLINE_URL, '/icons/icon-192.png']
-// Opsional (dipakai halaman offline); kegagalan tidak membatalkan install.
-const PRECACHE_OPTIONAL = ['/fonts/BitcountGridDouble-Regular.woff2']
+// Font inti (self-hosted). Opsional: file yang hilang tidak boleh menggagalkan install.
+// Subset latin-ext dan Bitcount Variable tidak di-precache; masuk cache saat pertama dipakai
+// lewat staleWhileRevalidate di bawah.
+const PRECACHE_OPTIONAL = [
+  '/fonts/BitcountGridDouble-Regular.woff2',
+  '/fonts/BitcountGridDouble-Bold.woff2',
+  '/fonts/inter/Inter-latin.woff2',
+  '/fonts/manrope/Manrope-latin.woff2',
+]
+
+// Hanya simpan respons sukses yang BUKAN halaman HTML. Kalau file font hilang dan server
+// membalas halaman fallback (HTML), jangan sampai itu tersimpan lalu disajikan sebagai font.
+function isCacheable(response) {
+  return response.ok && !/text\/html/i.test(response.headers.get('content-type') || '')
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(STATIC_CACHE)
     await cache.addAll(PRECACHE_REQUIRED)
-    await Promise.all(PRECACHE_OPTIONAL.map((url) => cache.add(url).catch(() => {})))
+    await Promise.all(PRECACHE_OPTIONAL.map(async (url) => {
+      try {
+        const res = await fetch(url)
+        if (isCacheable(res)) await cache.put(url, res)
+      } catch { /* opsional */ }
+    }))
     await self.skipWaiting()
   })())
 })
@@ -105,7 +123,7 @@ async function staleWhileRevalidate(request, event) {
 
   const refresh = fetch(request)
     .then((response) => {
-      if (response.ok) cache.put(request, response.clone())
+      if (isCacheable(response)) cache.put(request, response.clone())
       return response
     })
     .catch(() => null)

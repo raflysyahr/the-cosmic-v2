@@ -96,7 +96,10 @@ function appendVideoFields(formData: FormData, file: File, meta?: VideoMeta) {
 }
 
 export default function DiscussRoom(props: PageProps) {
-  const [messages, setMessages] = useState<Message[]>(props.messages ?? [])
+  // props.messages datang dari server urut DESC (terbaru dulu, lihat MessageService::paginate).
+  // Balik dulu sebelum render pertama; kalau tidak, pesan terbaru sempat tampil di atas
+  // sampai fetch di bawah menggantinya.
+  const [messages, setMessages] = useState<Message[]>(() => [...(props.messages ?? [])].reverse())
   const [reactionAnimations, setReactionAnimations] = useState<Record<string, 'pop' | 'bump'>>({})
   const [members, setMembers] = useState<Member[]>(props.members ?? [])
   const [replyTo, setReplyTo] = useState<Message | undefined>(undefined)

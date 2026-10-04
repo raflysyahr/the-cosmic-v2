@@ -1,6 +1,6 @@
 import { useEffect, useState, type ComponentType } from 'react'
 import { Link, usePage } from '@inertiajs/react'
-import { Megaphone, MessageCircle, Trophy, User } from 'lucide-react'
+import { Megaphone, MessageCircle, Trophy, User , BookOpen} from 'lucide-react'
 import client from '../../api/client'
 
 interface NavItem {
@@ -26,6 +26,13 @@ const ITEMS: NavItem[] = [
     icon: Megaphone,
     url: '/discuss/story',
     isActive: (path) => path === '/discuss/story',
+  },
+  {
+    id:'comic',
+    label:'Comic',
+    icon:BookOpen,
+    url:'/',
+    isActive:(path) => path === '/'
   },
   {
     id: 'leaderboard',

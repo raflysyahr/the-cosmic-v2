@@ -1,4 +1,4 @@
-import { useEffect, useRef, type FC } from 'react'
+import { useLayoutEffect, useRef, type FC } from 'react'
 import MessageItem from './MessageItem'
 import type { Message } from './MessageItem'
 
@@ -49,9 +49,14 @@ const Skeleton: FC = () => (
 const MessageList: FC<MessageListProps> = ({ messages, currentUserId, emotes, onReply, onDelete, onStartEdit, onReact, onPin, onMark, onReport, onRetry, pinnedMessageIds, userRole, reactionAnimations, onReactionAnimationEnd, loading }) => {
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages.length])
+  // Buka room: lompat ke pesan terbaru sebelum browser menggambar (tanpa animasi scroll dari
+  // atas). Pesan baru setelahnya baru di-scroll smooth.
+  const initialScrollDone = useRef(false)
+  useLayoutEffect(() => {
+    if (loading) return
+    bottomRef.current?.scrollIntoView({ behavior: initialScrollDone.current ? 'smooth' : 'auto' })
+    if (messages.length > 0) initialScrollDone.current = true
+  }, [messages.length, loading])
 
   if (loading) {
     return (

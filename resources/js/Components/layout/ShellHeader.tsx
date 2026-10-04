@@ -5,7 +5,7 @@ import { parentPath } from './shellRoutes'
 /** Header mode tab utama: hanya logo. */
 export function TabHeader() {
     return (
-        <header className="shrink-0 bg-black/95 backdrop-blur">
+        <header className="shrink-0 bg-black/95 pt-[env(safe-area-inset-top)] backdrop-blur">
             <div className="flex h-12 items-center px-4">
                 <Link href="/" className="shrink-0">
                     <span className="text-xl tracking-tight text-white font-[BitcountGridDouble]">The Cosmic</span>
@@ -35,7 +35,7 @@ export function DetailHeader({ path, title, onBack }: DetailHeaderProps) {
     }
 
     return (
-        <header className="shrink-0 border-b border-neutral-900 bg-black/95 backdrop-blur">
+        <header className="shrink-0 border-b border-neutral-900 bg-black/95 pt-[env(safe-area-inset-top)] backdrop-blur">
             <div className="flex h-12 items-center gap-1 px-1">
                 <button
                     type="button"

@@ -5,9 +5,74 @@
 
         <title inertia>{{ config('app.name', 'The Cosmic') }}</title>
 
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Manrope:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1&display=swap" rel="stylesheet" />
+        {{-- @font-face SENGAJA inline di sini, bukan di resources/css/app.css:
+             - Di dev (npm run dev) CSS app baru ada setelah JS dimuat dan URL font-nya
+               ditulis ulang ke origin Vite (:5173), jadi teks splash tampil dengan font
+               cadangan dan preload di bawah tidak terpakai.
+             - Di sini rule sudah ada di first paint, URL-nya same-origin dan persis sama
+               dengan preload serta daftar precache di public/sw.js (ubah salah satu → ubah semua).
+             Bitcount memakai font-display: block (teks brand pendek); Inter/Manrope swap. --}}
+        <style>
+            @font-face {
+                font-family: 'BitcountGridDouble';
+                font-style: normal;
+                font-weight: 100 900;
+                font-display: block;
+                src: url('/fonts/BitcountGridDouble-Variable.woff2') format('woff2-variations');
+            }
+            @font-face {
+                font-family: 'BitcountGridDouble';
+                font-style: normal;
+                font-weight: 400;
+                font-display: block;
+                src: url('/fonts/BitcountGridDouble-Regular.woff2') format('woff2');
+            }
+            @font-face {
+                font-family: 'BitcountGridDouble';
+                font-style: normal;
+                font-weight: 700;
+                font-display: block;
+                src: url('/fonts/BitcountGridDouble-Bold.woff2') format('woff2');
+            }
+            @font-face {
+                font-family: 'Inter';
+                font-style: normal;
+                font-weight: 100 900;
+                font-display: swap;
+                src: url('/fonts/inter/Inter-latin.woff2') format('woff2');
+                unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+            }
+            @font-face {
+                font-family: 'Inter';
+                font-style: normal;
+                font-weight: 100 900;
+                font-display: swap;
+                src: url('/fonts/inter/Inter-latin-ext.woff2') format('woff2');
+                unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+            }
+            @font-face {
+                font-family: 'Manrope';
+                font-style: normal;
+                font-weight: 200 800;
+                font-display: swap;
+                src: url('/fonts/manrope/Manrope-latin.woff2') format('woff2');
+                unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+            }
+            @font-face {
+                font-family: 'Manrope';
+                font-style: normal;
+                font-weight: 200 800;
+                font-display: swap;
+                src: url('/fonts/manrope/Manrope-latin-ext.woff2') format('woff2');
+                unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+            }
+        </style>
+        {{-- Font self-hosted (public/fonts). Preload hanya yang dipakai di first paint:
+             teks splash (Bitcount 400), body (Inter), UI (Manrope). 'crossorigin' wajib
+             untuk preload font walau same-origin. --}}
+        <link rel="preload" href="/fonts/BitcountGridDouble-Regular.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preload" href="/fonts/inter/Inter-latin.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preload" href="/fonts/manrope/Manrope-latin.woff2" as="font" type="font/woff2" crossorigin />
         <meta
             name="viewport"
             content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content"

@@ -277,8 +277,9 @@ Aplikasi bisa dipasang ke home screen (Android/desktop lewat prompt native, iOS 
 | Fitur | Status | Lokasi kode |
 |---|---|---|
 | Web app manifest (nama, ikon, `display: standalone`, shortcut Discuss & Bookmarks) | ✅ Ada | `public/manifest.json`, di-link dari `resources/views/app.blade.php` |
-| Ikon app (192, 512, maskable 512, apple-touch 180, favicon 32) — glyph "C" piksel putih di atas hitam | ✅ Ada (placeholder, bisa diganti logo final) | `public/icons/` |
-| Service worker (allowlist: navigasi → network-first + fallback offline; `/build/assets/*` cache-first; `/fonts/*` & `/icons/*` stale-while-revalidate) | ✅ Ada | `public/sw.js` |
+| Ikon app (192, 512, maskable 512, apple-touch 180, favicon 32) — dibuat dari `public/black-hole.jpg` (crop persegi di sekitar lubang hitam; versi maskable dikecilkan + fade ke hitam agar aman dari mask Android) | ✅ Ada | `public/icons/` |
+| Service worker (allowlist: navigasi → network-first + fallback offline; `/build/assets/*` cache-first; `/fonts/*` & `/icons/*` stale-while-revalidate; font inti di-precache) | ✅ Ada | `public/sw.js` |
+| Font self-hosted: BitcountGridDouble (brand), Inter (body), Manrope (UI) — tidak ada lagi request ke Google Fonts. Inter & Manrope = variable font, subset latin + latin-ext (`unicode-range`, latin-ext hanya diunduh bila perlu). Preload di `<head>` untuk Bitcount Regular, Inter latin, Manrope latin | ✅ Ada | `public/fonts/`; `@font-face` + preload di `<head>` `resources/views/app.blade.php` (sengaja inline, bukan di `app.css`, agar rule ada di first paint dan URL-nya same-origin baik di dev maupun prod; ubah font → sinkronkan dengan precache di `public/sw.js`) |
 | Halaman offline | ✅ Ada | `public/offline.html` |
 | Registrasi SW (hanya build produksi) + tangkap `beforeinstallprompt` | ✅ Ada | `resources/js/lib/pwa.ts`, dipanggil di `resources/js/app.jsx` |
 | Menu "Install app" di Profile (muncul hanya bila bisa dipasang & belum terpasang; iOS menampilkan petunjuk manual) | ✅ Ada | `resources/js/Pages/Profile.tsx`, hook `usePwaInstall` di `lib/pwa.ts` |
@@ -286,11 +287,12 @@ Aplikasi bisa dipasang ke home screen (Android/desktop lewat prompt native, iOS 
 **Aturan yang harus dijaga:**
 - Service worker **tidak boleh** men-cache HTML, request `/api/*`, Inertia XHR, `/broadcasting/*`, atau request non-GET. Halaman membawa props user dan token CSRF; cache di sini akan membuat sesi/CSRF basi atau bocor antar akun di perangkat bersama.
 - Pembersihan cache lama di `activate` hanya menyentuh cache berawalan `cosmic-`. Jangan hapus cache lain — `lib/mediaCache.ts` memakai `discuss-media-v1` untuk media Discuss.
-- Mengubah isi `offline.html`, ikon, atau logika `sw.js` → naikkan `VERSION` di `public/sw.js` agar cache statis lama dibuang.
+- Mengubah isi `offline.html`, ikon, daftar precache font, atau logika `sw.js` → naikkan `VERSION` di `public/sw.js` agar cache statis lama dibuang dan precache dijalankan ulang.
 - Service worker hanya aktif di HTTPS atau `localhost`. Lewat IP LAN `http://` tidak terdaftar dan app tidak bisa di-install; uji lewat tunnel HTTPS atau deploy.
 - Server web harus mengirim `sw.js` tanpa cache panjang (`Cache-Control: no-cache`), kalau tidak update SW tertunda.
 
 **Batasan yang diketahui:**
 - Offline hanya sampai halaman "You're offline". Navigasi Inertia (XHR) saat offline gagal tanpa pesan khusus, dan konten komik/chat tidak tersedia offline.
-- Font Google (Inter, Manrope, Material Symbols) dimuat dari domain lain dan tidak di-cache oleh SW.
+- Font di `public/fonts/` bisa dipakai offline, tapi halaman app tetap butuh jaringan (HTML dan request Inertia tidak di-cache), jadi offline praktis hanya menampilkan `offline.html`.
+- JetBrains Mono dan Material Symbols dulu dimuat dari Google Fonts tapi tidak dipakai di kode (tidak ada `font-mono` / `material-symbols`), jadi tidak ikut self-host. Utility `font-mono` akan jatuh ke `monospace` sistem; kalau suatu saat dipakai, tambahkan file fontnya.
 - Splash di `app.blade.php` (video, minimum 3 detik) tampil di setiap cold start, termasuk saat app dibuka dari home screen.
