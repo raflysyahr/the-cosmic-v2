@@ -290,6 +290,9 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
   const isFile = message.type === 'file'
   const isVideo = message.type === 'video'
   const imageAttachments = isFile || isVideo ? [] : message.attachments
+  // Foto/video: bubble tanpa padding (media menempel ke tepi bubble, sudut ikut radius bubble).
+  // Reply quote dan caption tetap diberi padding sendiri supaya teks tidak menempel ke tepi.
+  const isMedia = isVideo || imageAttachments.length > 0
   const fileUrl = message.attachments[0]
   const fileName = message.metadata?.file?.name || decodeURIComponent(fileUrl?.split('/').pop() ?? 'file')
   const fileSize = formatFileSize(message.metadata?.file?.size)
@@ -375,7 +378,7 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
       type="button"
       onClick={() => videoUrl && videoReady && openLightbox(videoUrl, true)}
       disabled={!videoReady}
-      className="relative block w-[200px] max-w-full overflow-hidden rounded-lg bg-black/40 disabled:cursor-default"
+      className="relative block w-[200px] max-w-full overflow-hidden bg-black/40 disabled:cursor-default"
       style={{
         aspectRatio: video?.width && video?.height ? `${video.width} / ${video.height}` : '16 / 9',
         maxHeight: 300,
@@ -445,6 +448,11 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
     </button>
   )
 
+  const quoteInBubble = (cls: string, mb: string) => {
+    const quote = replyQuote(isMedia ? cls : `${mb} ${cls}`)
+    return quote && isMedia ? <div className="px-2 pb-1 pt-2">{quote}</div> : quote
+  }
+
   const isLongBody = bodyText.length > 40
   const sizeClass = isLongBody ? 'w-[80%]' : 'w-[90%]'
   const emojiOnly = !message.reply_to && bodyText.length > 0 && bodyText.length <= 10 && /^(\p{Extended_Pictographic}|\uFE0F|\u200D|\u20E3|\p{Emoji_Modifier_Base}|\p{RI})+$/u.test(bodyText)
@@ -509,7 +517,7 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
               </div>
             </div>
           ) : (
-            <div className="relative">
+            <div className="relative ">
               {/* Indikator swipe-reply — makin kelihatan makin dekat ke threshold */}
               <div
                 className="pointer-events-none absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-surface-container-highest transition-opacity"
@@ -525,7 +533,7 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
                 onPointerLeave={handlePointerCancel}
                 onPointerCancel={handlePointerCancel}
                 onContextMenu={handleContextMenu}
-                className="message-bubble-self px-2 py-2 relative select-none"
+                className={`message-bubble-self relative select-none ${isMedia ? 'overflow-hidden p-0' : 'px-2 py-2'}`}
                 style={{
                   transform: `translateX(${dragX}px)`,
                   transition: dragX === 0 ? 'transform 150ms ease-out' : 'none',
@@ -533,7 +541,7 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
                 }}
               >
               {/* Reply preview inside bubble */}
-              {replyQuote('mb-2 border-l-2 border-[#555] bg-[#2C2C2C] px-2 py-1')}
+              {quoteInBubble('border-l-2 border-[#555] bg-[#2C2C2C] px-2 py-1', 'mb-2')}
 
               {/* Body */}
               <>
@@ -547,7 +555,7 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
                           key={i}
                           type="button"
                           onClick={() => openLightbox(url, false)}
-                          className="block overflow-hidden rounded-lg"
+                          className={`block overflow-hidden ${isMedia ? '' : 'rounded-lg'}`}
                           style={{ WebkitTouchCallout: 'none' }}
                         >
                           <img
@@ -565,7 +573,7 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
 
                   {/* Caption — always below the image */}
                   {message.body && (
-                    <EmojiText text={message.body} className={`font-body-md pr-1 ${imageAttachments.length > 0 || isFile || isVideo ? 'mt-1' : ''}`} />
+                    <EmojiText text={message.body} className={`font-body-md  ${isMedia ? 'block px-2 pb-1.5 pt-1' : `pr-1 ${isFile ? 'mt-1' : ''}`}`} />
                   )}
                 </>
               </div>
@@ -696,7 +704,7 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
                   onPointerLeave={handlePointerCancel}
                   onPointerCancel={handlePointerCancel}
                   onContextMenu={handleContextMenu}
-                  className="message-bubble-other w-fit  px-2 py-2 select-none"
+                  className={`message-bubble-other max-w-[200px] select-none ${isMedia ? 'overflow-hidden p-0' : 'px-2 py-2'}`}
                   style={{
                     transform: `translateX(${dragX}px)`,
                     transition: dragX === 0 ? 'transform 150ms ease-out' : 'none',
@@ -704,7 +712,7 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
                   }}
                 >
                 {/* Reply preview inside bubble */}
-                {replyQuote('mb-1 border-l-2 border-[#666] bg-[#343434] px-2 py-1')}
+                {quoteInBubble('border-l-2 border-[#666] bg-[#343434] px-2 py-1', 'mb-1')}
 
 
                 {fileCard}
@@ -717,7 +725,7 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
                         key={i}
                         type="button"
                         onClick={() => openLightbox(url, false)}
-                        className="block overflow-hidden rounded-lg"
+                        className={`block overflow-hidden ${isMedia ? '' : 'rounded-lg'}`}
                         style={{ WebkitTouchCallout: 'none' }}
                       >
                         <img
@@ -736,7 +744,7 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
 
                 {/* Caption — always below the image */}
                 {message.body && (
-                  <EmojiText text={message.body} className={`font-body-md text-on-surface ${imageAttachments.length > 0 || isFile || isVideo ? 'mt-1' : ''}`} />
+                  <EmojiText text={message.body} className={`font-body-md w-full  text-on-surface ${isMedia ? 'block px-2 pb-1.5 pt-1' : isFile ? 'mt-1' : ''}`} />
                 )}
                 </div>
               </div>
