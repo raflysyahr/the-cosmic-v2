@@ -4,7 +4,7 @@ import DiscussRoomCard from '../../Components/discuss/DiscussRoomCard'
 import type { RoomCardData,DirectChatData } from '../../Components/discuss/DiscussRoomCard'
 import ChatListItem from '../../Components/discuss/ChatListItem'
 import LayoutDiscuss from '../../Components/layout/LayoutDiscuss'
-import { Trophy } from 'lucide-react'
+import { Trophy,Search } from 'lucide-react'
 
 interface PageProps {
   rooms: RoomCardData[],
@@ -20,18 +20,45 @@ export default function DiscussIndex({ rooms,directChats }: PageProps) {
 
       <>
       <div className="px-2 pb-4">
-        <div className="sticky top-0 z-10 bg-surface pt-4">
+        <div className="sticky  top-0 z-10 bg-surface pt-4">
 
 
 
 
+        <div className="flex items-center rounded-full border border-neutral-800 justify-center px-3 w-[300px] ml-5 mb-2 ">
+        <Search className="w-4 h-4" />
         <input
         type="text"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Search chats..."
-        className="w-full rounded-full border border-neutral-800 bg-transparent py-2 pl-10 pr-4 text-sm text-neutral-200 placeholder-neutral-500 outline-none transition-colors focus:border-neutral-600 mb-3"
+className="
+    w-full
+
+    border-0
+    bg-transparent
+    py-2
+    pl-0
+    pr-4
+    text-sm
+    text-neutral-200
+    placeholder-neutral-500
+    appearance-none
+    outline-none
+    shadow-none
+    focus:outline-none
+    focus:ring-0
+    focus:border-0
+    focus:shadow-none
+  "
+
+  style={{
+    WebkitAppearance: 'none',
+    appearance: 'none',
+    WebkitTapHighlightColor: 'transparent',
+  }}
         />
+        </div>
 
 
 

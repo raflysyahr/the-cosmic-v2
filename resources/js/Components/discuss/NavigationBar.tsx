@@ -27,6 +27,11 @@ const ITEMS: NavItem[] = [
     url: '/discuss/story',
     isActive: (path) => path === '/discuss/story',
   },
+{
+    id: 'leaderboard',
+    label: 'Leaderboard',                                        icon: Trophy,
+    url: '/discuss/leaderboard',                                 isActive: (path) => path === '/discuss/leaderboard',
+  },
   {
     id:'comic',
     label:'Comic',
@@ -34,13 +39,13 @@ const ITEMS: NavItem[] = [
     url:'/',
     isActive:(path) => path === '/'
   },
-  {
-    id: 'leaderboard',
-    label: 'Leaderboard',
-    icon: Trophy,
-    url: '/discuss/leaderboard',
-    isActive: (path) => path === '/discuss/leaderboard',
-  },
+
+
+
+
+
+
+
   {
     id: 'profile',
     label: 'Profile',

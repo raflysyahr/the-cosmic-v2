@@ -12,6 +12,7 @@ import client from '../api/client'
 import { useAuth } from '../contexts/AuthContext'
 import { usePopup } from '../contexts/PopupContext'
 import { usePwaInstall } from '../lib/pwa'
+import ModalHost from '../Components/ui/Modal'
 
 interface PageProps {
   profile: ProfileData | null
@@ -164,6 +165,7 @@ export default function Profile() {
             />
           )}
         </Card>
+        <ModalHost />
     </Frame>
   )
 }

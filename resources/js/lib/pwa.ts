@@ -10,13 +10,36 @@ import { useSyncExternalStore } from 'react'
 // --- Service worker ---------------------------------------------------------
 
 /**
- * Hanya di build produksi. Di dev (Vite HMR) service worker justru merusak:
- * asset dev tidak boleh di-cache dan HMR bergantung pada request langsung.
- * Browser juga hanya mengizinkan SW di HTTPS atau localhost — lewat IP LAN
- * http:// registrasi akan ditolak diam-diam.
+ * Default: service worker hanya aktif di build produksi.
+ *
+ * Di dev (npm run dev) SW sengaja TIDAK didaftarkan, dan SW + cache `cosmic-*` sisa
+ * pengujian build produksi di origin yang sama dibuang. Tanpa ini SW lama tetap
+ * mengendalikan halaman dan menyajikan font/ikon basi, sehingga perubahan tidak
+ * langsung terlihat di app yang terpasang.
+ *
+ * Mau menguji SW/offline sambil tetap pakai Vite HMR? Set `VITE_PWA_DEV=true` di .env
+ * lalu restart `npm run dev`. Aman untuk HMR karena SW hanya mencegat /build/assets,
+ * /fonts, /icons, dan navigasi (aset Vite dev ada di origin :5173, tidak disentuh).
+ *
+ * Browser hanya mengizinkan SW di HTTPS atau localhost — lewat IP LAN http://
+ * registrasi akan ditolak diam-diam.
  */
 export function registerServiceWorker() {
-  if (!import.meta.env.PROD || typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return
+
+  const enabled = import.meta.env.PROD || import.meta.env.VITE_PWA_DEV === 'true'
+
+  if (!enabled) {
+    navigator.serviceWorker.getRegistrations()
+      .then((registrations) => registrations.forEach((r) => r.unregister()))
+      .catch(() => {})
+    if ('caches' in window) {
+      caches.keys()
+        .then((names) => names.filter((n) => n.startsWith('cosmic-')).forEach((n) => caches.delete(n)))
+        .catch(() => {})
+    }
+    return
+  }
 
   window.addEventListener('load', () => {
     navigator.serviceWorker

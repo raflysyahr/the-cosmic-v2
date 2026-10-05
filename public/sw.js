@@ -16,7 +16,7 @@
  * tidak boleh dihapus di sini — pembersihan hanya menyentuh cache berawalan 'cosmic-'.
  */
 
-const VERSION = 'v3'
+const VERSION = 'v4'
 const STATIC_CACHE = `cosmic-static-${VERSION}`
 const ASSET_CACHE = 'cosmic-assets'
 const OFFLINE_URL = '/offline.html'
@@ -32,6 +32,7 @@ const PRECACHE_OPTIONAL = [
   '/fonts/BitcountGridDouble-Bold.woff2',
   '/fonts/inter/Inter-latin.woff2',
   '/fonts/manrope/Manrope-latin.woff2',
+  '/icons/splash-poster.jpg',
 ]
 
 // Hanya simpan respons sukses yang BUKAN halaman HTML. Kalau file font hilang dan server

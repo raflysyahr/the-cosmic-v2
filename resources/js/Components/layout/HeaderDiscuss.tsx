@@ -25,7 +25,7 @@ export default function HeaderDiscuss() {
 
     return (
         <header className="border-b-0 shrink-0 border-[#2A2A2A] bg-black/95 backdrop-blur">
-            <div className="mx-auto flex h-12 max-w-7xl items-center gap-4 px-4">
+            <div className="mx-auto flex h-12 max-w-7xl items-center gap-4 px-4 ">
                 <Link href="/" className="shrink-0 group">
                     <span className="text-xl tracking-tight text-white font-[BitcountGridDouble]">The Cosmic</span>
                 </Link>

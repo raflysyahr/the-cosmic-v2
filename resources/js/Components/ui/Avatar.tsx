@@ -1,7 +1,7 @@
 import { type FC } from 'react'
 
 const SIZES = {
-  sm: 'h-9 w-9 text-xs',
+  sm: 'h-6 w-6 text-xs',
   md: 'h-10 w-10 text-sm',
   lg: 'h-28 w-28 text-4xl',
 } as const

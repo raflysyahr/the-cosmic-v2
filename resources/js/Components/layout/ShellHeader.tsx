@@ -5,8 +5,8 @@ import { parentPath } from './shellRoutes'
 /** Header mode tab utama: hanya logo. */
 export function TabHeader() {
     return (
-        <header className="shrink-0 bg-black/95 pt-[env(safe-area-inset-top)] backdrop-blur">
-            <div className="flex h-12 items-center px-4">
+        <header className="shrink-0 bg-surface pt-[env(safe-area-inset-top)] backdrop-blur">
+            <div className="flex h-12 pt-10 pb-5 items-center px-4">
                 <Link href="/" className="shrink-0">
                     <span className="text-xl tracking-tight text-white font-[BitcountGridDouble]">The Cosmic</span>
                 </Link>

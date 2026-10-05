@@ -69,17 +69,24 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
 
           <div className="mt-3 flex flex-col ">
 
-            <Stat icon={Cloud} label="Realm" value={
-                <div className="flex items-center gap-2">
-                { cultivation?.badge && <Crest realm={
-                    cultivation?.badge
-                } size={30} /> }
+
+          <Stat icon={Cloud} label="Realm" value={
+            <div className="flex items-center h-fit gap-2">
+
 
                 <p className="mt-1 text-sm font-semibold leading-tight text-white">
                 {realm} - {stage}
                 </p>
-                </div>
-            } />
+
+                { cultivation?.badge && <Crest
+
+                    realm={
+                    cultivation?.badge
+                } size={35} /> }
+
+            </div>
+          }/>
+
 
 
             <Stat icon={ChartNoAxesColumn} label="Level" value={

@@ -96,7 +96,9 @@
     <body class="bg-black text-[#999999] antialiased">
         <div id="splash" style="position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center">
             <div style="position:relative;width:200px;max-width:80vw;margin-bottom:16px">
-                <video autoplay loop muted playsinline style="width:100%;display:block">
+                {{-- poster = frame logo yang sama dengan ikon app (dibuat scripts/make-pwa-icons.py), supaya
+                     splash bawaan OS -> splash ini terlihat bersambung, bukan dua logo berbeda. --}}
+                <video autoplay loop muted playsinline poster="/icons/splash-poster.jpg" style="width:100%;display:block">
                     <source src="/lv_0_20260622135734.mp4" type="video/mp4" />
                 </video>
                 <div style="position:absolute;inset:0;pointer-events:none;background:linear-gradient(to right,#000 0%,transparent 25%,transparent 75%,#000 100%)"></div>

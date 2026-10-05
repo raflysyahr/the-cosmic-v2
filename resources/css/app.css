@@ -26,6 +26,19 @@ body {
     background: #555;
 }
 
+input {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+input:focus,
+input:focus-visible {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
 .scrollbar-none {
     -ms-overflow-style: none;
     scrollbar-width: none;

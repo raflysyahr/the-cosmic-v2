@@ -1,5 +1,5 @@
 import { Link, router } from '@inertiajs/react'
-import { Search, Menu, User, Bookmark, LogOut, MessageSquare } from 'lucide-react'
+import { Search, Menu, User, Bookmark, LogOut, MessageSquare, MessageCircle } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import NotificationDropdown from '../discuss/NotificationDropdown'
@@ -25,7 +25,7 @@ export default function Header() {
 
     return (
         <header className="sticky top-0 z-50 border-b border-[#2A2A2A] bg-black/95 backdrop-blur">
-            <div className="mx-auto flex h-12 max-w-7xl items-center gap-4 px-4">
+            <div className="mx-auto flex h-12 max-w-7xl items-center gap-4 px-4 pt-10 pb-5">
                 <Link href="/" className="shrink-0 group">
                     <span className="text-xl tracking-tight text-white font-[BitcountGridDouble]">The Cosmic</span>
                 </Link>
@@ -52,7 +52,7 @@ export default function Header() {
                         <Bookmark className="h-3 w-3" />
                     </NavLink>
                     <NavLink href="/discuss">
-                        <MessageSquare className="h-3 w-3" />
+                        <MessageCircle className="h-5 w-5" />
                     </NavLink>
                 </nav>
 
@@ -94,14 +94,14 @@ export default function Header() {
 
                 <div className="flex items-center ml-auto">
                 <NavLink href="/discuss" className="md:hidden lg:hidden">
-                    <MessageSquare className="h-4 w-4" />
+                    <MessageCircle className="h-5 w-5" />
                 </NavLink>
                 <button
                     onClick={() => setMenuOpen(!menuOpen)}
                     className="md:hidden ml-auto p-2 text-[#555] transition-colors hover:text-white"
                     aria-label="Menu"
                 >
-                    <Menu className="h-4 w-4" />
+                    <Menu className="h-5 w-5" />
                 </button>
                 </div>
             </div>
@@ -136,7 +136,7 @@ export default function Header() {
                                     <Avatar
                                         src={user.avatarUrl}
                                         alt={user.displayName}
-                                        size="md"
+                                        size="sm"
                                         border
                                     />
                                     <span className="truncate text-sm text-white">{user.displayName}</span>
@@ -171,7 +171,7 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
     return (
         <Link
             href={href}
-            className="px-3 py-1.5 text-xs font-semibold text-[#555] transition-colors hover:bg-[#1A1A1A] hover:text-white"
+            className="px-3 py-1.5 text-xs font-semibold text-[#555] transition-colors hover:text-white"
         >
             {children}
         </Link>
