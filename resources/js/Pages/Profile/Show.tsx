@@ -53,6 +53,7 @@ interface MediaItem {
   thumbnail: string | null
   duration: number | null
   createdAt: string | null
+  roomName?: string | null
 }
 
 interface LinkItem {
@@ -60,6 +61,7 @@ interface LinkItem {
   url: string
   host: string
   createdAt: string | null
+  roomName?: string | null
 }
 
 interface VoiceItem {
@@ -68,7 +70,20 @@ interface VoiceItem {
   name: string
   size: number | null
   createdAt: string | null
+  roomName?: string | null
 }
+
+/** Konten dipisah: dari group vs dari chat pribadi. */
+interface Scoped<T> {
+  group: T[]
+  private: T[]
+}
+
+type ScopeId = 'group' | 'private'
+
+const SCOPE_LABEL: Record<ScopeId, string> = { group: 'Groups', private: 'Private chat' }
+
+const emptyScoped = <T,>(): Scoped<T> => ({ group: [], private: [] })
 
 interface GroupItem {
   id: string
@@ -81,9 +96,9 @@ interface GroupItem {
 interface PageProps {
   profile: PublicProfile
   isSelf: boolean
-  media?: MediaItem[]
-  links?: LinkItem[]
-  voices?: VoiceItem[]
+  media?: Scoped<MediaItem>
+  links?: Scoped<LinkItem>
+  voices?: Scoped<VoiceItem>
   groups?: GroupItem[]
 }
 
@@ -343,7 +358,10 @@ function LinkList({ items }: { items: LinkItem[] }) {
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-semibold text-white">{l.host}</span>
-              <span className="block truncate text-xs text-neutral-500">{l.url}</span>
+              <span className="block truncate text-xs text-neutral-500">
+                {l.roomName ? `${l.roomName} · ` : ''}
+                {l.url}
+              </span>
             </span>
             <ExternalLink className="h-4 w-4 shrink-0 text-neutral-600" />
           </a>
@@ -367,7 +385,7 @@ function VoiceList({ items }: { items: VoiceItem[] }) {
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-white">{v.name}</p>
               <p className="text-xs text-neutral-500">
-                {[fmtDate(v.createdAt), fmtBytes(v.size)].filter(Boolean).join(' · ')}
+                {[v.roomName, fmtDate(v.createdAt), fmtBytes(v.size)].filter(Boolean).join(' · ')}
               </p>
             </div>
           </div>
@@ -406,6 +424,52 @@ function GroupList({ items }: { items: GroupItem[] }) {
         </li>
       ))}
     </ul>
+  )
+}
+
+/* ───────────────────────── scope filter (Groups / Private chat) ───────────────────────── */
+
+function ScopeFilter({
+  scope,
+  counts,
+  onChange,
+}: {
+  scope: ScopeId
+  counts: Record<ScopeId, number>
+  onChange: (s: ScopeId) => void
+}) {
+  const both = counts.group > 0 && counts.private > 0
+
+  // Hanya satu sumber yang punya isi: cukup caption, tanpa toggle.
+  if (!both) {
+    return (
+      <p className="mb-3 px-1 text-xs font-semibold uppercase tracking-wider text-neutral-500">
+        {SCOPE_LABEL[scope]}
+      </p>
+    )
+  }
+
+  return (
+    <div className="mb-3 flex gap-2">
+      {(['group', 'private'] as const).map((id) => {
+        const active = scope === id
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() => onChange(id)}
+            className={`flex items-center gap-2 rounded-[999px] border px-3.5 py-1.5 text-[13px] font-medium transition-colors ${
+              active
+                ? 'border-[#3a3a3a] bg-[#252525] text-white'
+                : 'border-[#262626] text-neutral-400 hover:text-neutral-200'
+            }`}
+          >
+            {SCOPE_LABEL[id]}
+            <span className={active ? 'text-neutral-300' : 'text-neutral-600'}>{counts[id]}</span>
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
@@ -454,13 +518,45 @@ function MediaViewer({ item, onClose }: { item: MediaItem; onClose: () => void }
 /* ───────────────────────── page ───────────────────────── */
 
 export default function PublicProfileShow() {
-  const { profile, isSelf, media = [], links = [], voices = [], groups = [] } = usePage<PageProps>().props
+  const {
+    profile,
+    isSelf,
+    media = emptyScoped<MediaItem>(),
+    links = emptyScoped<LinkItem>(),
+    voices = emptyScoped<VoiceItem>(),
+    groups = [],
+  } = usePage<PageProps>().props
   const { showModal } = useModal()
 
   const [messaging, setMessaging] = useState(false)
   const [error, setError] = useState('')
   const [tab, setTab] = useState<TabId>('media')
+  const [scope, setScope] = useState<ScopeId>('group')
   const [viewer, setViewer] = useState<MediaItem | null>(null)
+
+  // Tombol tab hanya muncul kalau tab tersebut punya isi.
+  const scopedByTab: Record<Exclude<TabId, 'groups'>, Scoped<unknown>> = {
+    media,
+    links,
+    voice: voices,
+  }
+  const hasContent = (id: TabId): boolean =>
+    id === 'groups'
+      ? groups.length > 0
+      : scopedByTab[id].group.length > 0 || scopedByTab[id].private.length > 0
+
+  const availableTabs = TABS.filter((t) => hasContent(t.id))
+  // Tab terpilih bisa jadi kosong (mis. default 'media'): jatuh ke tab pertama yang ada.
+  const activeTab: TabId | null = availableTabs.find((t) => t.id === tab)?.id ?? availableTabs[0]?.id ?? null
+
+  // Scope efektif: kalau scope terpilih kosong di tab ini, pakai scope lainnya.
+  const activeScoped = activeTab && activeTab !== 'groups' ? scopedByTab[activeTab] : null
+  const counts: Record<ScopeId, number> = {
+    group: activeScoped?.group.length ?? 0,
+    private: activeScoped?.private.length ?? 0,
+  }
+  const effectiveScope: ScopeId =
+    counts[scope] > 0 ? scope : counts[scope === 'group' ? 'private' : 'group'] > 0 ? (scope === 'group' ? 'private' : 'group') : scope
 
   // Menu ⋮ di header shell. Elemen di-memo agar tidak memicu efek ulang.
   const menu = useMemo(() => <ProfileMenu username={profile.username} />, [profile.username])
@@ -596,37 +692,45 @@ export default function PublicProfileShow() {
         )}
       </section>
 
-      {/* Tabs */}
-      <div
-        role="tablist"
-        aria-label="Profile content"
-        className="mt-5 grid grid-cols-4 gap-1 rounded-[999px] border border-[#262626] bg-[#0f0f0f] p-1.5"
-      >
-        {TABS.map((t) => {
-          const active = tab === t.id
-          return (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => setTab(t.id)}
-              className={`rounded-[999px] px-2 py-3 text-xs font-medium transition-colors ${
-                active ? 'bg-[#252525] text-white' : 'text-neutral-400 hover:text-neutral-200'
-              }`}
-            >
-              {t.label}
-            </button>
-          )
-        })}
-      </div>
+      {/* Tabs — hanya yang punya isi */}
+      {availableTabs.length > 0 ? (
+        <>
+          <div
+            role="tablist"
+            aria-label="Profile content"
+            style={{ gridTemplateColumns: `repeat(${availableTabs.length}, minmax(0, 1fr))` }}
+            className="mt-5 grid gap-1 rounded-[999px] border border-[#262626] bg-[#0f0f0f] p-1.5"
+          >
+            {availableTabs.map((t) => {
+              const active = activeTab === t.id
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setTab(t.id)}
+                  className={`rounded-[999px] px-2 py-3 text-[15px] font-medium transition-colors ${
+                    active ? 'bg-[#252525] text-white' : 'text-neutral-400 hover:text-neutral-200'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              )
+            })}
+          </div>
 
-      <div role="tabpanel" className="mt-4">
-        {tab === 'media' && <MediaGrid items={media} onOpen={setViewer} />}
-        {tab === 'links' && <LinkList items={links} />}
-        {tab === 'voice' && <VoiceList items={voices} />}
-        {tab === 'groups' && <GroupList items={groups} />}
-      </div>
+          <div role="tabpanel" className="mt-4">
+            {activeScoped && <ScopeFilter scope={effectiveScope} counts={counts} onChange={setScope} />}
+            {activeTab === 'media' && <MediaGrid items={media[effectiveScope]} onOpen={setViewer} />}
+            {activeTab === 'links' && <LinkList items={links[effectiveScope]} />}
+            {activeTab === 'voice' && <VoiceList items={voices[effectiveScope]} />}
+            {activeTab === 'groups' && <GroupList items={groups} />}
+          </div>
+        </>
+      ) : (
+        <Empty icon={Users} text="Nothing shared yet" />
+      )}
 
       {viewer && <MediaViewer item={viewer} onClose={closeViewer} />}
       <ModalHost />

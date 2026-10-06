@@ -141,6 +141,14 @@ class RoomService
     }
 
     /**
+     * Find the existing direct chat room between two users WITHOUT creating one.
+     */
+    public function findDirectChat(string $user1Id, string $user2Id): ?Room
+    {
+        return $this->findByContext('direct', $this->generateDirectContextId($user1Id, $user2Id));
+    }
+
+    /**
      * Find the existing direct chat room between two users, or create a new one.
      * The room is created as Private with context_type=direct so it never shows
      * up in public listings, and both users are added as members.

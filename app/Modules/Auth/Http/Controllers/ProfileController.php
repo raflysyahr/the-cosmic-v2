@@ -92,8 +92,10 @@ class ProfileController
             stats: $stats,
         );
 
-        // Tab Media / Links / Voice / Groups — hanya dari room public.
-        $activity = app(PublicProfileActivityService::class)->forUser($user->id);
+        // Tab Media / Links / Voice dipisah per Group vs Private chat; tab Groups
+        // berisi daftar group. Aturan privasi ada di PublicProfileActivityService.
+        $activity = app(PublicProfileActivityService::class)
+            ->forUser($user->id, $request->user()?->id);
 
         return Inertia::render('Profile/Show', [
             'profile' => $publicProfile,
