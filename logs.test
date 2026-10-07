@@ -1,0 +1,708 @@
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\ExampleTest[39m
+  [32;1m✓[39;22m[90m [39m[90mthat true is true[39m
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\BookmarkTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcan add bookmark[39m[90m                                        [39m [90m2.49s[39m  
+  [32;1m✓[39;22m[90m [39m[90mduplicate bookmark is idempotent[39m[90m                        [39m [90m0.21s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcan list bookmarks[39m[90m                                      [39m [90m0.38s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcan remove bookmark[39m[90m                                     [39m [90m0.21s[39m  
+  [32;1m✓[39;22m[90m [39m[90mguest cannot access bookmarks[39m[90m                           [39m [90m0.13s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\ExampleTest[39m
+  [32;1m✓[39;22m[90m [39m[90mthe application returns a successful response[39m[90m           [39m [90m0.29s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\ReadingHistoryTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcan mark chapter as read[39m[90m                                [39m [90m0.19s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmarking same chapter read twice is idempotent[39m[90m           [39m [90m0.17s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcan list read chapters for a series[39m[90m                     [39m [90m0.15s[39m  
+  [32;1m✓[39;22m[90m [39m[90mguest cannot access reading history[39m[90m                     [39m [90m0.12s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Auth\tests\Unit\AuthServiceTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcan register user[39m[90m                                       [39m [90m0.18s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcan login with valid credentials[39m[90m                        [39m [90m0.12s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcannot login with invalid credentials[39m[90m                   [39m [90m0.11s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcannot login when banned[39m[90m                                [39m [90m0.12s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Auth\tests\Unit\ModelTimestampTest[39m
+  [32;1m✓[39;22m[90m [39m[90muser social account created at is populated[39m[90m             [39m [90m0.19s[39m  
+  [32;1m✓[39;22m[90m [39m[90muser profile updated at is populated on create[39m[90m          [39m [90m0.11s[39m  
+  [32;1m✓[39;22m[90m [39m[90muser profile updated at changes on update[39m[90m               [39m [90m0.14s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Auth\tests\Unit\UserModelTest[39m
+  [32;1m✓[39;22m[90m [39m[90mhas ulid primary key[39m[90m                                    [39m [90m0.15s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcasts role to enum[39m[90m                                      [39m [90m0.12s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcasts status to enum[39m[90m                                    [39m [90m0.12s[39m  
+  [32;1m✓[39;22m[90m [39m[90mavatar url returns default when null[39m[90m                    [39m [90m0.12s[39m  
+  [32;1m✓[39;22m[90m [39m[90mavatar url returns custom when set[39m[90m                      [39m [90m0.12s[39m  
+  [32;1m✓[39;22m[90m [39m[90mhidden attributes[39m[90m                                       [39m [90m0.14s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Auth\tests\Feature\EditProfileTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcan view own profile edit page[39m[90m                          [39m [90m0.20s[39m  
+  [32;1m✓[39;22m[90m [39m[90mprofile page reports unverified email[39m[90m                   [39m [90m0.14s[39m  
+  [32;1m✓[39;22m[90m [39m[90mprofile page has null profile when none exists[39m[90m          [39m [90m0.12s[39m  
+  [32;1m✓[39;22m[90m [39m[90mprofile fields can be cleared with empty strings[39m[90m        [39m [90m0.15s[39m  
+  [32;1m✓[39;22m[90m [39m[90mprofile edit page works with existing profile data[39m[90m      [39m [90m0.15s[39m  
+  [32;1m✓[39;22m[90m [39m[90mguest cannot view profile edit page[39m[90m                     [39m [90m0.20s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Auth\tests\Feature\LoginTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcan login with valid credentials[39m[90m                        [39m [90m0.24s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcannot login with wrong password[39m[90m                        [39m [90m0.13s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcannot login when banned[39m[90m                                [39m [90m0.15s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Auth\tests\Feature\LogoutTest[39m
+  [32;1m✓[39;22m[90m [39m[90mlogged in user can logout[39m[90m                               [39m [90m0.21s[39m  
+  [32;1m✓[39;22m[90m [39m[90mguest cannot logout[39m[90m                                     [39m [90m0.12s[39m  
+
+  [39;41;1m FAIL [39;49;22m[39m App\Modules\Auth\tests\Feature\PublicProfileTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcan view another users public profile[39m[90m                   [39m [90m0.24s[39m  
+  [32;1m✓[39;22m[90m [39m[90mpublic profile does not expose email[39m[90m                    [39m [90m0.20s[39m  
+  [32;1m✓[39;22m[90m [39m[90mpublic profile does not expose bookmarks stat[39m[90m           [39m [90m0.24s[39m  
+  [31;1m⨯[39;22m[90m [39m[90mpublic profile includes message and room stats[39m[90m          [39m [90m0.58s[39m  
+  [32;1m✓[39;22m[90m [39m[90mviewing own profile sets is self true[39m[90m                   [39m [90m0.21s[39m  
+  [32;1m✓[39;22m[90m [39m[90munknown username 404s[39m[90m                                   [39m [90m0.17s[39m  
+  [32;1m✓[39;22m[90m [39m[90mguest cannot view public profile[39m[90m                        [39m [90m0.15s[39m  
+  [32;1m✓[39;22m[90m [39m[90mpublic profile includes bio when set[39m[90m                    [39m [90m0.21s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Auth\tests\Feature\RegisterTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcan register with valid data[39m[90m                            [39m [90m0.29s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcannot register with duplicate email[39m[90m                    [39m [90m0.25s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcannot register with invalid data[39m[90m                       [39m [90m0.17s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Auth\tests\Feature\SocialAuthTest[39m
+  [32;1m✓[39;22m[90m [39m[90mredirect route exists[39m[90m                                   [39m [90m0.17s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Unit\ContributionPhase2Test[39m
+  [32;1m✓[39;22m[90m [39m[90mhelpful awards author once per message[39m[90m                  [39m [90m0.44s[39m  
+  [32;1m✓[39;22m[90m [39m[90munmarking helpful keeps points and remarking does not p[39m[90m…[39m [90m0.33s[39m  
+  [32;1m✓[39;22m[90m [39m[90mhelpful rules are enforced on the server[39m[90m                [39m [90m0.42s[39m  
+  [32;1m✓[39;22m[90m [39m[90mhelpful on deleted or system or foreign room message is[39m[90m…[39m [90m0.40s[39m  
+  [32;1m✓[39;22m[90m [39m[90mhelpful daily give limit is admin configurable[39m[90m          [39m [90m0.42s[39m  
+  [32;1m✓[39;22m[90m [39m[90mhelpful points follow admin settings and events[39m[90m         [39m [90m0.29s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdeleting a helpful message revokes its points[39m[90m           [39m [90m0.44s[39m  
+  [32;1m✓[39;22m[90m [39m[90masker can mark best answer and author is paid[39m[90m           [39m [90m0.42s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmoderator can mark best answer but a stranger cannot[39m[90m    [39m [90m0.44s[39m  
+  [32;1m✓[39;22m[90m [39m[90mbest answer rejects non replies and self answers[39m[90m        [39m [90m0.52s[39m  
+  [32;1m✓[39;22m[90m [39m[90monly one best answer per question until the first is re[39m[90m…[39m [90m0.76s[39m  
+  [32;1m✓[39;22m[90m [39m[90mremoving best answer takes the points back and remarkin[39m[90m…[39m [90m0.57s[39m  
+  [32;1m✓[39;22m[90m [39m[90mfirst valid reply of the day adds one daily bonus[39m[90m       [39m [90m0.63s[39m  
+  [32;1m✓[39;22m[90m [39m[90menough plain messages also qualify for the daily bonus[39m[90m  [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmessages that earn nothing do not qualify for the bonus[39m[90m [39m [90m0.32s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdaily bonus can be disabled by admin[39m[90m                    [39m [90m0.31s[39m  
+  [32;1m✓[39;22m[90m [39m[90mthree consecutive days pay the three day streak bonus[39m[90m   [39m [90m0.41s[39m  
+  [32;1m✓[39;22m[90m [39m[90mseven day streak pays its own milestone[39m[90m                 [39m [90m0.37s[39m  
+  [32;1m✓[39;22m[90m [39m[90ma gap breaks the streak[39m[90m                                 [39m [90m0.35s[39m  
+  [32;1m✓[39;22m[90m [39m[90mstreak points follow admin settings[39m[90m                     [39m [90m0.34s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Unit\ContributionPhase3Test[39m
+  [32;1m✓[39;22m[90m [39m[90mfirst reply unlocks once and is announced with its name[39m[90m [39m [90m0.55s[39m  
+  [32;1m✓[39;22m[90m [39m[90mhundredth reply unlocks its milestone[39m[90m                   [39m [90m0.82s[39m  
+  [32;1m✓[39;22m[90m [39m[90mhundredth reaction unlocks for the author[39m[90m               [39m [90m0.71s[39m  
+  [32;1m✓[39;22m[90m [39m[90mtenth helpful and tenth best answer unlock from their o[39m[90m…[39m [90m0.50s[39m  
+  [32;1m✓[39;22m[90m [39m[90mactive thirty days unlocks from the daily bonus[39m[90m         [39m [90m0.56s[39m  
+  [32;1m✓[39;22m[90m [39m[90mrevoked contributions do not count toward progress[39m[90m      [39m [90m0.19s[39m  
+  [32;1m✓[39;22m[90m [39m[90machievement points follow admin settings and zero disab[39m[90m…[39m [90m0.44s[39m  
+  [32;1m✓[39;22m[90m [39m[90mevent multiplier does not inflate achievements[39m[90m          [39m [90m0.37s[39m  
+  [32;1m✓[39;22m[90m [39m[90mprogress lists every achievement with defaults[39m[90m          [39m [90m0.15s[39m  
+  [32;1m✓[39;22m[90m [39m[90mpenalty deducts once floors at zero and keeps the ledge[39m[90m…[39m [90m0.16s[39m  
+  [32;1m✓[39;22m[90m [39m[90mzero or unknown member penalty is ignored[39m[90m               [39m [90m0.17s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Unit\ContributionServiceTest[39m
+  [32;1m✓[39;22m[90m [39m[90mplain message awards base points[39m[90m                        [39m [90m0.34s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreply awards replier and parent author[39m[90m                  [39m [90m0.37s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreply to own message counts as plain message[39m[90m            [39m [90m0.32s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreply points drop after daily tiers[39m[90m                     [39m [90m0.49s[39m  
+  [32;1m✓[39;22m[90m [39m[90mplain message daily cap stops points[39m[90m                    [39m [90m0.33s[39m  
+  [32;1m✓[39;22m[90m [39m[90mduplicate body within window gives no points[39m[90m            [39m [90m0.39s[39m  
+  [32;1m✓[39;22m[90m [39m[90memoji only message gives no points but attachment does[39m[90m  [39m [90m0.33s[39m  
+  [32;1m✓[39;22m[90m [39m[90mburst of messages gives no points[39m[90m                       [39m [90m0.28s[39m  
+  [32;1m✓[39;22m[90m [39m[90mevent multiplier scales payout and is recorded[39m[90m          [39m [90m0.27s[39m  
+  [32;1m✓[39;22m[90m [39m[90mexpired inactive and other source events are ignored[39m[90m    [39m [90m0.29s[39m  
+  [32;1m✓[39;22m[90m [39m[90moverlapping events use largest multiplier without stack[39m[90m…[39m [90m0.26s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcaps count base points not boosted payout[39m[90m               [39m [90m0.30s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreaction awards author once per reactor[39m[90m                 [39m [90m0.28s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreaction to own message or from unverified account give[39m[90m…[39m [90m0.29s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreaction reward per message is capped by admin setting[39m[90m  [39m [90m0.35s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreaction recipient is promoted when points reach next r[39m[90m…[39m [90m0.36s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdeleting a message revokes its points once[39m[90m              [39m [90m0.35s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdelete and repost does not free up daily quota[39m[90m          [39m [90m0.47s[39m  
+  [32;1m✓[39;22m[90m [39m[90madmin settings override defaults and can disable points[39m[90m [39m [90m0.50s[39m  
+  [32;1m✓[39;22m[90m [39m[90mroom opt out and direct rooms give no points[39m[90m            [39m [90m0.37s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Unit\MemberServiceTest[39m
+  [32;1m✓[39;22m[90m [39m[90mmoderator can kick member[39m[90m                               [39m [90m0.37s[39m  
+  [32;1m✓[39;22m[90m [39m[90mregular member cannot kick[39m[90m                              [39m [90m0.17s[39m  
+  [32;1m✓[39;22m[90m [39m[90mnon member cannot kick[39m[90m                                  [39m [90m0.25s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcannot kick self[39m[90m                                        [39m [90m0.18s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmoderator cannot kick another moderator[39m[90m                 [39m [90m0.19s[39m  
+  [32;1m✓[39;22m[90m [39m[90madmin can kick moderator[39m[90m                                [39m [90m0.20s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmoderator can mute member[39m[90m                               [39m [90m0.20s[39m  
+  [32;1m✓[39;22m[90m [39m[90mregular member cannot mute[39m[90m                              [39m [90m0.23s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmoderator can ban member[39m[90m                                [39m [90m0.18s[39m  
+  [32;1m✓[39;22m[90m [39m[90mregular member cannot ban[39m[90m                               [39m [90m0.16s[39m  
+  [32;1m✓[39;22m[90m [39m[90mlist for room resolves rank name and color[39m[90m              [39m [90m0.21s[39m  
+  [32;1m✓[39;22m[90m [39m[90mlist for room returns null rank when member has none[39m[90m    [39m [90m0.20s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Unit\MessageServiceTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcan send message[39m[90m                                        [39m [90m0.39s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcan edit message[39m[90m                                        [39m [90m0.24s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcannot edit another users message[39m[90m                       [39m [90m0.24s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcan soft delete message[39m[90m                                 [39m [90m0.26s[39m  
+  [32;1m✓[39;22m[90m [39m[90mstranger cannot delete message[39m[90m                          [39m [90m0.25s[39m  
+  [32;1m✓[39;22m[90m [39m[90mregular member cannot delete others message[39m[90m             [39m [90m0.25s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmoderator can delete others message[39m[90m                     [39m [90m0.28s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Unit\ModelTimestampTest[39m
+  [32;1m✓[39;22m[90m [39m[90mreaction created at is populated[39m[90m                        [39m [90m0.29s[39m  
+  [32;1m✓[39;22m[90m [39m[90memote created at is populated[39m[90m                           [39m [90m0.12s[39m  
+  [32;1m✓[39;22m[90m [39m[90mrank created at is populated[39m[90m                            [39m [90m0.12s[39m  
+  [32;1m✓[39;22m[90m [39m[90mnotification created at is populated[39m[90m                    [39m [90m0.14s[39m  
+  [32;1m✓[39;22m[90m [39m[90mnotifications are ordered newest first[39m[90m                  [39m [90m0.15s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Unit\RankServiceTest[39m
+  [32;1m✓[39;22m[90m [39m[90maward xp increases points[39m[90m                               [39m [90m0.21s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcheck promotion promotes when xp sufficient[39m[90m             [39m [90m0.19s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcheck promotion does not demote[39m[90m                         [39m [90m0.16s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcheck promotion assigns newcomer at zero xp[39m[90m             [39m [90m0.20s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Unit\RoomServiceTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcreates new direct chat between two users[39m[90m               [39m [90m0.25s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreturns same room regardless of argument order[39m[90m          [39m [90m0.16s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdoes not create duplicate room on repeated calls[39m[90m        [39m [90m0.16s[39m  
+  [32;1m✓[39;22m[90m [39m[90mget direct chats for user returns other participant inf[39m[90m…[39m [90m0.16s[39m  
+  [32;1m✓[39;22m[90m [39m[90mget direct chats excludes chats user is not part of[39m[90m     [39m [90m0.18s[39m  
+  [32;1m✓[39;22m[90m [39m[90mget direct chats includes last message[39m[90m                  [39m [90m0.26s[39m  
+  [32;1m✓[39;22m[90m [39m[90mget direct recipient returns the other participant[39m[90m      [39m [90m0.19s[39m  
+  [32;1m✓[39;22m[90m [39m[90mget direct recipient returns null for non direct room[39m[90m   [39m [90m0.16s[39m  
+  [32;1m✓[39;22m[90m [39m[90mget direct recipient returns null when other participan[39m[90m…[39m [90m0.18s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Feature\AnnouncementTest[39m
+  [32;1m✓[39;22m[90m [39m[90musers see only published announcements pinned first the[39m[90m…[39m [90m0.36s[39m  
+  [32;1m✓[39;22m[90m [39m[90mnew flag and unread count follow the last seen time[39m[90m     [39m [90m0.25s[39m  
+  [32;1m✓[39;22m[90m [39m[90mannouncements from before a user joined are not unread[39m[90m  [39m [90m0.17s[39m  
+  [32;1m✓[39;22m[90m [39m[90mscheduled announcement is not counted or listed until i[39m[90m…[39m [90m0.19s[39m  
+  [32;1m✓[39;22m[90m [39m[90mguests cannot read announcements[39m[90m                        [39m [90m0.16s[39m  
+  [32;1m✓[39;22m[90m [39m[90madmin can create update and delete[39m[90m                      [39m [90m0.31s[39m  
+  [32;1m✓[39;22m[90m [39m[90madmin list includes scheduled announcements[39m[90m             [39m [90m0.19s[39m  
+  [32;1m✓[39;22m[90m [39m[90madmin can schedule for the future[39m[90m                       [39m [90m0.26s[39m  
+  [32;1m✓[39;22m[90m [39m[90mvalidation rejects bad input including unsafe links[39m[90m     [39m [90m0.23s[39m  
+  [32;1m✓[39;22m[90m [39m[90mregular users cannot manage announcements[39m[90m               [39m [90m0.25s[39m  
+  [32;1m✓[39;22m[90m [39m[90mstory page renders and flags admins[39m[90m                     [39m [90m0.34s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Discuss\AuthorizationTest[39m
+  [32;1m✓[39;22m[90m [39m[90mnon member cannot see private rooms in listing[39m[90m          [39m [90m0.46s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmember can see their private rooms in listing[39m[90m           [39m [90m0.23s[39m  
+  [32;1m✓[39;22m[90m [39m[90mpublic rooms always visible in listing[39m[90m                  [39m [90m0.21s[39m  
+  [32;1m✓[39;22m[90m [39m[90mnon member cannot view private room via api[39m[90m             [39m [90m0.18s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmember can view private room via api[39m[90m                    [39m [90m0.21s[39m  
+  [32;1m✓[39;22m[90m [39m[90many user can view public room via api[39m[90m                   [39m [90m0.20s[39m  
+  [32;1m✓[39;22m[90m [39m[90mregular member cannot update room[39m[90m                       [39m [90m0.21s[39m  
+  [32;1m✓[39;22m[90m [39m[90madmin can update room[39m[90m                                   [39m [90m0.24s[39m  
+  [32;1m✓[39;22m[90m [39m[90mstranger cannot update room[39m[90m                             [39m [90m0.21s[39m  
+  [32;1m✓[39;22m[90m [39m[90mregular member cannot archive room[39m[90m                      [39m [90m0.19s[39m  
+  [32;1m✓[39;22m[90m [39m[90madmin can archive room[39m[90m                                  [39m [90m0.19s[39m  
+  [32;1m✓[39;22m[90m [39m[90mnon member cannot read private room messages[39m[90m            [39m [90m0.17s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmember can read private room messages[39m[90m                   [39m [90m0.24s[39m  
+  [32;1m✓[39;22m[90m [39m[90many user can read public room messages[39m[90m                  [39m [90m0.25s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Feature\ContributionFlowTest[39m
+  [32;1m✓[39;22m[90m [39m[90mdiscuss listeners are registered[39m[90m                        [39m [90m0.26s[39m  
+  [32;1m✓[39;22m[90m [39m[90msending a message over http awards cp and notifies[39m[90m      [39m [90m0.35s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreacting over http awards the message author[39m[90m            [39m [90m0.39s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdeleting a message over http revokes points[39m[90m             [39m [90m0.28s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Feature\ContributionPagesTest[39m
+  [32;1m✓[39;22m[90m [39m[90mleaderboard page renders for any logged in user[39m[90m         [39m [90m0.21s[39m  
+  [32;1m✓[39;22m[90m [39m[90madmin page is admin only[39m[90m                                [39m [90m0.41s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreports page is for room moderators only[39m[90m                [39m [90m0.30s[39m  
+  [32;1m✓[39;22m[90m [39m[90machievements endpoint lists progress for the current us[39m[90m…[39m [90m0.21s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Feature\CpAdminControllerTest[39m
+  [32;1m✓[39;22m[90m [39m[90mnon admin cannot read or change settings[39m[90m                [39m [90m0.29s[39m  
+  [32;1m✓[39;22m[90m [39m[90madmin can read effective settings and defaults[39m[90m          [39m [90m0.24s[39m  
+  [32;1m✓[39;22m[90m [39m[90madmin update persists and changes real payouts[39m[90m          [39m [90m0.37s[39m  
+  [32;1m✓[39;22m[90m [39m[90mnull value resets a setting to default[39m[90m                  [39m [90m0.25s[39m  
+  [32;1m✓[39;22m[90m [39m[90minvalid settings are rejected[39m[90m                           [39m [90m0.19s[39m  
+  [32;1m✓[39;22m[90m [39m[90madmin can create list update and delete events[39m[90m          [39m [90m0.26s[39m  
+  [32;1m✓[39;22m[90m [39m[90mevent validation rejects bad input[39m[90m                      [39m [90m0.20s[39m  
+  [32;1m✓[39;22m[90m [39m[90mpartial update cannot push end before start[39m[90m             [39m [90m0.16s[39m  
+  [32;1m✓[39;22m[90m [39m[90mevents can target the phase two sources[39m[90m                 [39m [90m0.14s[39m  
+  [32;1m✓[39;22m[90m [39m[90madmin can tune phase two settings[39m[90m                       [39m [90m0.17s[39m  
+  [32;1m✓[39;22m[90m [39m[90mnon admin cannot manage events[39m[90m                          [39m [90m0.17s[39m  
+  [32;1m✓[39;22m[90m [39m[90many logged in user sees only running events[39m[90m             [39m [90m0.13s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Feature\EditMessageTest[39m
+  [32;1m✓[39;22m[90m [39m[90mowner can edit own message[39m[90m                              [39m [90m0.35s[39m  
+  [32;1m✓[39;22m[90m [39m[90mother user cannot edit message[39m[90m                          [39m [90m0.17s[39m  
+  [32;1m✓[39;22m[90m [39m[90mguest cannot edit message[39m[90m                               [39m [90m0.14s[39m  
+  [32;1m✓[39;22m[90m [39m[90mowner can add image while editing[39m[90m                       [39m [90m0.43s[39m  
+  [32;1m✓[39;22m[90m [39m[90mowner can add file while editing[39m[90m                        [39m [90m0.22s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcannot clear body of plain text message[39m[90m                 [39m [90m0.19s[39m  
+  [32;1m✓[39;22m[90m [39m[90mother user cannot replace attachment[39m[90m                    [39m [90m0.19s[39m  
+  [32;1m✓[39;22m[90m [39m[90mowner can add video while editing[39m[90m                       [39m [90m0.21s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Feature\EmoteControllerTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcan list emotes for room[39m[90m                                [39m [90m0.25s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmoderator can upload room emote[39m[90m                         [39m [90m0.17s[39m  
+  [32;1m✓[39;22m[90m [39m[90mregular member cannot upload room emote[39m[90m                 [39m [90m0.13s[39m  
+  [32;1m✓[39;22m[90m [39m[90mnon admin cannot upload global emote[39m[90m                    [39m [90m0.11s[39m  
+  [32;1m✓[39;22m[90m [39m[90msite admin can upload global emote[39m[90m                      [39m [90m0.16s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmoderator can deactivate room emote[39m[90m                     [39m [90m0.14s[39m  
+  [32;1m✓[39;22m[90m [39m[90mregular member cannot deactivate room emote[39m[90m             [39m [90m0.13s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Feature\InviteLinkTest[39m
+  [32;1m✓[39;22m[90m [39m[90mmoderator can generate invite link[39m[90m                      [39m [90m0.17s[39m  
+  [32;1m✓[39;22m[90m [39m[90mregular member cannot generate invite link[39m[90m              [39m [90m0.15s[39m  
+  [32;1m✓[39;22m[90m [39m[90mvisiting valid invite link joins and redirects to room[39m[90m  [39m [90m0.24s[39m  
+  [32;1m✓[39;22m[90m [39m[90minvalid invite token 404s[39m[90m                               [39m [90m0.16s[39m  
+  [32;1m✓[39;22m[90m [39m[90mrotating invite link invalidates the old one[39m[90m            [39m [90m0.25s[39m  
+  [32;1m✓[39;22m[90m [39m[90mbanned member cannot rejoin via invite link[39m[90m             [39m [90m0.41s[39m  
+  [32;1m✓[39;22m[90m [39m[90mpublic room join endpoint still works without a token[39m[90m   [39m [90m0.23s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Feature\JoinRoomTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcan join public room[39m[90m                                    [39m [90m0.56s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcannot join private room[39m[90m                                [39m [90m0.23s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcannot join invite only room without invite[39m[90m             [39m [90m0.24s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcannot join when banned[39m[90m                                 [39m [90m0.19s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Feature\LeaderboardControllerTest[39m
+  [32;1m✓[39;22m[90m [39m[90mweekly board excludes old points but all time includes[39m[90m… [39m [90m0.26s[39m  
+  [32;1m✓[39;22m[90m [39m[90mrevoked points drop user off the board[39m[90m                  [39m [90m0.14s[39m  
+  [32;1m✓[39;22m[90m [39m[90munknown period falls back to weekly[39m[90m                     [39m [90m0.15s[39m  
+  [32;1m✓[39;22m[90m [39m[90mglobal board leaves out points from non public rooms[39m[90m    [39m [90m0.20s[39m  
+  [32;1m✓[39;22m[90m [39m[90mroom board is scoped to that room[39m[90m                       [39m [90m0.21s[39m  
+  [32;1m✓[39;22m[90m [39m[90mprivate room board is members only[39m[90m                      [39m [90m0.33s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Feature\ListMembersTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcan list members of a room[39m[90m                              [39m [90m0.31s[39m  
+  [32;1m✓[39;22m[90m [39m[90mbanned members are excluded from list[39m[90m                   [39m [90m0.18s[39m  
+  [32;1m✓[39;22m[90m [39m[90mnon muted member has null muted until[39m[90m                   [39m [90m0.21s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmuted member has future muted until[39m[90m                     [39m [90m0.15s[39m  
+  [32;1m✓[39;22m[90m [39m[90mexpired mute still reported but in the past[39m[90m             [39m [90m0.16s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Feature\MarkControllerTest[39m
+  [32;1m✓[39;22m[90m [39m[90mhelpful toggles on then off and pays the author once[39m[90m    [39m [90m0.32s[39m  
+  [32;1m✓[39;22m[90m [39m[90mrule violations come back as 422 with a readable reason[39m[90m [39m [90m0.33s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmarking requires login[39m[90m                                  [39m [90m0.25s[39m  
+  [32;1m✓[39;22m[90m [39m[90mbest answer flow over http and it shows up in the messa[39m[90m…[39m [90m0.40s[39m  
+  [32;1m✓[39;22m[90m [39m[90monly the asker or a moderator can choose the best answe[39m[90m…[39m [90m0.33s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmessage from another room cannot be marked through this[39m[90m…[39m [90m0.20s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Feature\ModerateMemberTest[39m
+  [32;1m✓[39;22m[90m [39m[90mmoderator can kick member via http[39m[90m                      [39m [90m0.22s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmoderator can mute member via http[39m[90m                      [39m [90m0.21s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmute requires minutes[39m[90m                                   [39m [90m0.26s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmoderator can ban member via http[39m[90m                       [39m [90m0.21s[39m  
+  [32;1m✓[39;22m[90m [39m[90mregular member cannot kick via http[39m[90m                     [39m [90m0.19s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmoderating unknown user id 404s[39m[90m                         [39m [90m0.18s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Feature\Discuss\NotificationControllerTest[39m
+  [32;1m✓[39;22m[90m [39m[90muser can mark own notification as read[39m[90m                  [39m [90m0.21s[39m  
+  [32;1m✓[39;22m[90m [39m[90muser cannot mark other user notification as read[39m[90m        [39m [90m0.13s[39m  
+  [32;1m✓[39;22m[90m [39m[90mguest cannot mark notification as read[39m[90m                  [39m [90m0.16s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Feature\OpenDirectChatTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcan open direct chat with another user by username[39m[90m      [39m [90m0.22s[39m  
+  [32;1m✓[39;22m[90m [39m[90mopening existing direct chat reuses same room[39m[90m           [39m [90m0.19s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcannot open direct chat with self[39m[90m                       [39m [90m3.98s[39m  
+  [32;1m✓[39;22m[90m [39m[90mguest cannot open direct chat[39m[90m                           [39m [90m0.15s[39m  
+  [32;1m✓[39;22m[90m [39m[90mopening chat with unknown username 404s[39m[90m                 [39m [90m0.21s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\Tests\Feature\PinnedMessageTest[39m
+  [32;1m✓[39;22m[90m [39m[90madmin can pin message[39m[90m                                   [39m [90m0.24s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmoderator cannot pin message[39m[90m                            [39m [90m0.17s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmember cannot pin message[39m[90m                               [39m [90m0.17s[39m  
+  [32;1m✓[39;22m[90m [39m[90mnon member cannot pin message[39m[90m                           [39m [90m0.18s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcan unpin specific message[39m[90m                              [39m [90m0.27s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcannot pin in direct chat[39m[90m                               [39m [90m0.18s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmultiple pins accumulate[39m[90m                                [39m [90m0.30s[39m  
+  [32;1m✓[39;22m[90m [39m[90mpin duplicate is idempotent[39m[90m                             [39m [90m0.19s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Feature\RankControllerTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcan list ranks for room[39m[90m                                 [39m [90m0.24s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmoderator can create rank[39m[90m                               [39m [90m0.21s[39m  
+  [32;1m✓[39;22m[90m [39m[90mregular member cannot create rank[39m[90m                       [39m [90m0.14s[39m  
+  [32;1m✓[39;22m[90m [39m[90mnon member cannot create rank[39m[90m                           [39m [90m0.14s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmoderator can update rank[39m[90m                               [39m [90m0.14s[39m  
+  [32;1m✓[39;22m[90m [39m[90mregular member cannot update rank[39m[90m                       [39m [90m0.13s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcannot update rank belonging to a different room[39m[90m        [39m [90m0.14s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmoderator can delete rank[39m[90m                               [39m [90m0.13s[39m  
+  [32;1m✓[39;22m[90m [39m[90mregular member cannot delete rank[39m[90m                       [39m [90m0.13s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\Tests\Feature\ReactionTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcan add reaction to other user message[39m[90m                  [39m [90m0.20s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcannot react to own message[39m[90m                             [39m [90m0.19s[39m  
+  [32;1m✓[39;22m[90m [39m[90msame reaction twice removes it[39m[90m                          [39m [90m0.30s[39m  
+  [32;1m✓[39;22m[90m [39m[90mswitching reaction replaces old emote[39m[90m                   [39m [90m0.29s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreactions are grouped into grouped reaction array[39m[90m       [39m [90m0.32s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Feature\ReportControllerTest[39m
+  [32;1m✓[39;22m[90m [39m[90mmember can report a message and it starts pending[39m[90m       [39m [90m0.36s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreport rules are enforced[39m[90m                               [39m [90m0.40s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdaily report limit is admin configurable[39m[90m                [39m [90m0.29s[39m  
+  [32;1m✓[39;22m[90m [39m[90monly moderators can list the queue[39m[90m                      [39m [90m0.31s[39m  
+  [32;1m✓[39;22m[90m [39m[90mvalid report pays reporter penalizes author and removes[39m[90m…[39m [90m0.41s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmanipulation penalty uses its own amount and floors at[39m[90m… [39m [90m0.35s[39m  
+  [32;1m✓[39;22m[90m [39m[90mvalid report without penalty only rewards the reporter[39m[90m  [39m [90m0.31s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdismissed report changes nothing even if a penalty is s[39m[90m…[39m [90m0.32s[39m  
+  [32;1m✓[39;22m[90m [39m[90ma report can only be resolved once[39m[90m                      [39m [90m1.03s[39m  
+  [32;1m✓[39;22m[90m [39m[90mregular members and other rooms cannot resolve[39m[90m          [39m [90m0.73s[39m  
+  [32;1m✓[39;22m[90m [39m[90mresolve validates the payload[39m[90m                           [39m [90m0.41s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Feature\RoomAboutTest[39m
+  [32;1m✓[39;22m[90m [39m[90mmember can view about page of public room[39m[90m               [39m [90m0.46s[39m  
+  [32;1m✓[39;22m[90m [39m[90mnon member cannot view about page of private room[39m[90m       [39m [90m0.25s[39m  
+  [32;1m✓[39;22m[90m [39m[90mabout page includes member list with username[39m[90m           [39m [90m0.24s[39m  
+  [32;1m✓[39;22m[90m [39m[90munknown room slug 404s[39m[90m                                  [39m [90m0.21s[39m  
+  [32;1m✓[39;22m[90m [39m[90mguest cannot view about page[39m[90m                            [39m [90m0.19s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Feature\RoomAccessTest[39m
+  [32;1m✓[39;22m[90m [39m[90mmember can view private room[39m[90m                            [39m [90m0.30s[39m  
+  [32;1m✓[39;22m[90m [39m[90mnon member cannot view private room[39m[90m                     [39m [90m0.21s[39m  
+  [32;1m✓[39;22m[90m [39m[90mstranger cannot view someone elses direct chat[39m[90m          [39m [90m0.29s[39m  
+  [32;1m✓[39;22m[90m [39m[90mparticipant can view their direct chat[39m[90m                  [39m [90m0.22s[39m  
+  [32;1m✓[39;22m[90m [39m[90many authenticated user can view public room[39m[90m             [39m [90m0.20s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Feature\RoomControllerTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcan list rooms with member count[39m[90m                        [39m [90m0.23s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcan show room with member count[39m[90m                         [39m [90m0.18s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcan create room[39m[90m                                         [39m [90m0.15s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Feature\SendMessageTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcan send message[39m[90m                                        [39m [90m0.30s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcannot send empty message[39m[90m                               [39m [90m0.21s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcannot send when muted[39m[90m                                  [39m [90m0.23s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcan send image message with caption[39m[90m                     [39m [90m0.58s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcan send image message without caption[39m[90m                  [39m [90m0.57s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcan send file message with metadata[39m[90m                     [39m [90m0.30s[39m  
+  [32;1m✓[39;22m[90m [39m[90mrejects executable file upload[39m[90m                          [39m [90m0.22s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcan send video message with metadata[39m[90m                    [39m [90m0.32s[39m  
+  [32;1m✓[39;22m[90m [39m[90mrejects non video file as video[39m[90m                         [39m [90m0.20s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m App\Modules\Discuss\tests\Feature\StoryMediaReactionTest[39m
+  [32;1m✓[39;22m[90m [39m[90madmin can post a photo with only a caption[39m[90m              [39m [90m0.23s[39m  
+  [32;1m✓[39;22m[90m [39m[90madmin can post a video with poster and duration[39m[90m         [39m [90m0.18s[39m  
+  [32;1m✓[39;22m[90m [39m[90ma post needs text or media[39m[90m                              [39m [90m0.22s[39m  
+  [32;1m✓[39;22m[90m [39m[90mmedia validation rejects bad types and oversized photos[39m[90m [39m [90m0.18s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreplacing or removing media deletes the old file[39m[90m        [39m [90m0.27s[39m  
+  [32;1m✓[39;22m[90m [39m[90mdeleting a post removes its files and reactions[39m[90m         [39m [90m0.33s[39m  
+  [32;1m✓[39;22m[90m [39m[90mregular users cannot post media[39m[90m                         [39m [90m0.18s[39m  
+  [32;1m✓[39;22m[90m [39m[90muser can react switch and remove a reaction[39m[90m             [39m [90m0.26s[39m  
+  [32;1m✓[39;22m[90m [39m[90mfeed shows counts in palette order and my reaction[39m[90m      [39m [90m0.29s[39m  
+  [32;1m✓[39;22m[90m [39m[90mreaction rejects unknown emoji and unpublished posts[39m[90m    [39m [90m0.18s[39m  
+  [32;1m✓[39;22m[90m [39m[90mguests cannot react[39m[90m                                     [39m [90m0.16s[39m  
+  [32;1m✓[39;22m[90m [39m[90monly admin can see who reacted[39m[90m                          [39m [90m0.24s[39m  
+
+  [39;41;1m FAIL [39;49;22m[39m App\Modules\Discuss\tests\Feature\ToastDemoTest[39m
+  [31;1m⨯[39;22m[90m [39m[90mdemo routes do not exist outside local[39m[90m                  [39m [90m0.23s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcontroller refuses to run outside local even if called[39m[90m… [39m [90m0.12s[39m  
+  [32;1m✓[39;22m[90m [39m[90mpush broadcasts a contribution event to the current use[39m[90m…[39m [90m0.13s[39m  
+  [32;1m✓[39;22m[90m [39m[90mpush converts multiplier and rejects unknown sources[39m[90m    [39m [90m0.15s[39m  
+
+  [39;41;1m FAIL [39;49;22m[39m App\Modules\Cultivation\tests\Unit\CultivationServiceTest[39m
+  [32;1m✓[39;22m[90m [39m[90mnew user starts at first realm stage one[39m[90m                [39m [90m0.29s[39m  
+  [32;1m✓[39;22m[90m [39m[90madd progress below threshold does not breakthrough[39m[90m      [39m [90m0.18s[39m  
+  [32;1m✓[39;22m[90m [39m[90madd progress triggers single stage breakthrough[39m[90m         [39m [90m0.20s[39m  
+  [32;1m✓[39;22m[90m [39m[90madd progress can breakthrough multiple stages at once[39m[90m   [39m [90m0.17s[39m  
+  [32;1m✓[39;22m[90m [39m[90madd progress moves to next realm after stage ten[39m[90m        [39m [90m0.18s[39m  
+  [32;1m✓[39;22m[90m [39m[90madd progress caps at max realm and stage[39m[90m                [39m [90m0.16s[39m  
+  [31;1m⨯[39;22m[90m [39m[90madd progress is deduped by source and reference[39m[90m         [39m [90m0.20s[39m  
+  [31;1m⨯[39;22m[90m [39m[90madd progress allows same source different reference[39m[90m     [39m [90m0.19s[39m  
+  [32;1m✓[39;22m[90m [39m[90madd progress ignores zero or negative amount[39m[90m            [39m [90m0.14s[39m  
+  [32;1m✓[39;22m[90m [39m[90mget status returns correct level and resource[39m[90m           [39m [90m0.18s[39m  
+  [32;1m✓[39;22m[90m [39m[90mget realm badge data returns batched results[39m[90m            [39m [90m0.20s[39m  
+  [32;1m✓[39;22m[90m [39m[90mget realm badge data returns empty for no users[39m[90m         [39m [90m0.13s[39m  
+  [32;1m✓[39;22m[90m [39m[90mrealm badge slug for two word realm names has no dash[39m[90m   [39m [90m0.16s[39m  
+  [32;1m✓[39;22m[90m [39m[90mget guide data groups realms under correct era in order[39m[90m [39m [90m0.14s[39m  
+  [32;1m✓[39;22m[90m [39m[90mget guide data includes icon slug without dash[39m[90m          [39m [90m0.15s[39m  
+  [32;1m✓[39;22m[90m [39m[90mget guide data returns empty realms array for era witho[39m[90m…[39m [90m0.14s[39m  
+
+  [39;41;1m FAIL [39;49;22m[39m App\Modules\Cultivation\tests\Feature\CultivationControllerTest[39m
+  [32;1m✓[39;22m[90m [39m[90mguest cannot access cultivation status[39m[90m                  [39m [90m0.34s[39m  
+  [32;1m✓[39;22m[90m [39m[90mauthenticated user can get cultivation status[39m[90m           [39m [90m0.28s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcomplete chapter rejects duration under six seconds[39m[90m     [39m [90m0.16s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcomplete chapter grants xp after six seconds[39m[90m            [39m [90m0.19s[39m  
+  [31;1m⨯[39;22m[90m [39m[90mcomplete chapter does not double grant same chapter[39m[90m     [39m [90m0.32s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcomplete chapter requires authentication[39m[90m                [39m [90m0.14s[39m  
+  [32;1m✓[39;22m[90m [39m[90mguide is accessible without authentication[39m[90m              [39m [90m0.14s[39m  
+  [32;1m✓[39;22m[90m [39m[90mguide returns eras with nested realms[39m[90m                   [39m [90m0.14s[39m  
+  [31m────────────────────────────────────────────────────────────────[39m  
+  [41;1m FAILED [49;22m [1mApp\Modules\Auth\tests\Feature\PublicProfileTest[22m [90m>[39m pu…   
+[39;1m  Property [profile.stats.xp] does not match the expected value.
+Failed asserting that 43 is identical to 42.[39;22m
+
+  at [32mapp/Modules/Auth/tests/Feature/PublicProfileTest.php[39m:[32m96[39m
+     92▕         $response->assertStatus(200);
+     93▕         $response->assertInertia(fn ($page) => $page
+     94▕             ->where('profile.stats.messages', 1)
+     95▕             ->where('profile.stats.rooms', 1)
+  ➜  96▕             ->where('profile.stats.xp', 42)
+     97▕         );
+     98▕     }
+     99▕ 
+    100▕     public function test_viewing_own_profile_sets_is_self_true(): void
+
+      [2m+2 vendor frames [22m
+  [33m3   [39m[39;1mapp/Modules/Auth/tests/Feature/PublicProfileTest.php[39;22m:[39;1m93[39;22m
+
+  [31m────────────────────────────────────────────────────────────────[39m  
+  [41;1m FAILED [49;22m [1mApp\Modules\Discuss\tests\Feature\ToastDemoTest[22m [90m>[39m dem…   
+[39;1m  Expected response status code [404] but received 200.
+Failed asserting that 200 is identical to 404.[39;22m
+
+  at [32mapp/Modules/Discuss/tests/Feature/ToastDemoTest.php[39m:[32m31[39m
+     27▕     public function test_demo_routes_do_not_exist_outside_local(): void
+     28▕     {
+     29▕         $user = User::factory()->create();
+     30▕ 
+  ➜  31▕         $this->actingAs($user)->get('/dev/toast-demo')->assertStatus(404);
+     32▕         $this->actingAs($user)->postJson('/api/dev/toast-demo/push', ['source' => 'message', 'amount' => 1])->assertStatus(404);
+     33▕     }
+     34▕ 
+     35▕     public function test_controller_refuses_to_run_outside_local_even_if_called_directly(): void
+
+  [31m────────────────────────────────────────────────────────────────[39m  
+  [41;1m FAILED [49;22m [1mApp\Modules\Culti[22m… [41;1m UniqueConstraintViolationException [49;22m  
+[39;1m  SQLSTATE[23000]: Integrity constraint violation: 19 UNIQUE constraint failed: cultivation_progress_logs.user_id, cultivation_progress_logs.source, cultivation_progress_logs.reference (Connection: sqlite, Database: :memory:, SQL: insert into "cultivation_progress_logs" ("user_id", "source", "reference", "amount", "id", "updated_at", "created_at") values (01m4azcvkwvygd032qnrdxmz3z, chapter_read, series-a:1, 50, 01m4azcvmvghvxqwjbaat8ejbn, 2026-10-07 10:43:54, 2026-10-07 10:43:54))[39;22m
+
+  at [32mvendor/laravel/framework/src/Illuminate/Database/Connection.php[39m:[32m857[39m
+    853▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    854▕                 ? UniqueConstraintViolationException::class
+    855▕                 : QueryException::class;
+    856▕ 
+  ➜ 857▕             $exception = new $exceptionType(
+    858▕                 $this->getNameWithReadWriteType(),
+    859▕                 $query,
+    860▕                 $this->prepareBindings($bindings),
+    861▕                 $e,
+
+      [2m+17 vendor frames [22m
+  [33m18  [39m[39;1mapp/Modules/Cultivation/Services/CultivationService.php[39;22m:[39;1m102[39;22m
+      [2m+3 vendor frames [22m
+  [33m22  [39m[39;1mapp/Modules/Cultivation/Services/CultivationService.php[39;22m:[39;1m97[39;22m
+
+  [31m────────────────────────────────────────────────────────────────[39m  
+  [41;1m FAILED [49;22m [1mApp\Modules\Cultivation\tests\Unit\CultivationService[22m…   
+[39;1m  Failed asserting that 0 matches expected 100.[39;22m
+
+  at [32mapp/Modules/Cultivation/tests/Unit/CultivationServiceTest.php[39m:[32m162[39m
+    158▕         $this->cultivationService->addProgress($user, 'chapter_read', 'series-a:1', 50);
+    159▕         $this->cultivationService->addProgress($user, 'chapter_read', 'series-a:2', 50);
+    160▕ 
+    161▕         $cultivation = UserCultivation::where('user_id', $user->id)->first();
+  ➜ 162▕         $this->assertEquals(100, $cultivation->progress);
+    163▕     }
+    164▕ 
+    165▕     public function test_add_progress_ignores_zero_or_negative_amount(): void
+    166▕     {
+
+  [33m1   [39m[39;1mapp/Modules/Cultivation/tests/Unit/CultivationServiceTest.php[39;22m:[39;1m162[39;22m
+
+  [31m────────────────────────────────────────────────────────────────[39m  
+  [41;1m FAILED [49;22m [1mApp\Modules\Cultivation\tests\Feature\CultivationCont[22m…   
+[39;1m  Expected response status code [200] but received 500.
+Failed asserting that 500 is identical to 200.
+
+The following exception occurred during the last request:
+
+PDOException: SQLSTATE[23000]: Integrity constraint violation: 19 UNIQUE constraint failed: cultivation_progress_logs.user_id, cultivation_progress_logs.source, cultivation_progress_logs.reference in /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Connection.php:601
+Stack trace:
+#0 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Connection.php(601): PDOStatement->execute()
+#1 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Connection.php(846): Illuminate\Database\Connection->{closure:Illuminate\Database\Connection::statement():590}('insert into "cu...', Array)
+#2 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Connection.php(813): Illuminate\Database\Connection->runQueryCallback('insert into "cu...', Array, Object(Closure))
+#3 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Connection.php(590): Illuminate\Database\Connection->run('insert into "cu...', Array, Object(Closure))
+#4 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Connection.php(554): Illuminate\Database\Connection->statement('insert into "cu...', Array)
+#5 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(4164): Illuminate\Database\Connection->insert('insert into "cu...', Array)
+#6 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(2271): Illuminate\Database\Query\Builder->insert(Array)
+#7 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1589): Illuminate\Database\Eloquent\Builder->__call('insert', Array)
+#8 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1382): Illuminate\Database\Eloquent\Model->performInsert(Object(Illuminate\Database\Eloquent\Builder))
+#9 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(1225): Illuminate\Database\Eloquent\Model->save()
+#10 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Support/helpers.php(393): Illuminate\Database\Eloquent\Builder->{closure:Illuminate\Database\Eloquent\Builder::create():1224}(Object(App\Modules\Cultivation\Models\CultivationProgressLog))
+#11 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(1224): tap(Object(App\Modules\Cultivation\Models\CultivationProgressLog), Object(Closure))
+#12 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Support/Traits/ForwardsCalls.php(23): Illuminate\Database\Eloquent\Builder->create(Array)
+#13 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(2809): Illuminate\Database\Eloquent\Model->forwardCallTo(Object(Illuminate\Database\Eloquent\Builder), 'create', Array)
+#14 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(2825): Illuminate\Database\Eloquent\Model->__call('create', Array)
+#15 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/app/Modules/Cultivation/Services/CultivationService.php(102): Illuminate\Database\Eloquent\Model::__callStatic('create', Array)
+#16 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Concerns/ManagesTransactions.php(35): App\Modules\Cultivation\Services\CultivationService->{closure:App\Modules\Cultivation\Services\CultivationService::addProgress():97}(Object(Illuminate\Database\SQLiteConnection))
+#17 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/DatabaseManager.php(502): Illuminate\Database\Connection->transaction(Object(Closure))
+#18 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Support/Facades/Facade.php(363): Illuminate\Database\DatabaseManager->__call('transaction', Array)
+#19 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/app/Modules/Cultivation/Services/CultivationService.php(97): Illuminate\Support\Facades\Facade::__callStatic('transaction', Array)
+#20 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/app/Modules/Cultivation/Http/Controllers/CultivationController.php(79): App\Modules\Cultivation\Services\CultivationService->addProgress(Object(App\Modules\Auth\Models\User), 'chapter_read', 'series-a:1', 1)
+#21 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(46): App\Modules\Cultivation\Http\Controllers\CultivationController->completeChapter(Object(Illuminate\Http\Request))
+#22 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Routing/Route.php(275): Illuminate\Routing\ControllerDispatcher->dispatch(Object(Illuminate\Routing\Route), Object(App\Modules\Cultivation\Http\Controllers\CultivationController), 'completeChapter')
+#23 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Routing/Route.php(215): Illuminate\Routing\Route->runController()
+#24 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Routing/Router.php(822): Illuminate\Routing\Route->run()
+#25 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Illuminate\Routing\Router->{closure:Illuminate\Routing\Router::runRouteWithinStack():821}(Object(Illuminate\Http\Request))
+#26 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Http/Middleware/AddLinkHeadersForPreloadedAssets.php(32): Illuminate\Pipeline\Pipeline->{closure:Illuminate\Pipeline\Pipeline::prepareDestination():178}(Object(Illuminate\Http\Request))
+#27 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets->handle(Object(Illuminate\Http\Request), Object(Closure))
+#28 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/inertiajs/inertia-laravel/src/Middleware.php(122): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#29 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Inertia\Middleware->handle(Object(Illuminate\Http\Request), Object(Closure))
+#30 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(52): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#31 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Routing\Middleware\SubstituteBindings->handle(Object(Illuminate\Http\Request), Object(Closure))
+#32 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Auth/Middleware/Authenticate.php(63): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#33 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Auth\Middleware\Authenticate->handle(Object(Illuminate\Http\Request), Object(Closure), 'sanctum')
+#34 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestForgery.php(104): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#35 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Foundation\Http\Middleware\PreventRequestForgery->handle(Object(Illuminate\Http\Request), Object(Closure))
+#36 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/View/Middleware/ShareErrorsFromSession.php(48): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#37 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\View\Middleware\ShareErrorsFromSession->handle(Object(Illuminate\Http\Request), Object(Closure))
+#38 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Session/Middleware/StartSession.php(120): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#39 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Session/Middleware/StartSession.php(63): Illuminate\Session\Middleware\StartSession->handleStatefulRequest(Object(Illuminate\Http\Request), Object(Illuminate\Session\Store), Object(Closure))
+#40 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Session\Middleware\StartSession->handle(Object(Illuminate\Http\Request), Object(Closure))
+#41 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Cookie/Middleware/AddQueuedCookiesToResponse.php(36): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#42 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse->handle(Object(Illuminate\Http\Request), Object(Closure))
+#43 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Cookie/Middleware/EncryptCookies.php(74): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#44 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Cookie\Middleware\EncryptCookies->handle(Object(Illuminate\Http\Request), Object(Closure))
+#45 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(137): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#46 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Routing/Router.php(821): Illuminate\Pipeline\Pipeline->then(Object(Closure))
+#47 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Routing/Router.php(800): Illuminate\Routing\Router->runRouteWithinStack(Object(Illuminate\Routing\Route), Object(Illuminate\Http\Request))
+#48 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Routing/Router.php(764): Illuminate\Routing\Router->runRoute(Object(Illuminate\Http\Request), Object(Illuminate\Routing\Route))
+#49 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Routing/Router.php(753): Illuminate\Routing\Router->dispatchToRoute(Object(Illuminate\Http\Request))
+#50 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(200): Illuminate\Routing\Router->dispatch(Object(Illuminate\Http\Request))
+#51 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Illuminate\Foundation\Http\Kernel->{closure:Illuminate\Foundation\Http\Kernel::dispatchToRouter():197}(Object(Illuminate\Http\Request))
+#52 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\Pipeline\Pipeline->{closure:Illuminate\Pipeline\Pipeline::prepareDestination():178}(Object(Illuminate\Http\Request))
+#53 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate\Foundation\Http\Middleware\TransformsRequest->handle(Object(Illuminate\Http\Request), Object(Closure))
+#54 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull->handle(Object(Illuminate\Http\Request), Object(Closure))
+#55 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#56 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(51): Illuminate\Foundation\Http\Middleware\TransformsRequest->handle(Object(Illuminate\Http\Request), Object(Closure))
+#57 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Foundation\Http\Middleware\TrimStrings->handle(Object(Illuminate\Http\Request), Object(Closure))
+#58 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePostSize.php(27): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#59 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Http\Middleware\ValidatePostSize->handle(Object(Illuminate\Http\Request), Object(Closure))
+#60 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(109): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#61 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance->handle(Object(Illuminate\Http\Request), Object(Closure))
+#62 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(74): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#63 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Http\Middleware\HandleCors->handle(Object(Illuminate\Http\Request), Object(Closure))
+#64 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(58): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#65 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Http\Middleware\TrustProxies->handle(Object(Illuminate\Http\Request), Object(Closure))
+#66 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/InvokeDeferredCallbacks.php(22): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#67 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Foundation\Http\Middleware\InvokeDeferredCallbacks->handle(Object(Illuminate\Http\Request), Object(Closure))
+#68 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePathEncoding.php(28): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#69 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Http\Middleware\ValidatePathEncoding->handle(Object(Illuminate\Http\Request), Object(Closure))
+#70 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(137): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#71 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(175): Illuminate\Pipeline\Pipeline->then(Object(Closure))
+#72 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate\Foundation\Http\Kernel->sendRequestThroughRouter(Object(Illuminate\Http\Request))
+#73 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(607): Illuminate\Foundation\Http\Kernel->handle(Object(Illuminate\Http\Request))
+#74 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(573): Illuminate\Foundation\Testing\TestCase->call('POST', '/api/cultivatio...', Array, Array, Array, Array, '{"slug":"series...')
+#75 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(411): Illuminate\Foundation\Testing\TestCase->json('POST', '/api/cultivatio...', Array, Array, 0)
+#76 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/app/Modules/Cultivation/tests/Feature/CultivationControllerTest.php(98): Illuminate\Foundation\Testing\TestCase->postJson('/api/cultivatio...', Array)
+#77 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/src/Framework/TestCase.php(1318): App\Modules\Cultivation\tests\Feature\CultivationControllerTest->test_complete_chapter_does_not_double_grant_same_chapter()
+#78 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/src/Framework/TestCase.php(1355): PHPUnit\Framework\TestCase->invokeTestMethod('test_complete_c...', Array)
+#79 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/src/Framework/TestCase.php(521): PHPUnit\Framework\TestCase->runTest()
+#80 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/src/Framework/TestRunner/TestRunner.php(99): PHPUnit\Framework\TestCase->runBare()
+#81 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/src/Framework/TestCase.php(361): PHPUnit\Framework\TestRunner->run(Object(App\Modules\Cultivation\tests\Feature\CultivationControllerTest))
+#82 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/src/Framework/TestSuite.php(374): PHPUnit\Framework\TestCase->run()
+#83 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/src/Framework/TestSuite.php(374): PHPUnit\Framework\TestSuite->run()
+#84 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/src/Framework/TestSuite.php(374): PHPUnit\Framework\TestSuite->run()
+#85 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/src/TextUI/TestRunner.php(64): PHPUnit\Framework\TestSuite->run()
+#86 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/src/TextUI/Application.php(229): PHPUnit\TextUI\TestRunner->run(Object(PHPUnit\TextUI\Configuration\Configuration), Object(PHPUnit\Runner\ResultCache\DefaultResultCache), Object(PHPUnit\Framework\TestSuite))
+#87 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/phpunit(104): PHPUnit\TextUI\Application->run(Array)
+#88 {main}
+
+Next Illuminate\Database\UniqueConstraintViolationException: SQLSTATE[23000]: Integrity constraint violation: 19 UNIQUE constraint failed: cultivation_progress_logs.user_id, cultivation_progress_logs.source, cultivation_progress_logs.reference (Connection: sqlite, Database: :memory:, SQL: insert into "cultivation_progress_logs" ("user_id", "source", "reference", "amount", "id", "updated_at", "created_at") values (01m4azcy5xwc19xdt8bx3e1cf9, chapter_read, series-a:1, 1, 01m4azcy7xf0paqtnmv2sr6w7e, 2026-10-07 10:43:56, 2026-10-07 10:43:56)) in /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Connection.php:857
+Stack trace:
+#0 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Connection.php(813): Illuminate\Database\Connection->runQueryCallback('insert into "cu...', Array, Object(Closure))
+#1 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Connection.php(590): Illuminate\Database\Connection->run('insert into "cu...', Array, Object(Closure))
+#2 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Connection.php(554): Illuminate\Database\Connection->statement('insert into "cu...', Array)
+#3 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(4164): Illuminate\Database\Connection->insert('insert into "cu...', Array)
+#4 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(2271): Illuminate\Database\Query\Builder->insert(Array)
+#5 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1589): Illuminate\Database\Eloquent\Builder->__call('insert', Array)
+#6 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1382): Illuminate\Database\Eloquent\Model->performInsert(Object(Illuminate\Database\Eloquent\Builder))
+#7 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(1225): Illuminate\Database\Eloquent\Model->save()
+#8 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Support/helpers.php(393): Illuminate\Database\Eloquent\Builder->{closure:Illuminate\Database\Eloquent\Builder::create():1224}(Object(App\Modules\Cultivation\Models\CultivationProgressLog))
+#9 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(1224): tap(Object(App\Modules\Cultivation\Models\CultivationProgressLog), Object(Closure))
+#10 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Support/Traits/ForwardsCalls.php(23): Illuminate\Database\Eloquent\Builder->create(Array)
+#11 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(2809): Illuminate\Database\Eloquent\Model->forwardCallTo(Object(Illuminate\Database\Eloquent\Builder), 'create', Array)
+#12 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(2825): Illuminate\Database\Eloquent\Model->__call('create', Array)
+#13 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/app/Modules/Cultivation/Services/CultivationService.php(102): Illuminate\Database\Eloquent\Model::__callStatic('create', Array)
+#14 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/Concerns/ManagesTransactions.php(35): App\Modules\Cultivation\Services\CultivationService->{closure:App\Modules\Cultivation\Services\CultivationService::addProgress():97}(Object(Illuminate\Database\SQLiteConnection))
+#15 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Database/DatabaseManager.php(502): Illuminate\Database\Connection->transaction(Object(Closure))
+#16 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Support/Facades/Facade.php(363): Illuminate\Database\DatabaseManager->__call('transaction', Array)
+#17 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/app/Modules/Cultivation/Services/CultivationService.php(97): Illuminate\Support\Facades\Facade::__callStatic('transaction', Array)
+#18 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/app/Modules/Cultivation/Http/Controllers/CultivationController.php(79): App\Modules\Cultivation\Services\CultivationService->addProgress(Object(App\Modules\Auth\Models\User), 'chapter_read', 'series-a:1', 1)
+#19 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(46): App\Modules\Cultivation\Http\Controllers\CultivationController->completeChapter(Object(Illuminate\Http\Request))
+#20 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Routing/Route.php(275): Illuminate\Routing\ControllerDispatcher->dispatch(Object(Illuminate\Routing\Route), Object(App\Modules\Cultivation\Http\Controllers\CultivationController), 'completeChapter')
+#21 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Routing/Route.php(215): Illuminate\Routing\Route->runController()
+#22 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Routing/Router.php(822): Illuminate\Routing\Route->run()
+#23 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Illuminate\Routing\Router->{closure:Illuminate\Routing\Router::runRouteWithinStack():821}(Object(Illuminate\Http\Request))
+#24 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Http/Middleware/AddLinkHeadersForPreloadedAssets.php(32): Illuminate\Pipeline\Pipeline->{closure:Illuminate\Pipeline\Pipeline::prepareDestination():178}(Object(Illuminate\Http\Request))
+#25 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets->handle(Object(Illuminate\Http\Request), Object(Closure))
+#26 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/inertiajs/inertia-laravel/src/Middleware.php(122): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#27 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Inertia\Middleware->handle(Object(Illuminate\Http\Request), Object(Closure))
+#28 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(52): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#29 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Routing\Middleware\SubstituteBindings->handle(Object(Illuminate\Http\Request), Object(Closure))
+#30 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Auth/Middleware/Authenticate.php(63): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#31 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Auth\Middleware\Authenticate->handle(Object(Illuminate\Http\Request), Object(Closure), 'sanctum')
+#32 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestForgery.php(104): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#33 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Foundation\Http\Middleware\PreventRequestForgery->handle(Object(Illuminate\Http\Request), Object(Closure))
+#34 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/View/Middleware/ShareErrorsFromSession.php(48): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#35 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\View\Middleware\ShareErrorsFromSession->handle(Object(Illuminate\Http\Request), Object(Closure))
+#36 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Session/Middleware/StartSession.php(120): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#37 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Session/Middleware/StartSession.php(63): Illuminate\Session\Middleware\StartSession->handleStatefulRequest(Object(Illuminate\Http\Request), Object(Illuminate\Session\Store), Object(Closure))
+#38 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Session\Middleware\StartSession->handle(Object(Illuminate\Http\Request), Object(Closure))
+#39 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Cookie/Middleware/AddQueuedCookiesToResponse.php(36): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#40 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse->handle(Object(Illuminate\Http\Request), Object(Closure))
+#41 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Cookie/Middleware/EncryptCookies.php(74): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#42 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Cookie\Middleware\EncryptCookies->handle(Object(Illuminate\Http\Request), Object(Closure))
+#43 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(137): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#44 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Routing/Router.php(821): Illuminate\Pipeline\Pipeline->then(Object(Closure))
+#45 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Routing/Router.php(800): Illuminate\Routing\Router->runRouteWithinStack(Object(Illuminate\Routing\Route), Object(Illuminate\Http\Request))
+#46 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Routing/Router.php(764): Illuminate\Routing\Router->runRoute(Object(Illuminate\Http\Request), Object(Illuminate\Routing\Route))
+#47 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Routing/Router.php(753): Illuminate\Routing\Router->dispatchToRoute(Object(Illuminate\Http\Request))
+#48 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(200): Illuminate\Routing\Router->dispatch(Object(Illuminate\Http\Request))
+#49 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Illuminate\Foundation\Http\Kernel->{closure:Illuminate\Foundation\Http\Kernel::dispatchToRouter():197}(Object(Illuminate\Http\Request))
+#50 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\Pipeline\Pipeline->{closure:Illuminate\Pipeline\Pipeline::prepareDestination():178}(Object(Illuminate\Http\Request))
+#51 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate\Foundation\Http\Middleware\TransformsRequest->handle(Object(Illuminate\Http\Request), Object(Closure))
+#52 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull->handle(Object(Illuminate\Http\Request), Object(Closure))
+#53 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#54 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(51): Illuminate\Foundation\Http\Middleware\TransformsRequest->handle(Object(Illuminate\Http\Request), Object(Closure))
+#55 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Foundation\Http\Middleware\TrimStrings->handle(Object(Illuminate\Http\Request), Object(Closure))
+#56 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePostSize.php(27): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#57 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Http\Middleware\ValidatePostSize->handle(Object(Illuminate\Http\Request), Object(Closure))
+#58 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(109): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#59 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance->handle(Object(Illuminate\Http\Request), Object(Closure))
+#60 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(74): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#61 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Http\Middleware\HandleCors->handle(Object(Illuminate\Http\Request), Object(Closure))
+#62 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(58): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#63 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Http\Middleware\TrustProxies->handle(Object(Illuminate\Http\Request), Object(Closure))
+#64 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/InvokeDeferredCallbacks.php(22): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#65 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Foundation\Http\Middleware\InvokeDeferredCallbacks->handle(Object(Illuminate\Http\Request), Object(Closure))
+#66 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePathEncoding.php(28): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#67 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Http\Middleware\ValidatePathEncoding->handle(Object(Illuminate\Http\Request), Object(Closure))
+#68 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(137): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#69 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(175): Illuminate\Pipeline\Pipeline->then(Object(Closure))
+#70 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate\Foundation\Http\Kernel->sendRequestThroughRouter(Object(Illuminate\Http\Request))
+#71 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(607): Illuminate\Foundation\Http\Kernel->handle(Object(Illuminate\Http\Request))
+#72 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(573): Illuminate\Foundation\Testing\TestCase->call('POST', '/api/cultivatio...', Array, Array, Array, Array, '{"slug":"series...')
+#73 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(411): Illuminate\Foundation\Testing\TestCase->json('POST', '/api/cultivatio...', Array, Array, 0)
+#74 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/app/Modules/Cultivation/tests/Feature/CultivationControllerTest.php(98): Illuminate\Foundation\Testing\TestCase->postJson('/api/cultivatio...', Array)
+#75 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/src/Framework/TestCase.php(1318): App\Modules\Cultivation\tests\Feature\CultivationControllerTest->test_complete_chapter_does_not_double_grant_same_chapter()
+#76 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/src/Framework/TestCase.php(1355): PHPUnit\Framework\TestCase->invokeTestMethod('test_complete_c...', Array)
+#77 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/src/Framework/TestCase.php(521): PHPUnit\Framework\TestCase->runTest()
+#78 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/src/Framework/TestRunner/TestRunner.php(99): PHPUnit\Framework\TestCase->runBare()
+#79 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/src/Framework/TestCase.php(361): PHPUnit\Framework\TestRunner->run(Object(App\Modules\Cultivation\tests\Feature\CultivationControllerTest))
+#80 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/src/Framework/TestSuite.php(374): PHPUnit\Framework\TestCase->run()
+#81 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/src/Framework/TestSuite.php(374): PHPUnit\Framework\TestSuite->run()
+#82 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/src/Framework/TestSuite.php(374): PHPUnit\Framework\TestSuite->run()
+#83 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/src/TextUI/TestRunner.php(64): PHPUnit\Framework\TestSuite->run()
+#84 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/src/TextUI/Application.php(229): PHPUnit\TextUI\TestRunner->run(Object(PHPUnit\TextUI\Configuration\Configuration), Object(PHPUnit\Runner\ResultCache\DefaultResultCache), Object(PHPUnit\Framework\TestSuite))
+#85 /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root/auto/the-cosmic/vendor/phpunit/phpunit/phpunit(104): PHPUnit\TextUI\Application->run(Array)
+#86 {main}
+
+----------------------------------------------------------------------------------
+
+SQLSTATE[23000]: Integrity constraint violation: 19 UNIQUE constraint failed: cultivation_progress_logs.user_id, cultivation_progress_logs.source, cultivation_progress_logs.reference (Connection: sqlite, Database: :memory:, SQL: insert into "cultivation_progress_logs" ("user_id", "source", "reference", "amount", "id", "updated_at", "created_at") values (01m4azcy5xwc19xdt8bx3e1cf9, chapter_read, series-a:1, 1, 01m4azcy7xf0paqtnmv2sr6w7e, 2026-10-07 10:43:56, 2026-10-07 10:43:56))[39;22m
+
+  at [32mapp/Modules/Cultivation/tests/Feature/CultivationControllerTest.php[39m:[32m100[39m
+     96▕ 
+     97▕         $this->actingAs($user)->postJson('/api/cultivation/chapter-complete', $payload);
+     98▕         $second = $this->actingAs($user)->postJson('/api/cultivation/chapter-complete', $payload);
+     99▕ 
+  ➜ 100▕         $second->assertStatus(200);
+    101▕         $second->assertJson(['success' => true, 'cultivation_gain' => null]);
+    102▕     }
+    103▕ 
+    104▕     public function test_complete_chapter_requires_authentication(): void
+
+
+  [90mTests:[39m    [31;1m5 failed[39;22m[90m,[39m[39m [39m[32;1m327 passed[39;22m[90m (1107 assertions)[39m
+  [90mDuration:[39m [39m92.46s[39m
+

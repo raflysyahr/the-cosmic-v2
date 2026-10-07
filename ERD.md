@@ -542,20 +542,37 @@ Direct message tidak menambah tabel baru — sepenuhnya reuse `discuss_rooms` + 
 **Index:** `UNIQUE(message_id, reporter_id)`, `INDEX(room_id, status, created_at)`, `INDEX(reporter_id, created_at)`
 
 ### `discuss_announcements`
-*Pemberitahuan dari admin untuk halaman Story. Dibuat/diubah hanya oleh admin platform.*
+*Post dari admin untuk halaman Story (teks, foto, atau video + caption). Dibuat/diubah hanya oleh admin platform.*
 
 | Kolom | Tipe | Catatan |
 |---|---|---|
 | `id` | `ULID` | PK |
-| `title` | `VARCHAR(120)` | |
-| `body` | `TEXT` | Teks biasa (dirender tanpa HTML) |
+| `title` | `VARCHAR(120)` | Boleh string kosong pada post bermedia |
+| `body` | `TEXT` | Teks / caption, teks biasa (dirender tanpa HTML); boleh string kosong pada post bermedia |
 | `link_url` | `VARCHAR(500)` | Nullable; hanya http/https |
+| `media_type` | `VARCHAR(10)` | Nullable; `image` \| `video` (satu media per post) |
+| `media_url` | `TEXT` | Nullable; URL file di disk `public` (`story/images`, `story/videos`) |
+| `media_thumbnail` | `TEXT` | Nullable; poster video (dibuat di browser) |
+| `media_meta` | `JSON` | Nullable; `name`, `size`, `mime`, `width`, `height`, `duration`, `path`, `thumb_path` (path dipakai untuk hapus file) |
 | `is_pinned` | `BOOLEAN` | Disematkan di atas |
 | `published_at` | `TIMESTAMP` | Nullable; masa depan = terjadwal, null = draf (tidak tampil) |
 | `created_by` ⟶ | `ULID` | → `users.id` *(logis)* |
 | `created_at` / `updated_at` | `TIMESTAMP` | |
 
 **Index:** `INDEX(published_at)`, `INDEX(is_pinned, published_at)`
+
+### `discuss_announcement_reactions`
+*Reaksi user pada post Story. Satu reaksi per user per post; emoji berasal dari palet tetap (`AnnouncementReaction::PALETTE`).*
+
+| Kolom | Tipe | Catatan |
+|---|---|---|
+| `id` | `ULID` | PK |
+| `announcement_id` ⟶ | `ULID` | → `discuss_announcements.id` *(logis; dihapus manual saat post dihapus)* |
+| `user_id` ⟶ | `ULID` | → `users.id` *(logis)* |
+| `emoji` | `VARCHAR(16)` | Salah satu dari palet: ❤️ 👍 😂 😮 😢 🔥 |
+| `created_at` | `TIMESTAMP` | |
+
+**Index:** `UNIQUE(announcement_id, user_id)`, `INDEX(announcement_id, emoji)`
 
 ### `discuss_story_seen`
 *Satu baris per user: kapan terakhir membuka halaman Story (dasar badge "belum dibaca").*
