@@ -154,7 +154,7 @@ Semua terverifikasi ada di `app/Modules/Discuss/`. Real-time via Laravel Reverb 
 | CP: banner event + menu Report | ✅ Ada (belum diuji di browser) | `CpEventBanner` (strip "x2 CP · nama event · sisa waktu", di `LayoutDiscuss`, dari `GET /api/cp/active-events`). Menu tekan-lama pesan: "Report" → popup pilih alasan (`ReportReasonPicker`). |
 | **Belum dibangun** | ⏳ | Penalti langsung tanpa laporan, notifikasi ke penulis saat terkena penalti / laporan ditutup, batas minimum report valid per pelapor untuk mendeteksi pelapor jahat, padanan "thread" (tidak ada di model chat), pengujian UI di browser. |
 | Auto-promosi rank | ✅ Ada | `CheckRankPromotion` listener, fire `MemberRankUpgraded` |
-| Rank per-room & global | ✅ Ada | `RankService::ranksForRoom()`, seeded lewat `DefaultRanksSeeder` (Newcomer/Regular/Veteran/Legend). Rank yang ditetapkan ke member kini benar-benar resolve nama & warnanya di `MemberService::listForRoom()` dan payload presence channel (`RoomChannel.php`) — keduanya sempat diam-diam selalu mengembalikan `null` (lihat §8). |
+| Rank per-room & global | ✅ Ada | `RankService::ranksForRoom()`, seeded lewat `DefaultRanksSeeder` (12 level: Outer Disciple 0 XP → Celestial Disciple 80.000 XP; DB lama dimigrasi lewat `2026_10_07_000001_update_discuss_default_ranks.php`). Rank yang ditetapkan ke member kini benar-benar resolve nama & warnanya di `MemberService::listForRoom()` dan payload presence channel (`RoomChannel.php`) — keduanya sempat diam-diam selalu mengembalikan `null` (lihat §8). |
 | CRUD rank (admin room) | ✅ Ada | `RankController` |
 
 ### 5.6 Notifikasi

@@ -293,7 +293,7 @@ discuss_notifications.payload → room_id, message_id, rank_name, dll (per type)
 |---|---|---|
 | `id` 🔑 | `ULID` | Primary key |
 | `room_id` ⟶ | `ULID` | → `discuss_rooms.id` *(logis)*, null = rank global |
-| `name` | `VARCHAR(50)` | Newcomer, Regular, Veteran, Legend, dll |
+| `name` | `VARCHAR(50)` | Outer Disciple, Inner Disciple, Core Disciple, … Celestial Disciple (12 level bawaan), dll |
 | `label_color` | `VARCHAR(7)` | Hex color badge (misal `#6c8ef5`) |
 | `icon_url` | `TEXT` | Ikon pangkat, nullable |
 | `min_xp` | `INT` | Minimum XP untuk naik ke rank ini |

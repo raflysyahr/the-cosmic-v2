@@ -203,7 +203,7 @@ app/Modules/Discuss/
 │   └── seeders/
 │       ├── DiscussDatabaseSeeder.php
 │       ├── DefaultEmotesSeeder.php   # Seed emot default platform
-│       └── DefaultRanksSeeder.php    # Seed rank: Newcomer → Legend
+│       └── DefaultRanksSeeder.php    # Seed rank: Outer Disciple → Celestial Disciple (12 level)
 │
 ├── routes/
 │   └── discuss.php
