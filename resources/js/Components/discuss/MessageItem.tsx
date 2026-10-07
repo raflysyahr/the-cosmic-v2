@@ -533,7 +533,7 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
                 onPointerLeave={handlePointerCancel}
                 onPointerCancel={handlePointerCancel}
                 onContextMenu={handleContextMenu}
-                className={`message-bubble-self relative select-none ${isMedia ? 'overflow-hidden p-0' : 'px-2 py-2'}`}
+                className={`message-bubble-self max-w-[200px] relative select-none ${isMedia ? 'overflow-hidden p-0' : 'px-2 py-2'}`}
                 style={{
                   transform: `translateX(${dragX}px)`,
                   transition: dragX === 0 ? 'transform 150ms ease-out' : 'none',

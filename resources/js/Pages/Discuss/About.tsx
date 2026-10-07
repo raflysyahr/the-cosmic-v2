@@ -1,20 +1,47 @@
-import { useState, useCallback, useMemo } from 'react'
-import { router, Link } from '@inertiajs/react'
-import { Shield, Crown, UserMinus, MicOff, Ban, Users, Image as ImageIcon, Link as LinkIcon, Flag } from 'lucide-react'
+import { useCallback, useMemo, useState, type ReactNode } from 'react'
+import { Link } from '@inertiajs/react'
+import {
+  Ban,
+  CalendarDays,
+  Crown,
+  Flag,
+  Link as LinkIcon,
+  MessageCircle,
+  MicOff,
+  Shield,
+  Trophy,
+  UserMinus,
+  Users,
+} from 'lucide-react'
+import LayoutDiscuss from '../../Components/layout/LayoutDiscuss'
+import {
+  Empty,
+  LinkList,
+  MediaGrid,
+  MediaViewer,
+  ProfileAvatar,
+  StatGrid,
+  TabPills,
+  VoiceList,
+  type LinkItem,
+  type MediaItem,
+  type VoiceItem,
+} from '../../Components/profile/SharedContent'
 import { apiFetch } from '../../api/fetch'
 import { extractErrorMessage } from '../../utils/discuss'
-import {  useEffect, type FC } from 'react'
 import { usePopup } from '../../contexts/PopupContext'
-import Popup from '../../Components/ui/Popup'
-import { ArrowLeft, User} from 'lucide-react'
+
+/* ───────────────────────── types ───────────────────────── */
 
 interface RoomData {
   id: string
   slug: string
   name: string
+  description?: string | null
   cover_url: string | null
   context_type: string | null
   type: string
+  created_at?: string | null
 }
 
 interface DirectRecipient {
@@ -35,42 +62,81 @@ interface Member {
   mutedUntil: string | null
 }
 
+interface RoomStats {
+  members: number
+  messages: number
+  xp: number
+}
+
 interface PageProps {
   room: RoomData
   directRecipient: DirectRecipient | null
   members: Member[]
   currentUserId: string
+  stats?: RoomStats
+  media?: MediaItem[]
+  links?: LinkItem[]
+  voices?: VoiceItem[]
 }
 
+type TabId = 'members' | 'media' | 'links' | 'voice'
 
+const TABS: { id: TabId; label: string }[] = [
+  { id: 'members', label: 'Members' },
+  { id: 'media', label: 'Media' },
+  { id: 'links', label: 'Links' },
+  { id: 'voice', label: 'Voice' },
+]
+
+/* ───────────────────────── helpers ───────────────────────── */
 
 const roleOrder = { admin: 0, moderator: 1, member: 2 }
-const roleLabel = { admin: 'Admin', moderator: 'Moderator', member: 'Member' }
+const roleLabel = { admin: 'Admin', moderator: 'Moderators', member: 'Members' } as const
+
+const ROOM_TYPE_LABEL: Record<string, string> = {
+  public: 'Public group',
+  private: 'Private group',
+  invite_only: 'Invite-only group',
+}
 
 function isCurrentlyMuted(mutedUntil: string | null): boolean {
   if (!mutedUntil) return false
   return new Date(mutedUntil) > new Date()
 }
 
-export default function DiscussAbout(props: PageProps) {
-  const [members, setMembers] = useState<Member[]>(props.members ?? [])
-  const [activeTab, setActiveTab] = useState<'member' | 'media'>('member')
-  const [generatingInvite, setGeneratingInvite] = useState(false)
-  const { popup, showPopup, closePopup } = usePopup()
+const fmtMonthYear = (iso?: string | null): string => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+}
 
-  const room = props.room
-  const directRecipient = props.directRecipient
-  const currentUserId = props.currentUserId
+/* ───────────────────────── page ───────────────────────── */
+
+export default function DiscussAbout(props: PageProps) {
+  const { room, directRecipient, currentUserId } = props
+  const media = props.media ?? []
+  const links = props.links ?? []
+  const voices = props.voices ?? []
+
+  const [members, setMembers] = useState<Member[]>(props.members ?? [])
+  const [tab, setTab] = useState<TabId>('members')
+  const [viewer, setViewer] = useState<MediaItem | null>(null)
+  const [generatingInvite, setGeneratingInvite] = useState(false)
+  const { showPopup } = usePopup()
+
   const isDirectChat = room.context_type === 'direct'
 
   const headerTitle = isDirectChat && directRecipient ? directRecipient.display_name : room.name
   const headerAvatar = isDirectChat ? directRecipient?.avatar_url ?? null : room.cover_url
 
+  const stats: RoomStats = props.stats ?? { members: members.length, messages: 0, xp: 0 }
+
   const currentMember = useMemo(
     () => members.find((m) => m.userId === currentUserId),
     [members, currentUserId],
   )
-  const canModerate = currentMember && (currentMember.role === 'admin' || currentMember.role === 'moderator')
+  const canModerate = Boolean(currentMember && (currentMember.role === 'admin' || currentMember.role === 'moderator'))
   const canInvite = canModerate && !isDirectChat && room.type === 'invite_only'
 
   const refreshMembers = useCallback(() => {
@@ -112,269 +178,298 @@ export default function DiscussAbout(props: PageProps) {
       .finally(() => setGeneratingInvite(false))
   }, [room.slug, showPopup])
 
-  const performModeration = useCallback((
-    userId: string,
-    action: 'kick' | 'mute' | 'ban',
-    successTitle: string,
-    successMessage: string,
-    body?: Record<string, unknown>,
-  ) => {
-    apiFetch(`/api/rooms/${room.slug}/members/${userId}/${action}`, {
-      method: 'POST',
-      ...(body ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}),
-    })
-      .then(async (r) => {
-        if (!r.ok) {
-          const message = await extractErrorMessage(r, `Could not ${action} this member.`)
-          throw new Error(message)
-        }
-        showPopup({ type: 'notification', title: successTitle, message: successMessage })
-        refreshMembers()
+  const performModeration = useCallback(
+    (
+      userId: string,
+      action: 'kick' | 'mute' | 'ban',
+      successTitle: string,
+      successMessage: string,
+      body?: Record<string, unknown>,
+    ) => {
+      apiFetch(`/api/rooms/${room.slug}/members/${userId}/${action}`, {
+        method: 'POST',
+        ...(body ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}),
       })
-      .catch((err: Error) => {
-        showPopup({ type: 'warning', title: 'Action failed', message: err.message })
+        .then(async (r) => {
+          if (!r.ok) {
+            const message = await extractErrorMessage(r, `Could not ${action} this member.`)
+            throw new Error(message)
+          }
+          showPopup({ type: 'notification', title: successTitle, message: successMessage })
+          refreshMembers()
+        })
+        .catch((err: Error) => {
+          showPopup({ type: 'warning', title: 'Action failed', message: err.message })
+        })
+    },
+    [room.slug, showPopup, refreshMembers],
+  )
+
+  const handleKick = useCallback(
+    (userId: string) => {
+      const name = members.find((m) => m.userId === userId)?.displayName ?? 'this member'
+
+      showPopup({
+        type: 'confirm',
+        title: 'Kick member?',
+        message: `${name} will be removed from the room. They can rejoin later if the room is public.`,
+        confirmText: 'Kick',
+        onConfirm: () => performModeration(userId, 'kick', 'Member kicked', `${name} has been removed from the room.`),
       })
-  }, [room.slug, showPopup, refreshMembers])
+    },
+    [members, showPopup, performModeration],
+  )
 
-  const handleKick = useCallback((userId: string) => {
-    const target = members.find((m) => m.userId === userId)
-    const name = target?.displayName ?? 'this member'
+  const handleMute = useCallback(
+    (userId: string) => {
+      const name = members.find((m) => m.userId === userId)?.displayName ?? 'this member'
 
-    showPopup({
-      type: 'confirm',
-      title: 'Kick member?',
-      message: `${name} will be removed from the room. They can rejoin later if the room is public.`,
-      confirmText: 'Kick',
-      onConfirm: () => performModeration(userId, 'kick', 'Member kicked', `${name} has been removed from the room.`),
-    })
-  }, [members, showPopup, performModeration])
+      showPopup({
+        type: 'input',
+        title: `Mute ${name}`,
+        message: 'How many minutes should this member be muted for?',
+        inputPlaceholder: 'e.g. 30',
+        inputDefaultValue: '30',
+        confirmText: 'Mute',
+        onConfirm: (value) => {
+          const minutes = parseInt(value ?? '', 10)
+          if (!minutes || minutes < 1) {
+            showPopup({ type: 'warning', title: 'Invalid duration', message: 'Please enter a whole number of minutes.' })
+            return
+          }
+          performModeration(
+            userId,
+            'mute',
+            'Member muted',
+            `${name} has been muted for ${minutes} minute${minutes === 1 ? '' : 's'}.`,
+            { minutes },
+          )
+        },
+      })
+    },
+    [members, showPopup, performModeration],
+  )
 
-  const handleMute = useCallback((userId: string) => {
-    const target = members.find((m) => m.userId === userId)
-    const name = target?.displayName ?? 'this member'
+  const handleBan = useCallback(
+    (userId: string) => {
+      const name = members.find((m) => m.userId === userId)?.displayName ?? 'this member'
 
-    showPopup({
-      type: 'input',
-      title: `Mute ${name}`,
-      message: 'How many minutes should this member be muted for?',
-      inputPlaceholder: 'e.g. 30',
-      inputDefaultValue: '30',
-      confirmText: 'Mute',
-      onConfirm: (value) => {
-        const minutes = parseInt(value ?? '', 10)
-        if (!minutes || minutes < 1) {
-          showPopup({ type: 'warning', title: 'Invalid duration', message: 'Please enter a whole number of minutes.' })
-          return
-        }
-        performModeration(userId, 'mute', 'Member muted', `${name} has been muted for ${minutes} minute${minutes === 1 ? '' : 's'}.`, { minutes })
-      },
-    })
-  }, [members, showPopup, performModeration])
-
-  const handleBan = useCallback((userId: string) => {
-    const target = members.find((m) => m.userId === userId)
-    const name = target?.displayName ?? 'this member'
-
-    showPopup({
-      type: 'confirm',
-      title: 'Ban member?',
-      message: `${name} will be permanently banned from this room and won't be able to rejoin.`,
-      confirmText: 'Ban',
-      onConfirm: () => performModeration(userId, 'ban', 'Member banned', `${name} has been banned from the room.`),
-    })
-  }, [members, showPopup, performModeration])
+      showPopup({
+        type: 'confirm',
+        title: 'Ban member?',
+        message: `${name} will be permanently banned from this room and won't be able to rejoin.`,
+        confirmText: 'Ban',
+        onConfirm: () => performModeration(userId, 'ban', 'Member banned', `${name} has been banned from the room.`),
+      })
+    },
+    [members, showPopup, performModeration],
+  )
 
   const sortedMembers = useMemo(
     () => [...members].sort((a, b) => roleOrder[a.role] - roleOrder[b.role]),
     [members],
   )
 
+  // Tombol tab hanya muncul kalau tab tersebut punya isi.
+  const hasContent: Record<TabId, boolean> = {
+    members: members.length > 0,
+    media: media.length > 0,
+    links: links.length > 0,
+    voice: voices.length > 0,
+  }
+  const availableTabs = TABS.filter((t) => hasContent[t.id])
+  const activeTab: TabId | null = availableTabs.find((t) => t.id === tab)?.id ?? availableTabs[0]?.id ?? null
+
+  const statCards = [
+    { label: 'Members', value: stats.members, icon: Users },
+    { label: 'Messages', value: stats.messages, icon: MessageCircle },
+    { label: 'Total XP', value: stats.xp, icon: Trophy },
+  ]
+
+  const typeLabel = isDirectChat ? 'Private chat' : ROOM_TYPE_LABEL[room.type] ?? 'Group'
+  const createdLabel = fmtMonthYear(room.created_at)
+
   let lastRole: string | null = null
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col bg-surface shadow-2xl">
-      {/* Top AppBar */}
-      <header className="sticky top-0 z-50 flex h-14 w-full items-center gap-3  bg-surface px-gutter-md">
-        <button
-          onClick={() => router.visit(`/discuss/${room.slug}`)}
-          className="active:opacity-70 transition-opacity p-1 -ml-1"
-        >
-          <ArrowLeft className="text-primary w-4 h-4" />
-        </button>
+    <div className="min-h-full bg-[#0b0b0b] px-4 pb-10 pt-8">
+      {/* Avatar + nama */}
+      <div className="flex flex-col items-center">
+        <ProfileAvatar src={headerAvatar} name={headerTitle} />
 
-      </header>
+        <h1 className="mt-5 max-w-[200px] text-center text-lg font-bold leading-tight text-white">
+          {headerTitle}
+        </h1>
+        <p className="mt-1 max-w-full truncate text-center text-md text-neutral-500">
+          {isDirectChat ? 'Private chat' : `${stats.members} member${stats.members === 1 ? '' : 's'}`}
+        </p>
 
-      {/* Room identity */}
-      <div className="flex flex-col items-center gap-2 px-gutter-md pb-4 pt-8">
-        <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-[50%] bg-surface-container-high mb-3">
-          {headerAvatar ? (
-            <img src={headerAvatar} alt="" className="h-full w-full object-cover" />
-          ) : (
-            isDirectChat ? <User className="text-on-surface-variant text-[40px]" /> : <Users className="text-on-surface-variant text-[40px]" />
-          )}
-        </div>
-        <h2 className="font-headline-sm text-headline-sm text-on-surface text-center">{headerTitle}</h2>
-        {!isDirectChat && (
-          <span className="font-body-sm text-body-sm text-on-surface-variant">
-            {members.length} member{members.length === 1 ? '' : 's'}
-          </span>
-        )}
         {canInvite && (
           <button
+            type="button"
             onClick={handleGenerateInvite}
             disabled={generatingInvite}
-            className="mt-1 flex items-center gap-1.5 rounded-full border border-outline-variant px-3 py-1.5 font-label-sm text-label-sm text-primary transition-opacity active:opacity-70 disabled:opacity-50"
+            className="mt-4 flex items-center gap-2 rounded-[999px] bg-white px-6 py-2.5 text-sm font-bold text-black transition-colors hover:bg-[#ddd] disabled:opacity-50"
           >
-            <LinkIcon size={14} />
+            <LinkIcon className="h-4 w-4" />
             {generatingInvite ? 'Generating…' : 'Copy Invite Link'}
           </button>
         )}
       </div>
 
-      {/* Tabs — directly below avatar and name */}
-      <div className="flex border-b border-outline-variant">
-        <button
-          onClick={() => setActiveTab('member')}
-          className={`flex flex-1 items-center justify-center gap-1.5 py-3 font-label-md text-label-md transition-colors ${
-            activeTab === 'member'
-              ? 'border-b-2 border-primary text-primary'
-              : 'text-on-surface-variant'
-          }`}
-        >
-          <Users size={16} />
-          Member
-        </button>
-        <button
-          onClick={() => setActiveTab('media')}
-          className={`flex flex-1 items-center justify-center gap-1.5 py-3 font-label-md text-label-md transition-colors ${
-            activeTab === 'media'
-              ? 'border-b-2 border-primary text-primary'
-              : 'text-on-surface-variant'
-          }`}
-        >
-          <ImageIcon size={16} />
-          Media
-        </button>
-      </div>
+      {/* Statistik */}
+      <StatGrid items={statCards} />
 
-      {canModerate && !isDirectChat && (
-        <Link
-          href={`/discuss/${room.slug}/reports`}
-          className="flex items-center gap-2 border-b border-outline-variant/30 px-4 py-3 font-label-md text-label-md text-on-surface-variant transition-colors hover:text-on-surface"
-        >
-          <Flag size={16} />
-          Reports
-        </Link>
-      )}
-
-      {/* Tab content */}
-      <div className="flex-1 overflow-y-auto">
-        {activeTab === 'member' ? (
-          <div className="flex flex-col">
-            {sortedMembers.map((m) => {
-              const showLabel = m.role !== lastRole
-              lastRole = m.role
-              const isSelf = m.userId === currentUserId
-              const muted = isCurrentlyMuted(m.mutedUntil)
-              const avatarFallback = m.displayName?.charAt(0).toUpperCase() || '?'
-
-              const rowContent = (
-                <div className="flex min-w-0 flex-1 items-center gap-3">
-                  <div className="relative shrink-0">
-                    <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-[50%] bg-surface-container-high">
-                      {m.avatarUrl ? (
-                        <img src={m.avatarUrl} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="font-label-sm text-label-sm text-on-surface-variant">{avatarFallback}</span>
-                      )}
-                    </div>
-                    <div
-                      className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface ${
-                        m.isOnline ? 'bg-primary' : 'bg-outline-variant'
-                      }`}
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="truncate font-label-md text-label-md text-on-surface">{m.displayName}</span>
-                      {m.role === 'admin' && <Crown size={13} className="shrink-0 text-yellow-500" />}
-                      {m.role === 'moderator' && <Shield size={13} className="shrink-0 text-blue-500" />}
-                      {muted && (
-                        <span title="Muted" className="shrink-0">
-                          <MicOff size={13} className="text-error" />
-                        </span>
-                      )}
-                    </div>
-                    {m.rank && (
-                      <span
-                        className="mt-0.5 inline-block rounded-sm px-1 text-[10px] font-medium leading-none"
-                        style={{ backgroundColor: m.rank.color + '20', color: m.rank.color }}
-                      >
-                        {m.rank.name}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )
-
-              return (
-                <div key={m.userId}>
-                  {showLabel && (
-                    <div className="px-gutter-md pt-3 pb-1">
-                      <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
-                        {roleLabel[m.role]}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 px-gutter-md py-2 transition-colors hover:bg-surface-container-low">
-                    {m.username ? (
-                      <Link href={`/u/${m.username}`} className="min-w-0 flex-1">
-                        {rowContent}
-                      </Link>
-                    ) : (
-                      <div className="min-w-0 flex-1">{rowContent}</div>
-                    )}
-
-                    {canModerate && !isSelf && (
-                      <div className="flex shrink-0 gap-1">
-                        <button
-                          onClick={() => handleKick(m.userId)}
-                          className="rounded-full p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-error"
-                          title="Kick"
-                        >
-                          <UserMinus size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleMute(m.userId)}
-                          className="rounded-full p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-yellow-500"
-                          title="Mute"
-                        >
-                          <MicOff size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleBan(m.userId)}
-                          className="rounded-full p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-error"
-                          title="Ban"
-                        >
-                          <Ban size={16} />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <ImageIcon size={32} className="text-on-surface-variant" />
-            <p className="font-body-md text-body-md text-on-surface-variant">Media gallery coming soon</p>
+      {/* Info */}
+      <section className="mt-5 rounded-[20px] border border-[#262626] bg-[#0f0f0f] px-5 py-5">
+        {!isDirectChat && (
+          <div>
+            <p className="text-md text-neutral-500">Description</p>
+            <p className="mt-1 whitespace-pre-line break-words text-base leading-snug text-neutral-200">
+              {room.description?.trim() ? room.description : '—'}
+            </p>
           </div>
         )}
-      </div>
 
-      {/* Popup layer — this page doesn't use <Layout>, so it must render its own. */}
-      {popup && <Popup config={popup} onClose={closePopup} />}
+        <div className={`${isDirectChat ? '' : 'mt-6 '}min-w-0`}>
+          <p className="text-md text-neutral-500">Type</p>
+          <p className="mt-1 truncate text-sm text-white">{typeLabel}</p>
+        </div>
+
+        {createdLabel && (
+          <div className="mt-5 flex items-center gap-3 border-t border-[#262626] pt-4 text-neutral-500">
+            <CalendarDays className="h-4 w-4 shrink-0" strokeWidth={1.6} />
+            <span className="text-sm">Created {createdLabel}</span>
+          </div>
+        )}
+
+        {canModerate && !isDirectChat && (
+          <Link
+            href={`/discuss/${room.slug}/reports`}
+            className="mt-4 flex items-center gap-3 border-t border-[#262626] pt-4 text-sm text-neutral-300 transition-colors hover:text-white"
+          >
+            <Flag className="h-4 w-4 shrink-0 text-neutral-500" strokeWidth={1.6} />
+            Reports
+          </Link>
+        )}
+      </section>
+
+      {/* Tabs — hanya yang punya isi */}
+      {availableTabs.length > 0 ? (
+        <>
+          <TabPills tabs={availableTabs} active={activeTab} onChange={setTab} label="Room content" />
+
+          <div role="tabpanel" className="mt-4">
+            {activeTab === 'members' && (
+              <div className="flex flex-col gap-2">
+                {sortedMembers.map((m) => {
+                  const showLabel = m.role !== lastRole
+                  lastRole = m.role
+                  const isSelf = m.userId === currentUserId
+                  const muted = isCurrentlyMuted(m.mutedUntil)
+                  const avatarFallback = m.displayName?.charAt(0).toUpperCase() || '?'
+
+                  const rowContent = (
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <div className="relative shrink-0">
+                        <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-[999px] bg-[#1c1c1c]">
+                          {m.avatarUrl ? (
+                            <img src={m.avatarUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="text-sm font-semibold text-neutral-300">{avatarFallback}</span>
+                          )}
+                        </div>
+                        <span
+                          className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-[999px] border-2 border-[#0f0f0f] ${
+                            m.isOnline ? 'bg-green-500' : 'bg-neutral-600'
+                          }`}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="truncate text-sm font-semibold text-white">{m.displayName}</span>
+                          {m.role === 'admin' && <Crown size={13} className="shrink-0 text-yellow-500" />}
+                          {m.role === 'moderator' && <Shield size={13} className="shrink-0 text-blue-500" />}
+                          {muted && (
+                            <span title="Muted" className="shrink-0">
+                              <MicOff size={13} className="text-red-400" />
+                            </span>
+                          )}
+                        </div>
+                        {m.rank && (
+                          <span
+                            className="mt-0.5 inline-block rounded-sm px-1 text-[10px] font-medium leading-none"
+                            style={{ backgroundColor: m.rank.color + '20', color: m.rank.color }}
+                          >
+                            {m.rank.name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )
+
+                  return (
+                    <div key={m.userId} className="flex flex-col gap-2">
+                      {showLabel && (
+                        <p className="px-1 pt-2 text-xs font-semibold uppercase tracking-wider text-neutral-500">
+                          {roleLabel[m.role]}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 rounded-[14px] border border-[#222] bg-[#0f0f0f] p-3 transition-colors hover:bg-[#151515]">
+                        {m.username ? (
+                          <Link href={`/u/${m.username}`} className="min-w-0 flex-1">
+                            {rowContent}
+                          </Link>
+                        ) : (
+                          <div className="min-w-0 flex-1">{rowContent}</div>
+                        )}
+
+                        {canModerate && !isDirectChat && !isSelf && (
+                          <div className="flex shrink-0 gap-0.5">
+                            <button
+                              type="button"
+                              onClick={() => handleKick(m.userId)}
+                              className="rounded-[999px] p-2 text-neutral-500 transition-colors hover:bg-[#1c1c1c] hover:text-red-400"
+                              title="Kick"
+                            >
+                              <UserMinus size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMute(m.userId)}
+                              className="rounded-[999px] p-2 text-neutral-500 transition-colors hover:bg-[#1c1c1c] hover:text-yellow-500"
+                              title="Mute"
+                            >
+                              <MicOff size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleBan(m.userId)}
+                              className="rounded-[999px] p-2 text-neutral-500 transition-colors hover:bg-[#1c1c1c] hover:text-red-400"
+                              title="Ban"
+                            >
+                              <Ban size={16} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+            {activeTab === 'media' && <MediaGrid items={media} onOpen={setViewer} />}
+            {activeTab === 'links' && <LinkList items={links} />}
+            {activeTab === 'voice' && <VoiceList items={voices} />}
+          </div>
+        </>
+      ) : (
+        <Empty icon={Users} text="Nothing here yet" />
+      )}
+
+      {viewer && <MediaViewer item={viewer} onClose={() => setViewer(null)} />}
     </div>
   )
 }
+
+DiscussAbout.layout = (page: ReactNode) => <LayoutDiscuss>{page}</LayoutDiscuss>

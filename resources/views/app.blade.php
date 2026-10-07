@@ -78,6 +78,35 @@
             content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content"
         />
 
+        {{-- Splash web (#splash di bawah) hanya untuk tab browser biasa. Saat dibuka dari PWA
+             yang sudah di-install, OS sudah menampilkan splash sendiri (ikon + background_color
+             manifest), jadi splash web dimatikan agar tidak muncul dua kali.
+             - Media query: mencakup display-mode manifest (fullscreen/standalone/minimal-ui/WCO)
+               dan langsung berlaku di first paint tanpa menunggu JS.
+             - Script: iOS Safari tidak mendukung media query itu (pakai navigator.standalone),
+               dan TWA Android ditandai lewat document.referrer 'android-app://'. --}}
+        <style>
+            @media (display-mode: fullscreen), (display-mode: standalone), (display-mode: minimal-ui), (display-mode: window-controls-overlay) {
+                #splash { display: none !important; }
+            }
+            html.is-pwa #splash { display: none !important; }
+        </style>
+        <script>
+            (function () {
+                var pwa = false;
+                try {
+                    pwa = window.navigator.standalone === true
+                        || (window.matchMedia && (
+                            window.matchMedia('(display-mode: fullscreen)').matches
+                            || window.matchMedia('(display-mode: standalone)').matches
+                            || window.matchMedia('(display-mode: minimal-ui)').matches
+                            || window.matchMedia('(display-mode: window-controls-overlay)').matches))
+                        || (document.referrer || '').indexOf('android-app://') === 0;
+                } catch (e) {}
+                if (pwa) document.documentElement.classList.add('is-pwa');
+            })();
+        </script>
+
         {{-- PWA --}}
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#000000" />
@@ -119,6 +148,13 @@
                 var MIN_SPLASH_MS = 3000;
                 var startTime = Date.now();
                 var splash = document.getElementById('splash');
+
+                // PWA: splash dibuang dari DOM (bukan sekadar disembunyikan) supaya <video>-nya
+                // berhenti memuat/memutar, dan tidak ada jeda 3 detik buatan (MIN_SPLASH_MS).
+                if (document.documentElement.classList.contains('is-pwa')) {
+                    if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
+                    return;
+                }
 
                 function hideSplash() {
                     if (!splash) return;
