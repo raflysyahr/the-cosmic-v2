@@ -17,7 +17,7 @@ interface ProfileEditPanelProps {
 }
 
 const inputClass =
-  'w-full rounded-lg border border-outline-variant/60 bg-surface-container-low px-3 py-2.5 text-sm text-white placeholder:text-on-surface-variant/50 focus:border-primary/40 focus:outline-none'
+  'w-full rounded-[12px] border border-outline-variant/60 bg-surface-container-low px-3 py-2.5 text-sm text-white placeholder:text-on-surface-variant/50 focus:border-primary/40 focus:outline-none'
 
 const Field: FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <label className="block">
@@ -127,10 +127,10 @@ const ProfileEditPanel: FC<ProfileEditPanelProps> = ({ initial, onBack, onSaved 
         {saved && <p className="text-sm text-green-400">Profile saved.</p>}
 
         <div className="flex gap-3">
-          <button type="submit" disabled={saving} className={`${primaryButton} flex-1`}>
+          <button type="submit" disabled={saving} className={`${primaryButton} flex-1 rounded-[15px]`}>
             {saving ? 'Saving...' : 'Save'}
           </button>
-          <button type="button" onClick={onBack} className={`${subtleButton} flex-1`}>
+          <button type="button" onClick={onBack} className={`${subtleButton} flex-1 rounded-[15px]`}>
             Done
           </button>
         </div>

@@ -921,12 +921,12 @@ export default function DiscussRoom(props: PageProps) {
             <ArrowLeft className="text-primary" />
           </button>
           <div
-            className={`flex items-center gap-3 bg-gray-800 rounded-[90px] overflow-hidden px-2 ${!isDirectChat ? 'cursor-pointer' : ''}`}
+            className={`flex items-center gap-3 bg-surface-container-low rounded-[90px] overflow-hidden py-1 px-2 ${!isDirectChat ? 'cursor-pointer' : ''}`}
             onClick={() => {
               if (!isDirectChat) router.visit(`/discuss/${room.slug}/about`)
             }}
           >
-            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-surface-container-high">
+            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-[99px] bg-surface-container-highest">
               {headerAvatar ? (
                 <img src={headerAvatar} alt="" className="h-full w-full object-cover" />
               ) : (

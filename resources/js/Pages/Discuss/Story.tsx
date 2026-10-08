@@ -67,7 +67,7 @@ function PostCard({
   const clamped = long && !expanded
 
   return (
-    <article className="overflow-hidden rounded-[20px] border border-[#262626] bg-[#0f0f0f]">
+    <article className="overflow-hidden rounded-[20px]  bg-surface-container-low">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-4">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[999px] bg-[#1c1c1c] text-neutral-300">
@@ -187,7 +187,7 @@ export default function Story({ isAdmin }: { isAdmin: boolean }) {
   }
 
   return (
-    <div className="min-h-full bg-[#0b0b0b] px-4 pb-10 pt-6">
+    <div className="min-h-full bg-surface px-4 pb-10 pt-6">
       <div className="mb-5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-[999px] bg-[#1c1c1c] text-neutral-300">

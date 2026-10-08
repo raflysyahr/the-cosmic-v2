@@ -435,10 +435,10 @@ export default function PublicProfileShow() {
       <StatGrid items={statCards} />
 
       {/* Info */}
-      <section className="mt-5 rounded-[20px] border border-[#262626] bg-[#0f0f0f] px-5 py-5">
-        <div>
+      <section className="mt-5 rounded-[20px] bg-surface-container-low px-5 py-5">
+        <div className="border-b border-[#262626]">
           <p className="text-base text-neutral-500">Bio</p>
-          <p className="mt-1 whitespace-pre-line break-words text-md leading-snug text-neutral-200">
+          <p className="mt-1 whitespace-pre-line break-words text-sm leading-snug text-neutral-200">
             {profile.bio?.trim() ? profile.bio : '—'}
           </p>
         </div>

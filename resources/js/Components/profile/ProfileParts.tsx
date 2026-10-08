@@ -4,7 +4,7 @@ import { ChevronRight } from 'lucide-react'
 type IconType = FC<{ className?: string }>
 
 export const Card: FC<{ children: ReactNode }> = ({ children }) => (
-  <section className="mx-4 mt-5 overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-low">
+  <section className="mx-4 mt-5 overflow-hidden rounded-[20px] border border-outline-variant/30 bg-surface-container-low">
     {children}
   </section>
 )
@@ -18,7 +18,7 @@ interface InfoRowProps {
 /** Baris informasi: ikon dalam kotak, label kecil, nilai di bawahnya. */
 export const InfoRow: FC<InfoRowProps> = ({ icon: Icon, label, children }) => (
   <div className="flex items-center gap-4 border-b border-outline-variant/30 px-4 py-4 last:border-b-0">
-    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-surface-container-high text-on-surface-variant">
+    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[20px] bg-surface-container-high text-on-surface-variant">
       <Icon className="h-5 w-5" />
     </div>
     <div className="min-w-0 flex-1">
@@ -42,7 +42,7 @@ export const MenuRow: FC<MenuRowProps> = ({ icon: Icon, title, subtitle, onClick
     onClick={onClick}
     className="flex w-full items-center gap-4 border-b border-outline-variant/30 px-4 py-4 text-left transition-colors last:border-b-0 hover:bg-surface-container"
   >
-    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-surface-container-high text-on-surface-variant">
+    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[20px] bg-surface-container-high text-on-surface-variant">
       <Icon className="h-5 w-5" />
     </div>
     <div className="min-w-0 flex-1">

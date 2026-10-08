@@ -87,11 +87,11 @@ export const fmtBytes = (bytes: number | null): string => {
 export function ProfileAvatar({ src, name }: { src: string | null; name: string }) {
   return (
     <div className="rounded-[999px] ring-4 ring-[#2c2c2c] ring-offset-[5px] ring-offset-[#0b0b0b]">
-      <div className="flex h-[100px] w-[100px] items-center justify-center overflow-hidden rounded-[999px] bg-[#e8e8e8]">
+      <div className="flex h-[80px] w-[80px] items-center justify-center overflow-hidden rounded-[999px] bg-[#e8e8e8]">
         {src ? (
           <img src={src} alt="" className="h-full w-full object-cover" />
         ) : (
-          <span className="select-none font-serif text-[64px] font-medium leading-none text-[#1b1b1b]">
+          <span className="select-none font-serif text-xl font-medium leading-none text-[#1b1b1b]">
             {initialsOf(name)}
           </span>
         )}
@@ -251,10 +251,10 @@ export function StatGrid({ items }: { items: StatCardItem[] }) {
   return (
     <div className="mt-7 grid grid-cols-3 gap-3">
       {items.map((s) => (
-        <div key={s.label} className="min-w-0 rounded-[18px] border border-[#262626] bg-[#0f0f0f] px-3 py-3">
+        <div key={s.label} className="min-w-0 rounded-[18px] bg-surface-container-low px-3 py-3 ">
           <div className="flex items-center gap-2 text-neutral-500">
             <s.icon className="h-3 w-3 shrink-0" strokeWidth={1.4} />
-            <span className="truncate text-[10px] font-semibold uppercase tracking-wider">{s.label}</span>
+            <span className="truncate text-[8px] font-semibold uppercase tracking-wider">{s.label}</span>
           </div>
           <p className="mt-1.5 truncate text-md font-bold leading-none text-white">{fmtNumber(s.value)}</p>
         </div>

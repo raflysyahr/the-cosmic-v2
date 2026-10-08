@@ -297,7 +297,7 @@ export default function DiscussAbout(props: PageProps) {
       <div className="flex flex-col items-center">
         <ProfileAvatar src={headerAvatar} name={headerTitle} />
 
-        <h1 className="mt-5 max-w-[200px] text-center text-lg font-bold leading-tight text-white">
+        <h1 className="mt-5 max-w-[200px] text-center text-md font-bold leading-tight text-white">
           {headerTitle}
         </h1>
         <p className="mt-1 max-w-full truncate text-center text-md text-neutral-500">
@@ -321,19 +321,19 @@ export default function DiscussAbout(props: PageProps) {
       <StatGrid items={statCards} />
 
       {/* Info */}
-      <section className="mt-5 rounded-[20px] border border-[#262626] bg-[#0f0f0f] px-5 py-5">
+      <section className="mt-5 rounded-[20px] bg-surface-container-low px-5 py-5">
         {!isDirectChat && (
           <div>
-            <p className="text-md text-neutral-500">Description</p>
-            <p className="mt-1 whitespace-pre-line break-words text-base leading-snug text-neutral-200">
+            <p className="text-sm text-neutral-500">Description</p>
+            <p className="mt-1 whitespace-pre-line break-words text-xs leading-snug text-neutral-200">
               {room.description?.trim() ? room.description : '—'}
             </p>
           </div>
         )}
 
         <div className={`${isDirectChat ? '' : 'mt-6 '}min-w-0`}>
-          <p className="text-md text-neutral-500">Type</p>
-          <p className="mt-1 truncate text-sm text-white">{typeLabel}</p>
+          <p className="text-sm text-neutral-500">Type</p>
+          <p className="mt-1 truncate text-md text-white">{typeLabel}</p>
         </div>
 
         {createdLabel && (

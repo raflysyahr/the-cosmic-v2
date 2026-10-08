@@ -63,19 +63,19 @@ export default function Leaderboard({ isAdmin }: { isAdmin: boolean }) {
   }, [tab, achievements])
 
   const tabClass = (active: boolean) =>
-    `flex flex-1 items-center justify-center gap-1.5 py-3 font-label-md text-label-md transition-colors ${
-      active ? 'border-b-2 border-primary text-primary' : 'text-on-surface-variant'
+    `flex flex-1 items-center justify-center gap-1.5 py-3 font-label-md text-label-md transition-colors  border-b-[1px]  ${
+      active ? ' border-primary text-primary' : 'text-on-surface-variant border-transparent'
     }`
 
   return (
     <>
       <div className="mx-auto max-w-2xl px-2 pb-6 pt-4">
-        <div className="mb-2 flex items-center justify-between">
+        <div className=" mb-2 flex items-center justify-between">
 
           {isAdmin && (
             <Link
               href="/discuss/leaderboard/admin"
-              className="relative px-2 bg-surface-container-higher rounded-[999px]  flex items-center justify-center gap-1.5 font-label-md text-label-md text-on-surface-variant hover:text-on-surface"
+              className="relative rounded-[20px] border-[1px] border-outline-variant/30 py-2  px-2 bg-surface-container-higher  flex items-center justify-center gap-1.5 font-label-md text-label-md text-on-surface-variant hover:text-on-surface"
             >
               <Settings className="h-4 w-4" />
               Settings Cp
@@ -83,7 +83,7 @@ export default function Leaderboard({ isAdmin }: { isAdmin: boolean }) {
           )}
         </div>
 
-        <div className="mb-3 flex border-b border-outline-variant/30">
+        <div className="mb-3 flex border-b pb-2 border-outline-variant/30">
           <button onClick={() => setTab('leaderboard')} className={tabClass(tab === 'leaderboard')}>
             <Trophy className="h-4 w-4" />
             Leaderboard
