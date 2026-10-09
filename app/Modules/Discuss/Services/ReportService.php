@@ -189,6 +189,10 @@ class ReportService
                 'id' => $report->message_id,
                 'body' => $message && ! $message->is_deleted ? Str::limit((string) $message->body, 240) : null,
                 'is_deleted' => $message ? (bool) $message->is_deleted : true,
+                'type' => $message?->type->value,
+                // Foto/video/file yang dilaporkan, supaya moderator menilai isinya langsung.
+                // Pesan yang sudah dihapus tidak menampilkan media lagi.
+                'media' => $message && ! $message->is_deleted ? $this->presentMedia($message) : null,
             ],
             'author' => $author ? [
                 'id' => $author->id,
@@ -201,6 +205,50 @@ class ReportService
                 'display_name' => $reporter->display_name,
             ] : ['id' => $report->reporter_id],
         ];
+    }
+
+    /**
+     * Media pesan untuk antrean laporan (hanya dilihat moderator room tersebut).
+     * Bentuk sama dengan data di chat: foto = attachments[0] (+ metadata.thumbnail),
+     * video = attachments[0] (+ metadata.video: thumbnail/duration/width/height),
+     * file = attachments[0] (+ metadata.file: name/size/mime).
+     *
+     * @return array<string, mixed>|null
+     */
+    private function presentMedia(Message $message): ?array
+    {
+        $url = $message->attachments[0] ?? null;
+        if (! $url) {
+            return null;
+        }
+
+        $meta = $message->metadata ?? [];
+
+        return match ($message->type) {
+            MessageType::Image => [
+                'type' => 'image',
+                'url' => $url,
+                'thumbnail' => $meta['thumbnail'] ?? $url,
+                'width' => $meta['width'] ?? null,
+                'height' => $meta['height'] ?? null,
+            ],
+            MessageType::Video => [
+                'type' => 'video',
+                'url' => $url,
+                'thumbnail' => $meta['video']['thumbnail'] ?? null,
+                'duration' => $meta['video']['duration'] ?? null,
+                'width' => $meta['video']['width'] ?? null,
+                'height' => $meta['video']['height'] ?? null,
+            ],
+            MessageType::File => [
+                'type' => 'file',
+                'url' => $url,
+                'name' => $meta['file']['name'] ?? basename((string) parse_url($url, PHP_URL_PATH)),
+                'size' => $meta['file']['size'] ?? null,
+                'mime' => $meta['file']['mime'] ?? null,
+            ],
+            default => null,
+        };
     }
 
     private function activeMember(string $roomId, string $userId): Member

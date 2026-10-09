@@ -1,9 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from '@inertiajs/react'
-import { Check, Flag, ShieldCheck, Shield, Trash2, X } from 'lucide-react'
+import { Check, FileText, Flag, Play, ShieldCheck, Shield, Trash2, X } from 'lucide-react'
 import LayoutDiscuss from '../../Components/layout/LayoutDiscuss'
 import { useShellChrome } from '../../Components/layout/ShellChrome'
-import { Empty, TabPills } from '../../Components/profile/SharedContent'
+import { Empty, MediaViewer, TabPills, fmtBytes, type MediaItem } from '../../Components/profile/SharedContent'
+import { formatDuration } from '../../lib/media'
 import client from '../../api/client'
 
 /* ───────────────────────── types ───────────────────────── */
@@ -17,6 +18,12 @@ interface PersonRef {
   username?: string | null
 }
 
+/** Lampiran pesan yang dilaporkan (hanya dikirim server ke moderator room tersebut). */
+type ReportMedia =
+  | { type: 'image'; url: string; thumbnail: string | null; width: number | null; height: number | null }
+  | { type: 'video'; url: string; thumbnail: string | null; duration: number | null; width: number | null; height: number | null }
+  | { type: 'file'; url: string; name: string; size: number | null; mime: string | null }
+
 interface ReportRow {
   id: string
   status: Status
@@ -24,7 +31,7 @@ interface ReportRow {
   note: string | null
   penalty: string | null
   created_at: string | null
-  message: { id: string; body: string | null; is_deleted: boolean }
+  message: { id: string; body: string | null; is_deleted: boolean; type?: string | null; media?: ReportMedia | null }
   author: PersonRef
   reporter: PersonRef
 }
@@ -90,14 +97,71 @@ function Person({ label, person }: { label: string; person: PersonRef }) {
   )
 }
 
+/** Rasio tampilan dibatasi agar kartu tidak terlalu tinggi / terlalu gepeng. */
+const aspectOf = (width: number | null, height: number | null): number =>
+  width && height ? Math.min(Math.max(width / height, 0.8), 1.91) : 4 / 3
+
+function ReportMediaBlock({ media, onOpen }: { media: ReportMedia; onOpen: (m: ReportMedia) => void }) {
+  if (media.type === 'file') {
+    return (
+      <a
+        href={media.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-3 rounded-[10px] border border-[#222] bg-[#0f0f0f] p-2.5 transition-colors hover:bg-[#1a1a1a]"
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#1c1c1c] text-neutral-400">
+          <FileText className="h-5 w-5" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[13px] font-medium text-white">{media.name}</span>
+          <span className="block text-[11px] text-neutral-500">
+            {[media.mime, fmtBytes(media.size)].filter(Boolean).join(' · ')}
+          </span>
+        </span>
+      </a>
+    )
+  }
+
+  const isVideo = media.type === 'video'
+
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(media)}
+      aria-label={isVideo ? 'Play reported video' : 'Open reported photo'}
+      style={{ aspectRatio: aspectOf(media.width, media.height) }}
+      className="relative block max-h-72 w-full overflow-hidden rounded-[10px] bg-black"
+    >
+      {media.thumbnail && <img src={media.thumbnail} alt="" loading="lazy" className="h-full w-full object-cover" />}
+      {media.type === 'video' && (
+        <>
+          <span className="absolute inset-0 flex items-center justify-center">
+            <span className="flex h-12 w-12 items-center justify-center rounded-[999px] bg-black/55 backdrop-blur-sm">
+              <Play className="h-5 w-5 translate-x-0.5 fill-white text-white" />
+            </span>
+          </span>
+          {media.duration ? (
+            <span className="absolute bottom-1.5 left-1.5 rounded-[8px] bg-black/55 px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
+              {formatDuration(media.duration)}
+            </span>
+          ) : null}
+        </>
+      )}
+    </button>
+  )
+}
+
 function ReportCard({
   report,
   slug,
   onResolved,
+  onOpenMedia,
 }: {
   report: ReportRow
   slug: string
   onResolved: (id: string) => void
+  onOpenMedia: (m: ReportMedia, messageId: string) => void
 }) {
   const [penalty, setPenalty] = useState<Penalty>('none')
   const [deleteMessage, setDeleteMessage] = useState(false)
@@ -134,12 +198,17 @@ function ReportCard({
       </div>
 
       {/* Pesan yang dilaporkan */}
-      <blockquote className="mt-3 rounded-[12px] border-l-2 border-red-400/60 bg-[#151515] px-3.5 py-3">
+      <blockquote className="mt-3 flex flex-col gap-2.5 rounded-[12px] border-l-2 border-red-400/60 bg-[#151515] px-3.5 py-3">
+        {report.message.media && (
+          <ReportMediaBlock media={report.message.media} onOpen={(m) => onOpenMedia(m, report.message.id)} />
+        )}
         {report.message.body ? (
           <p className="whitespace-pre-line break-words text-sm leading-snug text-neutral-200">{report.message.body}</p>
-        ) : (
+        ) : report.message.is_deleted ? (
           <p className="text-sm italic text-neutral-500">Message deleted</p>
-        )}
+        ) : !report.message.media ? (
+          <p className="text-sm italic text-neutral-500">No text</p>
+        ) : null}
       </blockquote>
 
       {report.note && (
@@ -271,6 +340,7 @@ export default function Reports({ room }: { room: { slug: string; name: string }
   const [reports, setReports] = useState<ReportRow[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
+  const [viewer, setViewer] = useState<MediaItem | null>(null)
 
   // `cancelled` mencegah respons lama menimpa daftar saat user cepat ganti tab.
   useEffect(() => {
@@ -294,6 +364,18 @@ export default function Reports({ room }: { room: { slug: string; name: string }
 
   // Laporan yang baru ditutup langsung hilang dari antrean pending.
   const handleResolved = (id: string) => setReports((prev) => prev?.filter((r) => r.id !== id) ?? prev)
+
+  const openMedia = (media: ReportMedia, messageId: string) => {
+    if (media.type === 'file') return
+    setViewer({
+      id: messageId,
+      type: media.type,
+      url: media.url,
+      thumbnail: media.thumbnail,
+      duration: media.type === 'video' ? media.duration : null,
+      createdAt: null,
+    })
+  }
 
   const tabLabel = STATUS_TABS.find((t) => t.id === status)?.label.toLowerCase() ?? status
 
@@ -346,11 +428,13 @@ export default function Reports({ room }: { room: { slug: string; name: string }
         {reports && reports.length > 0 && (
           <div className="flex flex-col gap-3">
             {reports.map((report) => (
-              <ReportCard key={report.id} report={report} slug={room.slug} onResolved={handleResolved} />
+              <ReportCard key={report.id} report={report} slug={room.slug} onResolved={handleResolved} onOpenMedia={openMedia} />
             ))}
           </div>
         )}
       </div>
+
+      {viewer && <MediaViewer item={viewer} onClose={() => setViewer(null)} />}
     </div>
   )
 }

@@ -70,12 +70,12 @@ export default function Leaderboard({ isAdmin }: { isAdmin: boolean }) {
   return (
     <>
       <div className="mx-auto max-w-2xl px-2 pb-6 pt-4">
-        <div className=" mb-2 flex items-center justify-between">
+        <div className=" mb-2 flex w-ft fixed bottom-20 right-5 z-[999] items-center justify-between">
 
           {isAdmin && (
             <Link
               href="/discuss/leaderboard/admin"
-              className="relative rounded-[20px] border-[1px] border-outline-variant/30 py-2  px-2 bg-surface-container-higher  flex items-center justify-center gap-1.5 font-label-md text-label-md text-on-surface-variant hover:text-on-surface"
+              className="relative rounded-[20px] border-[1px] border-outline-variant/30 py-2  px-2 bg-surface-container-low  flex items-center justify-center gap-1.5 font-label-md text-label-md text-on-surface-variant hover:text-on-surface"
             >
               <Settings className="h-4 w-4" />
               Settings Cp
@@ -83,7 +83,7 @@ export default function Leaderboard({ isAdmin }: { isAdmin: boolean }) {
           )}
         </div>
 
-        <div className="mb-3 flex border-b pb-2 border-outline-variant/30">
+        <div className="mb-3 grid grid-cols-2 border-b pb-2 border-outline-variant/30">
           <button onClick={() => setTab('leaderboard')} className={tabClass(tab === 'leaderboard')}>
             <Trophy className="h-4 w-4" />
             Leaderboard
@@ -144,7 +144,7 @@ export default function Leaderboard({ isAdmin }: { isAdmin: boolean }) {
             )}
 
             {board && board.me !== null && (
-              <div className="mt-4 rounded-[999px] bg-surface-container-high px-3 py-2 font-label-md text-label-md text-on-surface-variant w-fit rounded-[99px]">
+              <div className="mt-4 rounded-[999px] bg-surface-container-high px-3 py-2 font-label-md border border-outline-variant/30 text-label-md text-on-surface-variant w-fit rounded-[99px]">
                 Your points: <span className="font-semibold text-amber-300">{board.me} CP</span>
               </div>
             )}
@@ -157,11 +157,11 @@ export default function Leaderboard({ isAdmin }: { isAdmin: boolean }) {
               <p className="py-8 text-center font-body-sm text-body-sm text-on-surface-variant">Loading...</p>
             )}
 
-            <div className="flex flex-col gap-2 px-3">
+            <div className="flex flex-col gap-2 px-2">
               {achievements?.map((item) => (
                 <div
                   key={item.key}
-                  className={`rounded-full px-3 py-3 ${item.unlocked ? 'bg-amber-400/10' : 'bg-surface-container-high'}`}
+                  className={`rounded-full px-3 py-3 ${item.unlocked ? 'bg-green-400/10' : 'bg-surface-container-higher'}`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-label-md text-label-md font-semibold text-on-surface">{item.name}</span>
