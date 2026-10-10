@@ -61,7 +61,7 @@ class ContributionPhase3Test extends TestCase
     }
 
     /** Baris ledger di masa lalu (di luar batas harian hari ini). */
-    private function seed(User $user, string $source, int $count, int $amount = 1): array
+    private function seedLedger(User $user, string $source, int $count, int $amount = 1): array
     {
         $ids = [];
         for ($i = 0; $i < $count; $i++) {
@@ -107,7 +107,7 @@ class ContributionPhase3Test extends TestCase
 
     public function test_hundredth_reply_unlocks_its_milestone(): void
     {
-        $this->seed($this->alice, 'reply', 99, 4);
+        $this->seedLedger($this->alice, 'reply', 99, 4);
         $question = $this->send($this->bob, 'Does anyone know the answer here?');
 
         $this->send($this->alice, 'Reply number one hundred today', $question->id);
@@ -118,7 +118,7 @@ class ContributionPhase3Test extends TestCase
 
     public function test_hundredth_reaction_unlocks_for_the_author(): void
     {
-        $this->seed($this->bob, 'reaction_received', 99, 2);
+        $this->seedLedger($this->bob, 'reaction_received', 99, 2);
         $message = $this->send($this->bob, 'A post that everyone likes');
 
         $this->service->awardForReaction($this->room->id, $message->id, $this->alice->id);
@@ -128,8 +128,8 @@ class ContributionPhase3Test extends TestCase
 
     public function test_tenth_helpful_and_tenth_best_answer_unlock_from_their_own_triggers(): void
     {
-        $this->seed($this->alice, 'helpful', 9, 15);
-        $this->seed($this->alice, 'best_answer', 9, 25);
+        $this->seedLedger($this->alice, 'helpful', 9, 15);
+        $this->seedLedger($this->alice, 'best_answer', 9, 25);
 
         $helpfulMessage = $this->send($this->alice, 'A very helpful explanation');
         $this->service->awardForHelpful($helpfulMessage);
@@ -144,7 +144,7 @@ class ContributionPhase3Test extends TestCase
     public function test_active_thirty_days_unlocks_from_the_daily_bonus(): void
     {
         config(['discuss_cp.daily_bonus_points' => 10]);
-        $this->seed($this->alice, 'daily_bonus', 29, 10);
+        $this->seedLedger($this->alice, 'daily_bonus', 29, 10);
         $question = $this->send($this->bob, 'Does anyone know the answer here?');
 
         $this->send($this->alice, 'Reply that triggers the bonus', $question->id);
@@ -154,7 +154,7 @@ class ContributionPhase3Test extends TestCase
 
     public function test_revoked_contributions_do_not_count_toward_progress(): void
     {
-        $ids = $this->seed($this->alice, 'helpful', 5, 15);
+        $ids = $this->seedLedger($this->alice, 'helpful', 5, 15);
         foreach (array_slice($ids, 0, 2) as $id) {
             CpLog::unguarded(fn () => CpLog::create([
                 'user_id' => $this->alice->id, 'room_id' => $this->room->id, 'source' => 'revoke',

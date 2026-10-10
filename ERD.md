@@ -550,10 +550,7 @@ Direct message tidak menambah tabel baru — sepenuhnya reuse `discuss_rooms` + 
 | `title` | `VARCHAR(120)` | Boleh string kosong pada post bermedia |
 | `body` | `TEXT` | Teks / caption, teks biasa (dirender tanpa HTML); boleh string kosong pada post bermedia |
 | `link_url` | `VARCHAR(500)` | Nullable; hanya http/https |
-| `media_type` | `VARCHAR(10)` | Nullable; `image` \| `video` (satu media per post) |
-| `media_url` | `TEXT` | Nullable; URL file di disk `public` (`story/images`, `story/videos`) |
-| `media_thumbnail` | `TEXT` | Nullable; poster video (dibuat di browser) |
-| `media_meta` | `JSON` | Nullable; `name`, `size`, `mime`, `width`, `height`, `duration`, `path`, `thumb_path` (path dipakai untuk hapus file) |
+| `media_items` | `JSON` | Nullable; carousel berurutan, maks. 10 item. Tiap item: `id` (ULID, stabil untuk edit), `type` (`image` \| `video`), `url`, `thumbnail` (foto: JPEG ≤1080px buatan server, null untuk GIF; video: poster dari browser), `width`, `height`, `duration`, `name`, `size`, `mime`, `path` & `thumb_path` (lokasi file di disk `public`, tidak dikirim ke client; dipakai untuk menghapus file) |
 | `is_pinned` | `BOOLEAN` | Disematkan di atas |
 | `published_at` | `TIMESTAMP` | Nullable; masa depan = terjadwal, null = draf (tidak tampil) |
 | `created_by` ⟶ | `ULID` | → `users.id` *(logis)* |

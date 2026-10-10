@@ -8,6 +8,7 @@ use App\Modules\Discuss\Http\Requests\UpdateMessageRequest;
 use App\Modules\Discuss\Http\Resources\MessageResource;
 use App\Modules\Discuss\Models\Room;
 use App\Modules\Discuss\Services\MemberService;
+use App\Modules\Discuss\Services\ImageThumbnailService;
 use App\Modules\Discuss\Services\MessageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -211,37 +212,6 @@ class MessageController
      */
     private function makeImageThumbnail(string $binary): ?string
     {
-        if (! function_exists('imagecreatefromstring')) {
-            // GD extension not available on this install — skip the thumbnail,
-            // the client just falls back to the full-size original.
-            return null;
-        }
-
-        $src = @imagecreatefromstring($binary);
-        if ($src === false) {
-            return null;
-        }
-
-        $srcW = imagesx($src);
-        $srcH = imagesy($src);
-        $maxDim = 480;
-
-        $ratio = min(1.0, $maxDim / max($srcW, $srcH));
-        $dstW = max(1, (int) round($srcW * $ratio));
-        $dstH = max(1, (int) round($srcH * $ratio));
-
-        $dst = imagecreatetruecolor($dstW, $dstH);
-        // JPEG has no alpha channel — flatten any transparency onto white first.
-        imagefill($dst, 0, 0, (int) imagecolorallocate($dst, 255, 255, 255));
-        imagecopyresampled($dst, $src, 0, 0, 0, 0, $dstW, $dstH, $srcW, $srcH);
-
-        ob_start();
-        imagejpeg($dst, null, 82);
-        $encoded = ob_get_clean();
-
-        imagedestroy($src);
-        imagedestroy($dst);
-
-        return $encoded !== false && $encoded !== '' ? $encoded : null;
+        return app(ImageThumbnailService::class)->make($binary, 480);
     }
 }

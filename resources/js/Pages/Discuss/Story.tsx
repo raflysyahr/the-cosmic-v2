@@ -1,73 +1,54 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import { ExternalLink, Megaphone, Pin, Play, Settings2 } from 'lucide-react'
+import { ExternalLink, Megaphone, Pin, Settings2 } from 'lucide-react'
 import LayoutDiscuss from '../../Components/layout/LayoutDiscuss'
 import StoryAdminPanel from '../../Components/discuss/StoryAdminPanel'
-import StoryReactions from '../../Components/discuss/StoryReactions'
-import { Empty, MediaViewer, type MediaItem } from '../../Components/profile/SharedContent'
-import { formatStoryDate, type StoryPost } from '../../Components/discuss/storyTypes'
-import { formatDuration } from '../../lib/media'
+import StoryCarousel from '../../Components/discuss/StoryCarousel'
+import StoryViewer from '../../Components/discuss/StoryViewer'
+import {
+  ReactionChips,
+  ReactionPicker,
+  useLongPress,
+  useStoryReaction,
+} from '../../Components/discuss/StoryReactions'
+import { Empty } from '../../Components/profile/SharedContent'
+import { formatStoryDate, type StoryMedia, type StoryPost } from '../../Components/discuss/storyTypes'
 import client from '../../api/client'
 
 // Catatan: tailwind.config.js menimpa rounded-full (= 0.75rem), jadi pil/lingkaran selalu rounded-[999px].
 
 const CAPTION_CLAMP_CHARS = 220
 
-/** Rasio tampilan media dibatasi agar feed tidak terlalu tinggi / terlalu gepeng. */
-const aspectOf = (media: NonNullable<StoryPost['media']>): number => {
-  if (!media.width || !media.height) return 4 / 3
-  return Math.min(Math.max(media.width / media.height, 0.8), 1.91)
-}
-
-function PostMedia({ media, onOpen }: { media: NonNullable<StoryPost['media']>; onOpen: () => void }) {
-  const isVideo = media.type === 'video'
-
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      aria-label={isVideo ? 'Play video' : 'Open photo'}
-      style={{ aspectRatio: aspectOf(media) }}
-      className="relative mt-3 block w-full overflow-hidden bg-black"
-    >
-      {media.thumbnail ? (
-        <img src={media.thumbnail} alt="" loading="lazy" className="h-full w-full object-cover" />
-      ) : null}
-
-      {isVideo && (
-        <>
-          <span className="absolute inset-0 flex items-center justify-center">
-            <span className="flex h-14 w-14 items-center justify-center rounded-[999px] bg-black/55 backdrop-blur-sm">
-              <Play className="h-6 w-6 translate-x-0.5 fill-white text-white" />
-            </span>
-          </span>
-          {media.duration ? (
-            <span className="absolute bottom-2 left-2 rounded-[8px] bg-black/55 px-2 py-1 text-[13px] font-medium text-white backdrop-blur-sm">
-              {formatDuration(media.duration)}
-            </span>
-          ) : null}
-        </>
-      )}
-    </button>
-  )
+interface ViewerState {
+  items: StoryMedia[]
+  index: number
 }
 
 function PostCard({
   post,
-  isAdmin,
   onChange,
   onOpenMedia,
 }: {
   post: StoryPost
-  isAdmin: boolean
   onChange: (post: StoryPost) => void
-  onOpenMedia: (post: StoryPost) => void
+  onOpenMedia: (items: StoryMedia[], index: number) => void
 }) {
   const [expanded, setExpanded] = useState(false)
+  const [picker, setPicker] = useState<{ x: number; y: number } | null>(null)
+  const { react, pending, error } = useStoryReaction(post, onChange)
+
+  // Tahan kartu → tooltip pilihan reaksi.
+  const hold = useLongPress(setPicker)
+
   const long = post.body.length > CAPTION_CLAMP_CHARS
   const clamped = long && !expanded
+  const hasFooter = post.reactions.length > 0 || error
 
   return (
-    <article className="overflow-hidden rounded-[20px]  bg-surface-container-low">
+    <>
+    <article
+      {...hold}
+      className="select-none overflow-hidden rounded-[20px] border border-[#262626] bg-[#0f0f0f] [-webkit-touch-callout:none]"
+    >
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-4">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[999px] bg-[#1c1c1c] text-neutral-300">
@@ -83,8 +64,8 @@ function PostCard({
         )}
       </div>
 
-      {/* Media */}
-      {post.media && <PostMedia media={post.media} onOpen={() => onOpenMedia(post)} />}
+      {/* Media (carousel bila lebih dari satu) */}
+      <StoryCarousel media={post.media} onOpen={(index) => onOpenMedia(post.media, index)} />
 
       {/* Judul + caption */}
       {(post.title || post.body) && (
@@ -105,6 +86,7 @@ function PostCard({
               {long && (
                 <button
                   type="button"
+                  data-no-hold
                   onClick={() => setExpanded((v) => !v)}
                   className="mt-1 text-[13px] font-semibold text-neutral-500 transition-colors hover:text-neutral-300"
                 >
@@ -122,6 +104,7 @@ function PostCard({
             href={post.link_url}
             target="_blank"
             rel="noopener noreferrer"
+            data-no-hold
             className="inline-flex items-center gap-1.5 rounded-[999px] border border-[#2e2e2e] px-3.5 py-2 text-[13px] font-semibold text-neutral-200 transition-colors hover:bg-[#1a1a1a]"
           >
             Open link <ExternalLink className="h-3.5 w-3.5" />
@@ -129,23 +112,41 @@ function PostCard({
         </div>
       )}
 
-      <div className="mt-3">
-        <StoryReactions post={post} isAdmin={isAdmin} onChange={onChange} />
+      {/* Reaksi: hanya yang > 0; sisanya lewat tahan kartu */}
+      <div className={hasFooter ? 'px-4 pb-4 pt-3' : 'pb-4'}>
+        <ReactionChips post={post} pending={pending} onReact={react} />
+        {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
       </div>
+
     </article>
+
+    {/* Di luar <article>: event dari portal bergelembung lewat React tree dan akan
+        mengenai handler tahan-lama / klik milik kartu. */}
+    {picker && (
+      <ReactionPicker
+        anchor={picker}
+        current={post.my_reaction}
+        onClose={() => setPicker(null)}
+        onPick={(emoji) => {
+          setPicker(null)
+          void react(emoji)
+        }}
+      />
+    )}
+    </>
   )
 }
 
 /**
- * Story = post dari admin (teks, foto atau video, dengan caption). User membaca dan
- * memberi reaksi; admin platform juga melihat panel untuk menulis, mengelola, dan
- * melihat siapa bereaksi apa.
+ * Story = post dari admin (teks, atau carousel foto/video, dengan caption). User
+ * membaca dan memberi reaksi (tahan post untuk memilih emoji); admin platform juga
+ * melihat panel untuk menulis dan mengelola post.
  */
 export default function Story({ isAdmin }: { isAdmin: boolean }) {
   const [items, setItems] = useState<StoryPost[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [managing, setManaging] = useState(false)
-  const [viewer, setViewer] = useState<MediaItem | null>(null)
+  const [viewer, setViewer] = useState<ViewerState | null>(null)
 
   const load = useCallback(() => {
     setError(null)
@@ -174,26 +175,17 @@ export default function Story({ isAdmin }: { isAdmin: boolean }) {
     setItems((prev) => prev?.map((p) => (p.id === next.id ? next : p)) ?? prev)
   }, [])
 
-  const openMedia = (post: StoryPost) => {
-    if (!post.media) return
-    setViewer({
-      id: post.id,
-      type: post.media.type,
-      url: post.media.url,
-      thumbnail: post.media.thumbnail,
-      duration: post.media.duration,
-      createdAt: post.published_at,
-    })
-  }
-
   return (
-    <div className="min-h-full bg-surface px-4 pb-10 pt-6">
+    <div className="min-h-full bg-[#0b0b0b] px-4 pb-10 pt-6">
       <div className="mb-5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-[999px] bg-[#1c1c1c] text-neutral-300">
             <Megaphone className="h-5 w-5" strokeWidth={1.6} />
           </span>
-          <h1 className="text-[22px] font-bold text-white">Story</h1>
+          <div>
+            <h1 className="text-[22px] font-bold leading-tight text-white">Story</h1>
+            {items && items.length > 0 && <p className="text-xs text-neutral-600">Hold a post to react</p>}
+          </div>
         </div>
         {isAdmin && (
           <button
@@ -240,11 +232,16 @@ export default function Story({ isAdmin }: { isAdmin: boolean }) {
 
       <div className="flex flex-col gap-4">
         {items?.map((post) => (
-          <PostCard key={post.id} post={post} isAdmin={isAdmin} onChange={replacePost} onOpenMedia={openMedia} />
+          <PostCard
+            key={post.id}
+            post={post}
+            onChange={replacePost}
+            onOpenMedia={(media, index) => setViewer({ items: media, index })}
+          />
         ))}
       </div>
 
-      {viewer && <MediaViewer item={viewer} onClose={() => setViewer(null)} />}
+      {viewer && <StoryViewer items={viewer.items} startIndex={viewer.index} onClose={() => setViewer(null)} />}
     </div>
   )
 }

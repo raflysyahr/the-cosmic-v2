@@ -48,15 +48,15 @@ class AnnouncementController
             ['announcement' => $this->announcements->create(
                 $request->user(),
                 $request->validated(),
-                $request->file('media'),
-                $request->file('thumbnail'),
+                (array) $request->file('media', []),
+                (array) $request->file('thumbnails', []),
             )],
             201,
         );
     }
 
     /**
-     * Update parsial. Untuk mengganti media kirim multipart lewat POST + `_method=PUT`
+     * Update parsial. Untuk mengubah media kirim multipart lewat POST + `_method=PUT`
      * (PHP tidak mem-parse multipart pada request PUT asli).
      */
     public function update(AnnouncementRequest $request, string $id): JsonResponse
@@ -66,8 +66,8 @@ class AnnouncementController
                 $request->user(),
                 $id,
                 $request->validated(),
-                $request->file('media'),
-                $request->file('thumbnail'),
+                (array) $request->file('media', []),
+                (array) $request->file('thumbnails', []),
             )]
         );
     }
@@ -79,11 +79,6 @@ class AnnouncementController
         return response()->json(
             $this->announcements->react((string) $request->user()->id, $id, $data['emoji'])
         );
-    }
-
-    public function reactors(Request $request, string $id): JsonResponse
-    {
-        return response()->json($this->announcements->reactors($request->user(), $id));
     }
 
     public function destroy(Request $request, string $id): JsonResponse

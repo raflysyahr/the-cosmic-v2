@@ -2,6 +2,7 @@
 
 namespace App\Modules\Discuss;
 
+use App\Modules\Discuss\Console\GenerateStoryThumbnails;
 use App\Modules\Discuss\Events\MessageDeleted;
 use App\Modules\Discuss\Events\MessageSent;
 use App\Modules\Discuss\Events\ReactionToggled;
@@ -46,6 +47,10 @@ class DiscussServiceProvider extends ServiceProvider
         // (bukan 'auth:sanctum') karena project ini pakai Sanctum SPA
         // cookie-based (lihat resources/js/api/client.ts: withCredentials).
         Broadcast::routes(['middleware' => ['web']]);
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([GenerateStoryThumbnails::class]);
+        }
 
         require __DIR__ . '/Channels/RoomChannel.php';
     }

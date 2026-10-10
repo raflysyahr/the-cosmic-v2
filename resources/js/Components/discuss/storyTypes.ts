@@ -1,13 +1,19 @@
 /** Tipe & helper bersama untuk halaman Story dan panel admin-nya. */
 
 export interface StoryMedia {
+  /** Id item (stabil) — dipakai saat edit untuk memilih item lama yang dipertahankan. */
+  id: string
   type: 'image' | 'video'
   url: string
+  /** Thumbnail ringan untuk feed (foto: JPEG ≤1080px; video: poster). Foto GIF memakai file asli. */
   thumbnail: string | null
   duration: number | null
   width: number | null
   height: number | null
 }
+
+/** Jumlah maksimal foto/video per post (sinkron dengan AnnouncementRequest::MAX_MEDIA). */
+export const STORY_MAX_MEDIA = 10
 
 export interface StoryReactionCount {
   emoji: string
@@ -23,7 +29,8 @@ export interface StoryPost {
   published_at: string | null
   is_published?: boolean
   is_new?: boolean
-  media: StoryMedia | null
+  /** Carousel, berurutan. Kosong = post teks. */
+  media: StoryMedia[]
   reactions: StoryReactionCount[]
   my_reaction: string | null
   reaction_total: number

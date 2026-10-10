@@ -54,7 +54,6 @@ Route::prefix('api')->middleware(['web', 'auth:sanctum'])->group(function () {
     Route::get('/admin/story', [AnnouncementController::class, 'adminIndex']);
     Route::post('/admin/story', [AnnouncementController::class, 'store']);
     Route::put('/admin/story/{id}', [AnnouncementController::class, 'update']);
-    Route::get('/admin/story/{id}/reactions', [AnnouncementController::class, 'reactors']);
     Route::delete('/admin/story/{id}', [AnnouncementController::class, 'destroy']);
 
     // Reports (moderasi) & achievements

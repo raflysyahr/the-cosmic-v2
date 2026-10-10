@@ -13,7 +13,7 @@ class Announcement extends Model
 
     protected $fillable = [
         'title', 'body', 'link_url', 'is_pinned', 'published_at', 'created_by',
-        'media_type', 'media_url', 'media_thumbnail', 'media_meta',
+        'media_items',
     ];
 
     protected function casts(): array
@@ -21,7 +21,7 @@ class Announcement extends Model
         return [
             'is_pinned' => 'boolean',
             'published_at' => 'datetime',
-            'media_meta' => 'array',
+            'media_items' => 'array',
         ];
     }
 

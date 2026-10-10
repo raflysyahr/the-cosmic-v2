@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FC } from 'react'
-import { ImagePlus, Pin, Play, Trash2, X } from 'lucide-react'
+import { ImagePlus, Pin, Play, Plus, Trash2, X } from 'lucide-react'
 import client from '../../api/client'
 import { MAX_VIDEO_BYTES, readVideoMeta, type VideoMeta } from '../../lib/media'
-import { formatStoryDateTime, type StoryMedia, type StoryPost } from './storyTypes'
+import { STORY_MAX_MEDIA, formatStoryDateTime, type StoryMedia, type StoryPost } from './storyTypes'
 
 // Catatan: tailwind.config.js menimpa rounded-full (= 0.75rem), jadi pil/lingkaran selalu rounded-[999px].
 
@@ -11,11 +11,23 @@ interface StoryAdminPanelProps {
   onChanged: () => void
 }
 
+/** File yang baru dipilih dan belum diunggah. */
+interface DraftFile {
+  key: string
+  file: File
+  preview: string
+  isVideo: boolean
+  videoMeta: VideoMeta | null
+  size: { width: number | null; height: number | null } | null
+}
+
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024 // sinkron dengan batas foto di AnnouncementRequest
 const MEDIA_ACCEPT = 'image/png,image/jpeg,image/gif,image/webp,video/mp4,video/quicktime,video/webm'
 
 const inputClass =
   'w-full rounded-[12px] border border-[#2a2a2a] bg-[#0b0b0b] px-3.5 py-2.5 text-sm text-white placeholder:text-neutral-600 focus:border-[#4a4a4a] focus:outline-none'
+
+const tileClass = 'relative h-20 w-20 shrink-0 overflow-hidden rounded-[12px] bg-black'
 
 const toLocalInput = (iso: string | null): string => {
   if (!iso) return ''
@@ -35,6 +47,17 @@ const readImageSize = (url: string): Promise<{ width: number | null; height: num
 const reactionSummary = (post: StoryPost): string =>
   post.reactions.length === 0 ? 'No reactions' : post.reactions.map((r) => `${r.emoji} ${r.count}`).join('  ')
 
+const removeButton = (label: string, onClick: () => void) => (
+  <button
+    type="button"
+    onClick={onClick}
+    aria-label={label}
+    className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-[999px] bg-black/70 text-white"
+  >
+    <X className="h-3.5 w-3.5" />
+  </button>
+)
+
 /** Panel kelola post Story — hanya dirender untuk admin platform (server tetap memvalidasi). */
 const StoryAdminPanel: FC<StoryAdminPanelProps> = ({ onChanged }) => {
   const [items, setItems] = useState<StoryPost[]>([])
@@ -45,13 +68,11 @@ const StoryAdminPanel: FC<StoryAdminPanelProps> = ({ onChanged }) => {
   const [pinned, setPinned] = useState(false)
   const [publishAt, setPublishAt] = useState('')
 
-  // Media: file baru (belum diunggah) atau media lama milik post yang sedang diedit.
-  const [file, setFile] = useState<File | null>(null)
-  const [preview, setPreview] = useState<string | null>(null)
-  const [videoMeta, setVideoMeta] = useState<VideoMeta | null>(null)
-  const [imageSize, setImageSize] = useState<{ width: number | null; height: number | null } | null>(null)
-  const [existing, setExisting] = useState<StoryMedia | null>(null)
-  const [removeExisting, setRemoveExisting] = useState(false)
+  // Media: item lama yang dipertahankan (mode edit) + file baru. Urutan tampil = lama dulu, lalu baru.
+  const [kept, setKept] = useState<StoryMedia[]>([])
+  const [drafts, setDrafts] = useState<DraftFile[]>([])
+  const draftsRef = useRef<DraftFile[]>([])
+  draftsRef.current = drafts
 
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState<number | null>(null)
@@ -70,18 +91,20 @@ const StoryAdminPanel: FC<StoryAdminPanelProps> = ({ onChanged }) => {
 
   useEffect(load, [load])
 
-  // Bebaskan object URL preview saat diganti / panel ditutup.
+  // Bebaskan semua object URL saat panel ditutup.
   useEffect(() => {
-    return () => {
-      if (preview) URL.revokeObjectURL(preview)
-    }
-  }, [preview])
+    return () => draftsRef.current.forEach((d) => URL.revokeObjectURL(d.preview))
+  }, [])
 
-  const clearFile = () => {
-    setFile(null)
-    setPreview(null)
-    setVideoMeta(null)
-    setImageSize(null)
+  const clearDrafts = () => {
+    draftsRef.current.forEach((d) => URL.revokeObjectURL(d.preview))
+    setDrafts([])
+  }
+
+  const removeDraft = (key: string) => {
+    const target = drafts.find((d) => d.key === key)
+    if (target) URL.revokeObjectURL(target.preview)
+    setDrafts((prev) => prev.filter((d) => d.key !== key))
   }
 
   const reset = () => {
@@ -91,9 +114,8 @@ const StoryAdminPanel: FC<StoryAdminPanelProps> = ({ onChanged }) => {
     setLinkUrl('')
     setPinned(false)
     setPublishAt('')
-    clearFile()
-    setExisting(null)
-    setRemoveExisting(false)
+    clearDrafts()
+    setKept([])
     setProgress(null)
   }
 
@@ -105,39 +127,50 @@ const StoryAdminPanel: FC<StoryAdminPanelProps> = ({ onChanged }) => {
     setLinkUrl(item.link_url ?? '')
     setPinned(item.is_pinned)
     setPublishAt(toLocalInput(item.published_at))
-    setExisting(item.media)
+    setKept(item.media)
     setMessage(null)
   }
+
+  const total = kept.length + drafts.length
 
   const onPick = async (e: ChangeEvent<HTMLInputElement>) => {
-    const picked = e.target.files?.[0]
+    const picked = Array.from(e.target.files ?? [])
     e.target.value = '' // boleh memilih file yang sama lagi
-    if (!picked) return
-
-    const isVideo = picked.type.startsWith('video/')
-    const isImage = picked.type.startsWith('image/')
-
-    if (!isVideo && !isImage) return setMessage({ kind: 'error', text: 'Choose a photo or a video.' })
-    if (isVideo && picked.size > MAX_VIDEO_BYTES)
-      return setMessage({ kind: 'error', text: 'Video is too large (max 50 MB).' })
-    if (isImage && picked.size > MAX_IMAGE_BYTES)
-      return setMessage({ kind: 'error', text: 'Photo is too large (max 8 MB).' })
+    if (picked.length === 0) return
 
     setMessage(null)
-    clearFile()
+    const added: DraftFile[] = []
+    const problems: string[] = []
+    let room = STORY_MAX_MEDIA - total
 
-    const url = URL.createObjectURL(picked)
-    setFile(picked)
-    setPreview(url)
-    setRemoveExisting(false)
+    for (const file of picked) {
+      const isVideo = file.type.startsWith('video/')
+      const isImage = file.type.startsWith('image/')
 
-    // Durasi, ukuran, dan poster dibaca di browser (server tanpa ffmpeg), sama seperti di chat.
-    if (isVideo) setVideoMeta(await readVideoMeta(picked))
-    else setImageSize(await readImageSize(url))
+      if (!isVideo && !isImage) problems.push(`${file.name}: not a photo or video`)
+      else if (isVideo && file.size > MAX_VIDEO_BYTES) problems.push(`${file.name}: video over 50 MB`)
+      else if (isImage && file.size > MAX_IMAGE_BYTES) problems.push(`${file.name}: photo over 8 MB`)
+      else if (room <= 0) problems.push(`${file.name}: limit of ${STORY_MAX_MEDIA} reached`)
+      else {
+        room -= 1
+        const preview = URL.createObjectURL(file)
+        // Durasi, ukuran, dan poster dibaca di browser (server tanpa ffmpeg), sama seperti di chat.
+        added.push({
+          key: `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).slice(2, 7)}`,
+          file,
+          preview,
+          isVideo,
+          videoMeta: isVideo ? await readVideoMeta(file) : null,
+          size: isImage ? await readImageSize(preview) : null,
+        })
+      }
+    }
+
+    if (added.length) setDrafts((prev) => [...prev, ...added])
+    if (problems.length) setMessage({ kind: 'error', text: problems.join(' · ') })
   }
 
-  const keptExisting = existing && !removeExisting && !file ? existing : null
-  const hasMedia = Boolean(file || keptExisting)
+  const hasMedia = total > 0
   const canSubmit = !busy && (hasMedia || (title.trim() !== '' && body.trim() !== ''))
 
   const submit = async () => {
@@ -154,23 +187,29 @@ const StoryAdminPanel: FC<StoryAdminPanelProps> = ({ onChanged }) => {
       // Kosong = tayang sekarang (server yang mengisi).
       fd.append('published_at', publishAt ? new Date(publishAt).toISOString() : '')
 
-      if (file) {
-        fd.append('media', file)
-        const w = videoMeta?.width ?? imageSize?.width
-        const h = videoMeta?.height ?? imageSize?.height
-        if (w) fd.append('width', String(w))
-        if (h) fd.append('height', String(h))
-        if (videoMeta?.duration != null) fd.append('duration', String(videoMeta.duration))
-        if (videoMeta?.thumbnail) fd.append('thumbnail', new File([videoMeta.thumbnail], 'poster.jpg', { type: 'image/jpeg' }))
-      } else if (editingId && existing && removeExisting) {
-        fd.append('remove_media', '1')
+      // File baru memakai key berindeks; metadata tiap file memakai indeks yang sama.
+      drafts.forEach((d, i) => {
+        fd.append(`media[${i}]`, d.file)
+        const w = d.videoMeta?.width ?? d.size?.width
+        const h = d.videoMeta?.height ?? d.size?.height
+        if (w) fd.append(`widths[${i}]`, String(w))
+        if (h) fd.append(`heights[${i}]`, String(h))
+        if (d.videoMeta?.duration != null) fd.append(`durations[${i}]`, String(d.videoMeta.duration))
+        if (d.videoMeta?.thumbnail) {
+          fd.append(`thumbnails[${i}]`, new File([d.videoMeta.thumbnail], 'poster.jpg', { type: 'image/jpeg' }))
+        }
+      })
+
+      if (editingId) {
+        // Item lama yang tidak disebut di keep_media dihapus oleh server.
+        fd.append('sync_media', '1')
+        kept.forEach((m) => fd.append('keep_media[]', m.id))
+        // Update multipart: PHP tidak mem-parse body PUT asli, jadi POST + _method=PUT.
+        fd.append('_method', 'PUT')
       }
 
-      // Update multipart: PHP tidak mem-parse body PUT asli, jadi POST + _method=PUT.
-      if (editingId) fd.append('_method', 'PUT')
-
       await client.post(editingId ? `/admin/story/${editingId}` : '/admin/story', fd, {
-        timeout: 180_000, // video bisa sampai 50 MB
+        timeout: 300_000, // sampai 10 file, video bisa 50 MB per file
         onUploadProgress: (ev) => setProgress(ev.total ? Math.round((ev.loaded / ev.total) * 100) : null),
       })
 
@@ -187,7 +226,7 @@ const StoryAdminPanel: FC<StoryAdminPanelProps> = ({ onChanged }) => {
   }
 
   const remove = async (item: StoryPost) => {
-    const label = item.title || item.body.slice(0, 40) || (item.media ? `this ${item.media.type}` : 'this post')
+    const label = item.title || item.body.slice(0, 40) || (item.media.length ? 'this media post' : 'this post')
     if (!window.confirm(`Delete "${label}"? Its media and reactions will be removed too.`)) return
     try {
       await client.delete(`/admin/story/${item.id}`)
@@ -204,56 +243,61 @@ const StoryAdminPanel: FC<StoryAdminPanelProps> = ({ onChanged }) => {
       <h2 className="mb-3 text-base font-bold text-white">{editingId ? 'Edit post' : 'New post'}</h2>
 
       <div className="flex flex-col gap-2.5">
-        <input ref={fileInput} type="file" accept={MEDIA_ACCEPT} className="hidden" onChange={onPick} />
+        <input ref={fileInput} type="file" accept={MEDIA_ACCEPT} multiple className="hidden" onChange={onPick} />
 
-        {/* Media */}
-        {file && preview ? (
-          <div className="relative overflow-hidden rounded-[14px] bg-black">
-            {file.type.startsWith('video/') ? (
-              <video src={preview} controls muted playsInline className="max-h-72 w-full object-contain" />
-            ) : (
-              <img src={preview} alt="" className="max-h-72 w-full object-contain" />
-            )}
-            <button
-              type="button"
-              onClick={clearFile}
-              aria-label="Remove media"
-              className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-[999px] bg-black/65 text-white"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        ) : keptExisting ? (
-          <div className="relative overflow-hidden rounded-[14px] bg-black">
-            {keptExisting.type === 'video' ? (
-              <video
-                src={keptExisting.url}
-                poster={keptExisting.thumbnail ?? undefined}
-                controls
-                muted
-                playsInline
-                className="max-h-72 w-full object-contain"
-              />
-            ) : (
-              <img src={keptExisting.url} alt="" className="max-h-72 w-full object-contain" />
-            )}
-            <div className="absolute right-2 top-2 flex gap-2">
-              <button
-                type="button"
-                onClick={() => fileInput.current?.click()}
-                className="rounded-[999px] bg-black/65 px-3 py-1.5 text-xs font-semibold text-white"
-              >
-                Replace
-              </button>
-              <button
-                type="button"
-                onClick={() => setRemoveExisting(true)}
-                aria-label="Remove media"
-                className="flex h-8 w-8 items-center justify-center rounded-[999px] bg-black/65 text-white"
-              >
-                <X className="h-4 w-4" />
-              </button>
+        {/* Media: tray geser */}
+        {hasMedia ? (
+          <div>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {kept.map((m) => (
+                <div key={m.id} className={tileClass}>
+                  {m.type === 'video' && !m.thumbnail ? (
+                    <video src={m.url} muted playsInline className="h-full w-full object-cover" />
+                  ) : (
+                    <img src={m.thumbnail ?? m.url} alt="" className="h-full w-full object-cover" />
+                  )}
+                  {m.type === 'video' && (
+                    <span className="absolute bottom-1 left-1 flex h-5 w-5 items-center justify-center rounded-[999px] bg-black/65">
+                      <Play className="h-3 w-3 fill-white text-white" />
+                    </span>
+                  )}
+                  {removeButton('Remove media', () => setKept((prev) => prev.filter((x) => x.id !== m.id)))}
+                </div>
+              ))}
+
+              {drafts.map((d) => (
+                <div key={d.key} className={tileClass}>
+                  {d.isVideo ? (
+                    <video src={d.preview} muted playsInline className="h-full w-full object-cover" />
+                  ) : (
+                    <img src={d.preview} alt="" className="h-full w-full object-cover" />
+                  )}
+                  {d.isVideo && (
+                    <span className="absolute bottom-1 left-1 flex h-5 w-5 items-center justify-center rounded-[999px] bg-black/65">
+                      <Play className="h-3 w-3 fill-white text-white" />
+                    </span>
+                  )}
+                  <span className="absolute bottom-1 right-1 rounded-[6px] bg-white px-1 text-[9px] font-bold text-black">
+                    NEW
+                  </span>
+                  {removeButton('Remove media', () => removeDraft(d.key))}
+                </div>
+              ))}
+
+              {total < STORY_MAX_MEDIA && (
+                <button
+                  type="button"
+                  onClick={() => fileInput.current?.click()}
+                  aria-label="Add more media"
+                  className={`${tileClass} flex items-center justify-center border border-dashed border-[#333] bg-transparent text-neutral-400 transition-colors hover:border-[#4a4a4a] hover:text-neutral-200`}
+                >
+                  <Plus className="h-6 w-6" />
+                </button>
+              )}
             </div>
+            <p className="mt-1 text-xs text-neutral-600">
+              {total}/{STORY_MAX_MEDIA} · shown as a swipeable carousel in this order
+            </p>
           </div>
         ) : (
           <button
@@ -262,8 +306,10 @@ const StoryAdminPanel: FC<StoryAdminPanelProps> = ({ onChanged }) => {
             className="flex flex-col items-center gap-2 rounded-[14px] border border-dashed border-[#333] px-4 py-7 text-neutral-400 transition-colors hover:border-[#4a4a4a] hover:text-neutral-200"
           >
             <ImagePlus className="h-7 w-7" strokeWidth={1.5} />
-            <span className="text-sm font-medium">Add photo or video</span>
-            <span className="text-xs text-neutral-600">Photo up to 8 MB · Video up to 50 MB</span>
+            <span className="text-sm font-medium">Add photos or videos</span>
+            <span className="text-xs text-neutral-600">
+              Up to {STORY_MAX_MEDIA} · Photo up to 8 MB · Video up to 50 MB
+            </span>
           </button>
         )}
 
@@ -319,7 +365,13 @@ const StoryAdminPanel: FC<StoryAdminPanelProps> = ({ onChanged }) => {
             disabled={!canSubmit}
             className="rounded-[999px] bg-white px-5 py-2.5 text-sm font-bold text-black transition-colors hover:bg-[#ddd] disabled:opacity-50"
           >
-            {busy ? (progress !== null && progress < 100 ? `Uploading ${progress}%` : 'Saving…') : editingId ? 'Save changes' : 'Publish'}
+            {busy
+              ? progress !== null && progress < 100
+                ? `Uploading ${progress}%`
+                : 'Saving…'
+              : editingId
+                ? 'Save changes'
+                : 'Publish'}
           </button>
           {editingId && (
             <button
@@ -341,19 +393,25 @@ const StoryAdminPanel: FC<StoryAdminPanelProps> = ({ onChanged }) => {
       {items.length > 0 && (
         <div className="mt-5 flex flex-col divide-y divide-[#1f1f1f] border-t border-[#262626]">
           {items.map((item) => {
-            const label = item.title || item.body || (item.media?.type === 'video' ? 'Video' : 'Photo')
+            const cover = item.media[0]
+            const label = item.title || item.body || (cover?.type === 'video' ? 'Video' : cover ? 'Photo' : 'Post')
 
             return (
               <div key={item.id} className="flex items-center gap-3 py-3">
                 <button type="button" onClick={() => startEdit(item)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-                  {item.media && (
+                  {cover && (
                     <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[10px] bg-black">
-                      {item.media.thumbnail && (
-                        <img src={item.media.thumbnail} alt="" loading="lazy" className="h-full w-full object-cover" />
+                      {cover.thumbnail && (
+                        <img src={cover.thumbnail} alt="" loading="lazy" className="h-full w-full object-cover" />
                       )}
-                      {item.media.type === 'video' && (
+                      {cover.type === 'video' && (
                         <span className="absolute inset-0 flex items-center justify-center bg-black/30">
                           <Play className="h-4 w-4 fill-white text-white" />
+                        </span>
+                      )}
+                      {item.media.length > 1 && (
+                        <span className="absolute bottom-0.5 right-0.5 rounded-[6px] bg-black/70 px-1 text-[10px] font-bold text-white">
+                          {item.media.length}
                         </span>
                       )}
                     </span>
