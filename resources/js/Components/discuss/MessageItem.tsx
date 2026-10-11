@@ -3,6 +3,8 @@ import ReactionBar from './ReactionBar'
 import MarkBadges, { type MessageMarks } from './MarkBadges'
 import MessageActionMenu from './MessageActionMenu'
 import EmojiText from '../../lib/emoji-renderer'
+import RichText from './RichText'
+import type { TextEntity } from '../../lib/rich-text'
 import type { GroupedReaction } from './ReactionBar'
 import { ShieldBan, CheckCheck, UserPlus, LogOut, Loader2, AlertTriangle, X, Undo2, Reply, Download, FileText, Play, MoreVertical, Save } from 'lucide-react'
 import Crest from '../cultivation/Crest'
@@ -38,7 +40,7 @@ interface Message {
   reply_to?: ReplyTo
   reply_count: number
   attachments: string[]
-  metadata?: { file?: { name?: string; size?: number; mime?: string }; video?: VideoInfo; thumbnail?: string | null } | null
+  metadata?: { file?: { name?: string; size?: number; mime?: string }; video?: VideoInfo; thumbnail?: string | null; entities?: TextEntity[] } | null
   reactions: GroupedReaction[]
   /** Helpful / Best Answer. Opsional: pesan optimistik belum punya. */
   marks?: MessageMarks
@@ -573,7 +575,7 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
 
                   {/* Caption — always below the image */}
                   {message.body && (
-                    <EmojiText text={message.body} className={`font-body-md  ${isMedia ? 'block px-2 pb-1.5 pt-1' : `pr-1 ${isFile ? 'mt-1' : ''}`}`} />
+                    <RichText text={message.body} entities={message.metadata?.entities} className={`font-body-md  ${isMedia ? 'block px-2 pb-1.5 pt-1' : `pr-1 ${isFile ? 'mt-1' : ''}`}`} />
                   )}
                 </>
               </div>
@@ -744,7 +746,7 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
 
                 {/* Caption — always below the image */}
                 {message.body && (
-                  <EmojiText text={message.body} className={`font-body-md w-full  text-on-surface ${isMedia ? 'block px-2 pb-1.5 pt-1' : isFile ? 'mt-1' : ''}`} />
+                  <RichText text={message.body} entities={message.metadata?.entities} className={`font-body-md w-full  text-on-surface ${isMedia ? 'block px-2 pb-1.5 pt-1' : isFile ? 'mt-1' : ''}`} />
                 )}
                 </div>
               </div>
@@ -858,7 +860,7 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
               className="border-t absolute bottom-0 w-full border-white/10 bg-gray-800/50 px-4 py-3"
               onClick={(e) => e.stopPropagation()}
             >
-              <EmojiText text={message.body} className="font-body-md text-white" />
+              <RichText text={message.body} entities={message.metadata?.entities} className="font-body-md text-white" />
             </div>
           )}
         </div>

@@ -12,5 +12,7 @@ class SendMessageData
         public readonly ?string $body,
         public readonly array $attachments,
         public readonly array $metadata,
+        /** Format teks mentah (belum divalidasi) — disaring MessageEntityService. */
+        public readonly array $entities = [],
     ) {}
 }

@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, type FC, type KeyboardEvent, type ChangeEvent } from 'react'
-import { X, Paperclip, Smile, Send, Loader2, Reply, Image as ImageIcon, FileText, Edit3, Check, Video as VideoIcon, Play } from 'lucide-react'
+import { X, Paperclip, Smile, Send, Loader2, Reply, Image as ImageIcon, FileText, Edit3, Check, Video as VideoIcon, Play, Type } from 'lucide-react'
 import EmojiPicker from './EmojiPicker'
 import VideoPlayer from './VideoPlayer'
+import { FormatTray, RichEditorField, useRichComposer } from './RichComposer'
+import { entitiesEqual, sanitizeEntities, type TextEntity } from '../../lib/rich-text'
 import { formatFileSize } from '../../lib/downloadedFiles'
 import { readVideoMeta, getReplyThumb, MAX_VIDEO_BYTES, VIDEO_ACCEPT, type VideoMeta, type VideoInfo } from '../../lib/media'
 
@@ -20,20 +22,21 @@ interface EditingMessage {
   id: string
   body: string | null
   attachments: string[]
+  metadata?: { entities?: unknown } | null
 }
 
 export type EditAttachment = { kind: 'image' | 'file' | 'video'; file: File; meta?: VideoMeta }
 
 interface MessageInputProps {
-  onSend: (body: string, replyToId?: string) => Promise<boolean>
+  onSend: (body: string, replyToId?: string, entities?: TextEntity[]) => Promise<boolean>
   onSendImage?: (file: File, caption: string, replyToId?: string) => Promise<boolean>
-  onSendFile?: (file: File, caption: string, replyToId?: string) => Promise<boolean>
+  onSendFile?: (file: File, caption: string, replyToId?: string, entities?: TextEntity[]) => Promise<boolean>
   onSendVideo?: (file: File, caption: string, replyToId?: string, meta?: VideoMeta) => Promise<boolean>
   replyTo?: ReplyTo
   onCancelReply: () => void
   editing?: EditingMessage
   onCancelEdit?: () => void
-  onSubmitEdit?: (id: string, body: string, attachment?: EditAttachment) => Promise<boolean>
+  onSubmitEdit?: (id: string, body: string, attachment?: EditAttachment, entities?: TextEntity[]) => Promise<boolean>
   disabled?: boolean
   disabledReason?: string
   showEmoji?: boolean
@@ -48,8 +51,18 @@ const MAX_FILE_BYTES = 20 * 1024 * 1024
 const FILE_ACCEPT = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.odt,.ods,.odp,.zip,.rar,.7z,.mp3,.wav,.ogg,.mp4,.mov,.webm'
 
 const MessageInput: FC<MessageInputProps> = ({ onSend, onSendImage, onSendFile, onSendVideo, replyTo, onCancelReply, editing, onCancelEdit, onSubmitEdit, disabled, disabledReason, showEmoji, toggleEmoji, emojiInsert }) => {
+  // `body` = teks polos draf, `entities` = format-nya (bold, italic, spoiler, link, ...).
   const [body, setBody] = useState('')
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [entities, setEntities] = useState<TextEntity[]>([])
+  const [showFormat, setShowFormat] = useState(false)
+  const rich = useRichComposer({
+    onChange: (draft) => {
+      setBody(draft.text)
+      setEntities(draft.entities)
+    },
+    onSubmit: () => handleSend(),
+    onEscape: editing ? () => onCancelEdit?.() : undefined,
+  })
   const prevInsertId = useRef(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -78,11 +91,11 @@ const MessageInput: FC<MessageInputProps> = ({ onSend, onSendImage, onSendFile, 
 
   // ── Edit mode ──
   const hasExistingAttachment = (editing?.attachments.length ?? 0) > 0
-  const editChanged = !!editing && (!!pendingFile || body.trim() !== (editing.body ?? '').trim())
+  const editChanged = !!editing && (!!pendingFile || body.trim() !== (editing.body ?? '').trim() || !entitiesEqual(entities, sanitizeEntities(editing.body ?? '', editing.metadata?.entities)))
   const canSubmitEdit = !!editing && editChanged && !fileTooLarge && (!!body.trim() || hasExistingAttachment || !!pendingFile)
   const showReply = !!replyTo && !editing
   const replyThumb = getReplyThumb(replyTo)
-  const draftRef = useRef('')
+  const draftRef = useRef<{ text: string; entities: TextEntity[] }>({ text: '', entities: [] })
   const prevEditingId = useRef<string | undefined>(undefined)
   const editingId = editing?.id
 
@@ -91,14 +104,21 @@ const MessageInput: FC<MessageInputProps> = ({ onSend, onSendImage, onSendFile, 
   useEffect(() => {
     const prev = prevEditingId.current
     if (editingId && editingId !== prev) {
-      if (!prev) draftRef.current = body
-      setBody(editing?.body ?? '')
+      if (!prev) draftRef.current = { text: body, entities }
+      const text = editing?.body ?? ''
+      const formats = sanitizeEntities(text, editing?.metadata?.entities)
+      setBody(text)
+      setEntities(formats)
+      rich.setContent(text, formats)
       setPendingFile(null)
       setMenuOpen(false)
-      requestAnimationFrame(() => inputRef.current?.focus())
+      requestAnimationFrame(() => rich.focus())
     } else if (!editingId && prev) {
-      setBody(draftRef.current)
-      draftRef.current = ''
+      const draft = draftRef.current
+      setBody(draft.text)
+      setEntities(draft.entities)
+      rich.setContent(draft.text, draft.entities)
+      draftRef.current = { text: '', entities: [] }
       setPendingFile(null)
     }
     prevEditingId.current = editingId
@@ -150,7 +170,7 @@ const MessageInput: FC<MessageInputProps> = ({ onSend, onSendImage, onSendFile, 
     e.target.value = ''
     if (!file) return
     setPendingFile(file)
-    requestAnimationFrame(() => inputRef.current?.focus())
+    requestAnimationFrame(() => rich.focus())
   }
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -216,7 +236,9 @@ const MessageInput: FC<MessageInputProps> = ({ onSend, onSendImage, onSendFile, 
     const meta = videoMeta ?? undefined
     let send: (() => Promise<boolean>) | undefined
     if (editing) {
-      send = onSubmitEdit && (() => onSubmitEdit(editing.id, text, { kind: mediaKind, file: mediaFile, meta }))
+      // Caption belum diubah → format lama tetap dipertahankan.
+      const keepFormatting = text === body.trim() ? entities : undefined
+      send = onSubmitEdit && (() => onSubmitEdit(editing.id, text, { kind: mediaKind, file: mediaFile, meta }, keepFormatting))
     } else if (mediaKind === 'video') {
       send = onSendVideo && (() => onSendVideo(mediaFile, text, replyTo?.id, meta))
     } else {
@@ -245,22 +267,11 @@ const MessageInput: FC<MessageInputProps> = ({ onSend, onSendImage, onSendFile, 
     }
   }
 
-  useEffect(() => {
-    //inputRef.current?.focus()
-  }, [])
-
   // Handle emoji insert from parent
   useEffect(() => {
     if (emojiInsert && emojiInsert.id !== prevInsertId.current) {
       prevInsertId.current = emojiInsert.id
-      const input = inputRef.current
-      const start = input?.selectionStart ?? body.length
-      const end = input?.selectionEnd ?? start
-      setBody((prev) => prev.slice(0, start) + emojiInsert.unicode + prev.slice(end))
-      requestAnimationFrame(() => {
-        input?.focus()
-        input?.setSelectionRange(start + emojiInsert.unicode.length, start + emojiInsert.unicode.length)
-      })
+      rich.insertText(emojiInsert.unicode)
     }
   }, [emojiInsert])
 
@@ -272,7 +283,7 @@ const MessageInput: FC<MessageInputProps> = ({ onSend, onSendImage, onSendFile, 
     if (editing) {
       if (!onSubmitEdit || sendingFile || !canSubmitEdit) return
       setSendingFile(true)
-      onSubmitEdit(editing.id, text, pendingFile ? { kind: 'file', file: pendingFile } : undefined).then((ok) => {
+      onSubmitEdit(editing.id, text, pendingFile ? { kind: 'file', file: pendingFile } : undefined, entities).then((ok) => {
         setSendingFile(false)
         if (ok) setPendingFile(null)
       })
@@ -283,11 +294,13 @@ const MessageInput: FC<MessageInputProps> = ({ onSend, onSendImage, onSendFile, 
     if (pendingFile) {
       if (!onSendFile || sendingFile || fileTooLarge) return
       setSendingFile(true)
-      onSendFile(pendingFile, text, replyTo?.id).then((ok) => {
+      onSendFile(pendingFile, text, replyTo?.id, entities).then((ok) => {
         setSendingFile(false)
         if (ok) {
           setPendingFile(null)
           setBody('')
+          setEntities([])
+          rich.clear()
           if (replyTo) onCancelReply()
         }
       })
@@ -295,25 +308,14 @@ const MessageInput: FC<MessageInputProps> = ({ onSend, onSendImage, onSendFile, 
     }
 
     if (!text) return
-    onSend(text, replyTo?.id).then((ok) => {
+    onSend(text, replyTo?.id, entities).then((ok) => {
       if (ok) {
         setBody('')
+        setEntities([])
+        rich.clear()
         if (replyTo) onCancelReply()
       }
-      //inputRef.current?.focus()
     })
-  }
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Escape' && editing) {
-      e.preventDefault()
-      onCancelEdit?.()
-      return
-    }
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      handleSend()
-    }
   }
 
   return (
@@ -556,65 +558,83 @@ const MessageInput: FC<MessageInputProps> = ({ onSend, onSendImage, onSendFile, 
             </div>
           )}
 
+          {/* Format tray — tombol format permanen (layar sentuh), tepat di atas input */}
+          {showFormat && (
+            <FormatTray editor={rich.editor} className={showReply || editing || pendingFile ? '' : 'rounded-t-3xl'} />
+          )}
+
           <div
-            className={`relative flex h-[50px] w-full items-center bg-surface-container-highest px-2 ${
-              showReply || editing || pendingFile ? 'rounded-b-3xl rounded-t-none' : 'rounded-[50px]'
+            className={`relative flex min-h-[50px] w-full items-end bg-surface-container-highest px-2 ${
+              showReply || editing || pendingFile || showFormat ? 'rounded-b-3xl rounded-t-none' : 'rounded-3xl'
             }`}
           >
+            {/* Tombol-tombol ditaruh di slot setinggi 50px yang menempel di bawah,
+                jadi tetap di tengah saat 1 baris dan ikut turun saat input membesar. */}
             {/* Attach button */}
-            <button
-              ref={attachBtnRef}
-              onClick={() => setMenuOpen((p) => !p)}
-              className={`flex items-center justify-center p-2 transition-colors rounded-full hover:bg-surface-container-higher active:scale-95 ${
-                menuOpen ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant'
-              }`}
-            >
-              <Paperclip className="h-4 w-4" />
-            </button>
+            <div className="flex h-[50px] shrink-0 items-center">
+              <button
+                ref={attachBtnRef}
+                onClick={() => setMenuOpen((p) => !p)}
+                className={`flex items-center justify-center p-2 transition-colors rounded-full hover:bg-surface-container-higher active:scale-95 ${
+                  menuOpen ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant'
+                }`}
+              >
+                <Paperclip className="h-4 w-4" />
+              </button>
+            </div>
 
-            {/* Input field */}
-            <div className="flex flex-1 items-center rounded-full  px-4 py-2">
-              <input
-                ref={inputRef}
-                type="text"
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                onKeyDown={handleKeyDown}
+            {/* Input field (rich text) */}
+            <div className="flex min-w-0 flex-1 items-start px-4 py-[14px]">
+              <RichEditorField
+                editor={rich.editor}
                 placeholder={editing ? 'Edit message...' : pendingFile ? 'Add a caption...' : 'Type a message...'}
-                className="w-full border-none bg-transparent p-0 font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant focus:ring-0 h-[40px]"
-                onFocus={(e) => {
-                  //(e.target.parentElement as HTMLElement)?.classList.add('ring-1', 'ring-outline')
-                }}
-                onBlur={(e) => {
-                  (e.target.parentElement as HTMLElement)?.classList.remove('ring-1', 'ring-outline')
-                }}
               />
             </div>
 
+            {/* Text formatting toggle */}
+            <div className="flex h-[50px] shrink-0 items-center">
+              <button
+                type="button"
+                aria-label="Text formatting"
+                aria-pressed={showFormat}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setShowFormat((p) => !p)}
+                className={`flex items-center justify-center p-2 transition-colors rounded-full hover:bg-surface-container-higher active:scale-95 ${
+                  showFormat ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant'
+                }`}
+              >
+                <Type className="h-4 w-4" />
+              </button>
+            </div>
+
             {/* Emoji picker trigger */}
-            <button
-              onClick={toggleEmoji}
-              className={`mr-2 flex items-center justify-center p-2 transition-colors rounded-full hover:bg-surface-container-higher active:scale-95 ${
-                showEmoji ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant'
-              }`}
-            >
-              <Smile className="h-5 w-5" />
-            </button>
+            <div className="flex h-[50px] shrink-0 items-center">
+              <button
+                onClick={toggleEmoji}
+                className={`mr-2 flex items-center justify-center p-2 transition-colors rounded-full hover:bg-surface-container-higher active:scale-95 ${
+                  showEmoji ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant'
+                }`}
+              >
+                <Smile className="h-5 w-5" />
+              </button>
+            </div>
 
             {/* Send button */}
-            <button
-              onClick={handleSend}
-              disabled={editing ? sendingFile || !canSubmitEdit : pendingFile ? sendingFile || fileTooLarge : !body.trim()}
-              className="flex items-center justify-center rounded-full bg-primary p-2 transition-transform active:scale-95 disabled:opacity-50"
-            >
-              {sendingFile ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-on-primary" />
-              ) : editing ? (
-                <Check className="h-3.5 w-3.5 text-on-primary" strokeWidth={3} />
-              ) : (
-                <Send className="h-3.5 w-3.5 text-on-primary" fill="currentColor" />
-              )}
-            </button>
+            <div className="flex h-[50px] shrink-0 items-center">
+              <button
+                onClick={handleSend}
+                disabled={editing ? sendingFile || !canSubmitEdit : pendingFile ? sendingFile || fileTooLarge : !body.trim()}
+                className="flex items-center justify-center rounded-full bg-primary p-2 transition-transform active:scale-95 disabled:opacity-50"
+              >
+                {sendingFile ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-on-primary" />
+                ) : editing ? (
+                  <Check className="h-3.5 w-3.5 text-on-primary" strokeWidth={3} />
+                ) : (
+                  <Send className="h-3.5 w-3.5 text-on-primary" fill="currentColor" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

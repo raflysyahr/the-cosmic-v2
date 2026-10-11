@@ -65,6 +65,7 @@ class MessageController
             body: $request->input('body'),
             attachments: $attachments,
             metadata: $metadata,
+            entities: (array) $request->input('entities', []),
         );
 
         try {
@@ -96,6 +97,7 @@ class MessageController
                 $request->input('body'),
                 $request->user()->id,
                 $attachment,
+                (array) $request->input('entities', []),
             );
         } catch (\Throwable $e) {
             // Edit rejected (e.g. not the owner) — don't leave the upload orphaned.

@@ -9,6 +9,7 @@ import type { GroupedReaction } from '../../Components/discuss/ReactionBar'
 import { apiFetch } from '../../api/fetch'
 import client from '../../api/client'
 import type { EditAttachment } from '../../Components/discuss/MessageInput'
+import type { TextEntity } from '../../lib/rich-text'
 import type { VideoMeta } from '../../lib/media'
 import { putBlob } from '../../lib/mediaCache'
 import { usePopup } from '../../contexts/PopupContext'
@@ -87,6 +88,16 @@ function formatCountdown(ms: number): string {
 
 // Multipart fields for a video upload: the file, plus the duration/size/poster
 // frame the browser read (the server has no ffmpeg to do it).
+// Format teks (bold, italic, spoiler, link, ...) di request multipart: entities[0][type], dst.
+function appendEntities(formData: FormData, entities?: TextEntity[]) {
+  entities?.forEach((e, i) => {
+    formData.append(`entities[${i}][type]`, e.type)
+    formData.append(`entities[${i}][offset]`, String(e.offset))
+    formData.append(`entities[${i}][length]`, String(e.length))
+    if (e.url) formData.append(`entities[${i}][url]`, e.url)
+  })
+}
+
 function appendVideoFields(formData: FormData, file: File, meta?: VideoMeta) {
   formData.append('video', file)
   if (meta?.duration != null) formData.append('duration', String(meta.duration))
@@ -178,7 +189,7 @@ export default function DiscussRoom(props: PageProps) {
       .finally(() => setJoining(false))
   }, [room.slug])
 
-  const handleSend = useCallback(async (body: string, replyToId?: string): Promise<boolean> => {
+  const handleSend = useCallback(async (body: string, replyToId?: string, entities?: TextEntity[]): Promise<boolean> => {
     const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
     const optimistic: Message = {
       id: tempId,
@@ -191,6 +202,7 @@ export default function DiscussRoom(props: PageProps) {
       },
       reply_count: 0,
       attachments: [],
+      ...(entities?.length ? { metadata: { entities } } : {}),
       reactions: [],
       is_edited: false,
       is_deleted: false,
@@ -204,6 +216,7 @@ export default function DiscussRoom(props: PageProps) {
 
     try {
       const payload: Record<string, unknown> = { body }
+      if (entities?.length) payload.entities = entities
       if (replyToId) payload.reply_to_id = replyToId
       const r = await apiFetch(`/api/rooms/${room.slug}/messages`, {
         method: 'POST',
@@ -288,7 +301,7 @@ export default function DiscussRoom(props: PageProps) {
     }
   }, [room.slug, currentUserId, props.user?.display_name])
 
-  const handleSendFile = useCallback(async (file: File, caption: string, replyToId?: string): Promise<boolean> => {
+  const handleSendFile = useCallback(async (file: File, caption: string, replyToId?: string, entities?: TextEntity[]): Promise<boolean> => {
     const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
     pendingUploads.current.set(tempId, { kind: 'file', file })
     const optimistic: Message = {
@@ -302,7 +315,7 @@ export default function DiscussRoom(props: PageProps) {
       },
       reply_count: 0,
       attachments: [],
-      metadata: { file: { name: file.name, size: file.size, mime: file.type } },
+      metadata: { file: { name: file.name, size: file.size, mime: file.type }, ...(entities?.length ? { entities } : {}) },
       reactions: [],
       is_edited: false,
       is_deleted: false,
@@ -318,6 +331,7 @@ export default function DiscussRoom(props: PageProps) {
       const formData = new FormData()
       formData.append('file', file)
       if (caption) formData.append('body', caption)
+      appendEntities(formData, entities)
       if (replyToId) formData.append('reply_to_id', replyToId)
       // Documents can be large — override the client's default 15s timeout.
       const res = await client.post(`/rooms/${room.slug}/messages`, formData, { timeout: 120000 })
@@ -443,6 +457,7 @@ export default function DiscussRoom(props: PageProps) {
     messageId: string,
     newBody: string,
     attachment?: EditAttachment,
+    entities?: TextEntity[],
   ): Promise<boolean> => {
     try {
       let edited: Message
@@ -451,6 +466,7 @@ export default function DiscussRoom(props: PageProps) {
         const formData = new FormData()
         formData.append('_method', 'PUT')
         formData.append('body', newBody)
+        appendEntities(formData, entities)
         if (attachment.kind === 'video') appendVideoFields(formData, attachment.file, attachment.meta)
         else formData.append(attachment.kind, attachment.file)
         const res = await client.post(`/rooms/${room.slug}/messages/${messageId}`, formData, {
@@ -466,7 +482,7 @@ export default function DiscussRoom(props: PageProps) {
         const r = await apiFetch(`/api/rooms/${room.slug}/messages/${messageId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ body: newBody }),
+          body: JSON.stringify({ body: newBody, entities: entities ?? [] }),
         })
         if (!r.ok) throw new Error('edit failed')
         const res: { message: Message } = await r.json()
@@ -495,7 +511,7 @@ export default function DiscussRoom(props: PageProps) {
       const caption = failedMsg.body ?? ''
       const replyToId = failedMsg.reply_to?.id
       if (pending.kind === 'video') await handleSendVideo(pending.file, caption, replyToId, pending.meta)
-      else if (pending.kind === 'file') await handleSendFile(pending.file, caption, replyToId)
+      else if (pending.kind === 'file') await handleSendFile(pending.file, caption, replyToId, failedMsg.metadata?.entities)
       else await handleSendImage(pending.file, caption, replyToId)
       return
     }
@@ -511,7 +527,7 @@ export default function DiscussRoom(props: PageProps) {
     setMessages((prev) => prev.map((m) => m.id === failedMsg.id ? retry : m))
 
     try {
-      const payload: Record<string, unknown> = { body: failedMsg.body }
+      const payload: Record<string, unknown> = { body: failedMsg.body, ...(failedMsg.metadata?.entities?.length ? { entities: failedMsg.metadata.entities } : {}) }
       if (failedMsg.reply_to?.id) payload.reply_to_id = failedMsg.reply_to.id
       const r = await apiFetch(`/api/rooms/${room.slug}/messages`, {
         method: 'POST',

@@ -27,6 +27,7 @@ The Cosmic adalah web comic reader (mirip Komikcast) yang dibangun sebagai **mod
 | Auth token (API) | Laravel Sanctum | ^4.0 |
 | OAuth | Laravel Socialite | ^5.28 |
 | Ikon | lucide-react | — |
+| Editor teks pesan | Tiptap (`@tiptap/react`, `starter-kit`, `extension-link`, `extension-underline`) | 2.11.5 |
 | Emoji rendering | react-fluentui-emoji | — |
 | Testing | PHPUnit | ^12.5 |
 | Linting/format PHP | Laravel Pint | ^1.27 |
@@ -109,6 +110,7 @@ Semua terverifikasi ada di `app/Modules/Discuss/`. Real-time via Laravel Reverb 
 | Edit pesan | ✅ Ada | **Hanya pemilik pesan** (diperbaiki dari bug bypass sebelumnya) |
 | Hapus pesan (soft delete) | ✅ Ada | Pemilik pesan **atau** moderator/admin room |
 | Reply ke pesan | ✅ Ada | `reply_to_id` |
+| Format teks pesan (ala Telegram) | ✅ Ada (belum diuji di browser) | Bold, italic, underline, strike, monospace, spoiler, dan link pada input pesan. `body` tetap **teks polos**; format disimpan sebagai daftar *entity* `{type, offset, length, url?}` di `metadata.entities` (kolom JSON yang sudah ada, tanpa migration). `offset`/`length` dalam UTF-16 code unit (= indeks string JS). **Backend:** `MessageEntityService::sanitize()` memvalidasi tipe, rentang terhadap panjang body, dan URL (hanya `http`, `https`, `mailto`; maks 100 entity), dipanggil dari `MessageService::send()`/`edit()`; aturan request di `SendMessageRequest::ENTITIES_RULES` (dipakai juga `UpdateMessageRequest`). `metadata.entities` kiriman klien lewat field `metadata` selalu dibuang; saat edit, entity lama selalu diganti. **Frontend:** `lib/rich-text.ts` (logika murni: entity ↔ dokumen Tiptap, sanitasi, segmentasi), `lib/tiptap-spoiler.ts`, `Components/discuss/RichComposer.tsx` (editor Tiptap, toolbar kontekstual saat teks diseleksi, tray tombol format lewat tombol "Aa"), `Components/discuss/RichText.tsx` (render sebagai elemen React, tanpa `innerHTML`; spoiler dibuka dengan ketukan). Pintasan: Ctrl/Cmd+B/I/U/E, Ctrl/Cmd+Shift+S (strike), Ctrl/Cmd+Shift+P (spoiler); sintaks markdown `**tebal**`, `_miring_`, `~~coret~~`, `` `kode` ``, `||spoiler||`; URL yang diketik jadi link otomatis. Enter mengirim di perangkat dengan mouse; di layar sentuh Enter = baris baru. **Batasan:** caption gambar/video baru (input caption terpisah di preview) tetap teks polos; teks di preview daftar room, reply, dan notifikasi memakai `body` polos (tanpa format). |
 | Reaksi/emote di pesan | ✅ Ada | Hanya untuk pesan orang lain. Satu reaction per user per message (switch = replace). One-click pada reaction yang sudah ada. Animasi real-time: pop untuk emote baru, bump untuk count bertambah. Default: Unicode emoji. |
 | Pin/unpin pesan | ✅ Ada | Hanya admin. Admin bisa pin pesan sendiri maupun pesan member lain. Max 5 pinned per room, disimpan di `settings->pinned_message_ids` (array). Optimistic update + real-time broadcast. Modal list jika >1 pinned. Tidak berlaku untuk direct chat. |
 | Real-time push pesan baru/edit/delete | ✅ Ada | Broadcast via `PresenceChannel`, event `MessageSent`/`MessageEdited`/`MessageDeleted` |

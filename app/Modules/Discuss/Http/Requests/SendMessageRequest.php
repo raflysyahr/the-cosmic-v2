@@ -20,6 +20,16 @@ class SendMessageRequest extends FormRequest
         'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,rtf,odt,ods,odp,zip,rar,7z,mp3,wav,ogg,mp4,mov,webm',
     ];
 
+    // Format teks ala Telegram (lihat MessageEntityService). Dipakai bersama
+    // UpdateMessageRequest. Offset yang di luar panjang body dibuang di service.
+    public const ENTITIES_RULES = [
+        'entities' => ['nullable', 'array', 'max:100'],
+        'entities.*.type' => ['required', 'string', 'in:bold,italic,underline,strike,code,spoiler,link'],
+        'entities.*.offset' => ['required', 'integer', 'min:0'],
+        'entities.*.length' => ['required', 'integer', 'min:1'],
+        'entities.*.url' => ['nullable', 'string', 'max:2048'],
+    ];
+
     public function authorize(): bool
     {
         return true;
@@ -45,6 +55,7 @@ class SendMessageRequest extends FormRequest
             'reply_to_id' => ['nullable', 'string', 'max:26'],
             'type' => ['nullable', 'string', 'in:text,image,file,video,sticker,system'],
             'metadata' => ['nullable', 'array'],
+            ...self::ENTITIES_RULES,
         ];
     }
 }
