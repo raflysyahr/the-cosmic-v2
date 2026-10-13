@@ -9,6 +9,7 @@ use App\Modules\Discuss\Models\Emote;
 use App\Modules\Discuss\Models\Message;
 use App\Modules\Discuss\Models\MessageMark;
 use App\Modules\Discuss\Models\Reaction;
+use App\Modules\Discuss\Services\MessageEntityService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -90,6 +91,9 @@ class MessageResource extends JsonResource
                         default => null,
                     },
                     'file_name' => $replyToMsg->type->value === 'file' ? ($replyToMsg->metadata['file']['name'] ?? null) : null,
+                    // Kutipan hanya menampilkan spoiler; media spoiler → thumbnail di-blur.
+                    'entities' => app(MessageEntityService::class)->spoilersOnly($replyToMsg->metadata['entities'] ?? null),
+                    'spoiler' => (bool) ($replyToMsg->metadata['spoiler'] ?? false),
                     'user' => $replyToUser ? [
                         'id' => $replyToUser->id,
                         'display_name' => $replyToUser->display_name,

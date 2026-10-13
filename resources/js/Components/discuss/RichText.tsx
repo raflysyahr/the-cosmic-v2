@@ -8,18 +8,27 @@ interface RichTextProps {
   entities?: unknown
   size?: number | string
   className?: string
+  /**
+   * Mode preview (daftar chat, kutipan reply): hanya spoiler yang dipakai —
+   * tertutup dan tidak bisa diketuk — format lain tampil sebagai teks biasa,
+   * dan baris baru tidak dipertahankan agar `truncate` tetap satu baris.
+   */
+  preview?: boolean
 }
 
 // Menampilkan teks pesan dengan format (bold, italic, spoiler, link, ...).
 // Dirender sebagai elemen React biasa — tidak pernah lewat innerHTML.
-const RichText: FC<RichTextProps> = ({ text, entities, size, className = '' }) => {
-  const valid = useMemo(() => sanitizeEntities(text, entities), [text, entities])
+const RichText: FC<RichTextProps> = ({ text, entities, size, className = '', preview = false }) => {
+  const valid = useMemo(
+    () => sanitizeEntities(text, entities).filter((e) => !preview || e.type === 'spoiler'),
+    [text, entities, preview],
+  )
   const segments = useMemo(() => buildSegments(text, valid), [text, valid])
   const [revealed, setRevealed] = useState<ReadonlySet<number>>(() => new Set())
 
   if (!text) return null
 
-  const base = `whitespace-pre-wrap break-words ${className}`
+  const base = preview ? className : `whitespace-pre-wrap break-words ${className}`
   if (valid.length === 0) return <EmojiText text={text} size={size} className={base} />
 
   const find = (segment: Segment, type: EntityType): number | undefined =>
@@ -40,6 +49,10 @@ const RichText: FC<RichTextProps> = ({ text, entities, size, className = '' }) =
 
     const spoiler = find(segment, 'spoiler')
     if (spoiler !== undefined) {
+      if (preview) {
+        node = <span className="spoiler-text is-static">{node}</span>
+        return node
+      }
       const shown = revealed.has(spoiler)
       const reveal = (e: MouseEvent) => {
         // Spoiler di dalam link: ketukan pertama hanya membuka spoiler.

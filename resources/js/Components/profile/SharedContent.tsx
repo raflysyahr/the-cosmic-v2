@@ -1,5 +1,6 @@
 import { useEffect, type FC } from 'react'
 import {
+  EyeOff,
   ExternalLink,
   Globe,
   Link as LinkIcon,
@@ -26,6 +27,8 @@ export interface MediaItem {
   url: string
   thumbnail: string | null
   duration: number | null
+  /** Media spoiler: thumbnail di grid di-blur (viewer tetap terbuka saat diketuk). */
+  spoiler?: boolean
   createdAt: string | null
   /** Asal konten: nama group (profil publik). */
   roomName?: string | null
@@ -125,7 +128,14 @@ export function MediaGrid({ items, onOpen }: { items: MediaItem[]; onOpen: (m: M
           className="relative aspect-square overflow-hidden rounded-[10px] bg-black transition-opacity active:opacity-80"
         >
           {m.thumbnail && (
-            <img src={m.thumbnail} alt="" loading="lazy" className="h-full w-full object-cover" />
+            <img src={m.thumbnail} alt="" loading="lazy" className={`h-full w-full object-cover ${m.spoiler ? 'spoiler-media' : ''}`} />
+          )}
+          {m.spoiler && (
+            <span className="absolute inset-0 flex items-center justify-center">
+              <span className="flex h-9 w-9 items-center justify-center rounded-[999px] bg-black/55 text-white">
+                <EyeOff className="h-4 w-4" />
+              </span>
+            </span>
           )}
           {m.type === 'video' && (
             <span className="absolute bottom-1.5 left-1.5 flex items-center gap-1 rounded-[8px] bg-black/55 px-2 py-1 text-[13px] font-medium text-white backdrop-blur-sm">

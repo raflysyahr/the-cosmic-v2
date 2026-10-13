@@ -40,10 +40,14 @@ class MessageService implements MessageServiceContract
         // Format teks hanya diterima lewat input `entities` yang divalidasi —
         // tidak pernah langsung dari `metadata` kiriman klien.
         $metadata = $data->metadata;
-        unset($metadata['entities']);
+        unset($metadata['entities'], $metadata['spoiler']);
         $entities = $this->entities->sanitize($data->body, $data->entities);
         if ($entities !== []) {
             $metadata['entities'] = $entities;
+        }
+        // Flag spoiler media juga hanya lewat input tervalidasi, bukan `metadata` klien.
+        if ($data->spoiler && in_array($data->type, ['image', 'video'], true)) {
+            $metadata['spoiler'] = true;
         }
 
         $message = Message::create([
@@ -69,8 +73,11 @@ class MessageService implements MessageServiceContract
      * @param array<int, mixed> $entities
      *        Format teks untuk body baru. Entity lama selalu dibuang karena
      *        offset-nya hanya berlaku untuk body sebelumnya.
+     * @param bool $spoiler
+     *        Hanya dipakai bila `$attachment` mengganti media: menandai media
+     *        baru sebagai spoiler. Tanpa media baru, flag lama dibiarkan.
      */
-    public function edit(Message $message, ?string $newBody, string $byUserId, ?array $attachment = null, array $entities = []): Message
+    public function edit(Message $message, ?string $newBody, string $byUserId, ?array $attachment = null, array $entities = [], bool $spoiler = false): Message
     {
         if ((string) $message->user_id !== (string) $byUserId) {
             throw ValidationException::withMessages([
@@ -105,11 +112,14 @@ class MessageService implements MessageServiceContract
 
         if ($attachment !== null) {
             // Drop the previous file/video metadata, keep anything unrelated.
-            unset($metadata['file'], $metadata['video']);
+            unset($metadata['file'], $metadata['video'], $metadata['spoiler']);
 
             $attributes['type'] = $attachment['type'];
             $attributes['attachments'] = [$attachment['url']];
             $metadata = array_merge($metadata, $attachment['metadata'] ?? []);
+            if ($spoiler && in_array($attachment['type'], ['image', 'video'], true)) {
+                $metadata['spoiler'] = true;
+            }
         }
 
         $attributes['metadata'] = $metadata;

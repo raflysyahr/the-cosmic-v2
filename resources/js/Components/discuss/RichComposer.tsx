@@ -35,17 +35,31 @@ interface UseRichComposerOptions {
   initialText?: string
 }
 
+export interface LinkDialogState {
+  /** URL yang sudah ada di seleksi/kursor (kosong bila belum ada link). */
+  url: string
+  hasLink: boolean
+}
+
 export interface RichComposer {
   editor: Editor | null
   focus: () => void
   insertText: (text: string) => void
   setContent: (text: string, entities?: unknown) => void
   clear: () => void
+  /** Popup link (menggantikan window.prompt). `null` = tertutup. */
+  linkDialog: LinkDialogState | null
+  openLinkDialog: () => void
+  closeLinkDialog: () => void
+  /** Mengembalikan false bila URL tidak valid/tidak didukung. */
+  applyLink: (raw: string) => boolean
+  removeLink: () => void
 }
 
 const isTouchDevice = () => typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches
 
 export function useRichComposer({ onChange, onSubmit, onEscape, initialText = '' }: UseRichComposerOptions): RichComposer {
+  const [linkDialog, setLinkDialog] = useState<LinkDialogState | null>(null)
   // Extension dibuat sekali, jadi callback dibaca lewat ref agar selalu terbaru.
   const onChangeRef = useRef(onChange)
   const onSubmitRef = useRef(onSubmit)
@@ -126,7 +140,44 @@ export function useRichComposer({ onChange, onSubmit, onEscape, initialText = ''
     editor?.commands.clearContent(false)
   }, [editor])
 
-  return { editor, focus, insertText, setContent, clear }
+  const openLinkDialog = useCallback(() => {
+    if (!editor) return
+    const href = editor.getAttributes('link').href as string | undefined
+    setLinkDialog({ url: href ?? '', hasLink: editor.isActive('link') })
+  }, [editor])
+
+  const closeLinkDialog = useCallback(() => {
+    setLinkDialog(null)
+    editor?.commands.focus()
+  }, [editor])
+
+  const applyLink = useCallback(
+    (raw: string): boolean => {
+      if (!editor) return false
+      const url = normalizeLinkInput(raw)
+      if (!url) return false
+      if (editor.state.selection.empty && !editor.isActive('link')) {
+        // Tanpa seleksi: sisipkan URL-nya sebagai teks bertaut.
+        editor
+          .chain()
+          .focus()
+          .insertContent({ type: 'text', text: url, marks: [{ type: 'link', attrs: { href: url } }] })
+          .run()
+      } else {
+        editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+      }
+      setLinkDialog(null)
+      return true
+    },
+    [editor],
+  )
+
+  const removeLink = useCallback(() => {
+    editor?.chain().focus().extendMarkRange('link').unsetLink().run()
+    setLinkDialog(null)
+  }, [editor])
+
+  return { editor, focus, insertText, setContent, clear, linkDialog, openLinkDialog, closeLinkDialog, applyLink, removeLink }
 }
 
 /** Re-render saat ada transaksi editor (supaya status tombol aktif & placeholder selalu benar). */
@@ -167,22 +218,9 @@ const FormatButton: FC<FormatButtonProps> = ({ title, active, onClick, children 
   </button>
 )
 
-const FormatButtons: FC<{ editor: Editor }> = ({ editor }) => {
-  const setLink = () => {
-    const previous = editor.getAttributes('link').href as string | undefined
-    const input = window.prompt('Link URL', previous ?? 'https://')
-    if (input === null) return
-    if (!input.trim()) {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run()
-      return
-    }
-    const url = normalizeLinkInput(input)
-    if (!url) {
-      window.alert('Only http(s) and mailto links are supported.')
-      return
-    }
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
-  }
+const FormatButtons: FC<{ rich: RichComposer }> = ({ rich }) => {
+  const editor = rich.editor
+  if (!editor) return null
 
   return (
     <>
@@ -205,7 +243,7 @@ const FormatButtons: FC<{ editor: Editor }> = ({ editor }) => {
       <FormatButton title="Spoiler" active={editor.isActive('spoiler')} onClick={() => editor.chain().focus().toggleSpoiler().run()}>
         <EyeOff className="h-4 w-4" />
       </FormatButton>
-      <FormatButton title="Link" active={editor.isActive('link')} onClick={setLink}>
+      <FormatButton title="Link" active={editor.isActive('link')} onClick={rich.openLinkDialog}>
         <Link2 className="h-4 w-4" />
       </FormatButton>
     </>
@@ -213,23 +251,117 @@ const FormatButtons: FC<{ editor: Editor }> = ({ editor }) => {
 }
 
 /** Baris tombol format yang selalu tampil (untuk layar sentuh). */
-export const FormatTray: FC<{ editor: Editor | null; className?: string }> = ({ editor, className = '' }) => {
-  useEditorRerender(editor)
-  if (!editor) return null
+export const FormatTray: FC<{ rich: RichComposer; className?: string }> = ({ rich, className = '' }) => {
+  useEditorRerender(rich.editor)
+  if (!rich.editor) return null
   return (
     <div className={`flex items-center gap-0.5 overflow-x-auto scrollbar-none bg-surface-container-highest px-3 pt-2 ${className}`}>
-      <FormatButtons editor={editor} />
+      <FormatButtons rich={rich} />
     </div>
   )
 }
 
+/** Popup untuk menambah/mengubah/menghapus link (menggantikan window.prompt). */
+const LinkDialog: FC<{ rich: RichComposer }> = ({ rich }) => {
+  const dialog = rich.linkDialog
+  const [value, setValue] = useState('')
+  const [invalid, setInvalid] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!dialog) return
+    setValue(dialog.url)
+    setInvalid(false)
+    requestAnimationFrame(() => {
+      inputRef.current?.focus()
+      inputRef.current?.select()
+    })
+  }, [dialog])
+
+  if (!dialog) return null
+
+  const submit = () => {
+    if (!rich.applyLink(value)) setInvalid(true)
+  }
+  const title = dialog.hasLink ? 'Edit link' : 'Add link'
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/60 p-4"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) rich.closeLinkDialog()
+      }}
+    >
+      <div role="dialog" aria-modal="true" aria-label={title} className="w-full max-w-sm rounded-2xl bg-surface-container p-4 shadow-xl">
+        <p className="font-label-md text-label-md text-on-surface">{title}</p>
+        <input
+          ref={inputRef}
+          type="text"
+          inputMode="url"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value)
+            setInvalid(false)
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              submit()
+            } else if (e.key === 'Escape') {
+              e.preventDefault()
+              e.stopPropagation()
+              rich.closeLinkDialog()
+            }
+          }}
+          placeholder="https://example.com"
+          aria-invalid={invalid}
+          className="mt-3 w-full rounded-xl border-none bg-surface-container-highest px-3 py-2.5 font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant focus:ring-0"
+        />
+        {invalid && (
+          <p className="mt-1.5 font-body-sm text-body-sm text-error">Enter a valid http(s) or mailto link.</p>
+        )}
+        <div className="mt-4 flex items-center justify-end gap-2">
+          {dialog.hasLink && (
+            <button
+              type="button"
+              onClick={rich.removeLink}
+              className="mr-auto rounded-full px-3 py-1.5 font-label-md text-label-md text-error transition-colors hover:bg-surface-container-highest"
+            >
+              Remove link
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={rich.closeLinkDialog}
+            className="rounded-full px-3 py-1.5 font-label-md text-label-md text-on-surface-variant transition-colors hover:bg-surface-container-highest"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            className="rounded-full bg-primary px-4 py-1.5 font-label-md text-label-md text-on-primary transition-transform active:scale-95"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
 interface RichEditorFieldProps {
-  editor: Editor | null
+  rich: RichComposer
   placeholder: string
 }
 
 /** Area ketik + placeholder + toolbar kontekstual yang muncul saat teks diseleksi. */
-export const RichEditorField: FC<RichEditorFieldProps> = ({ editor, placeholder }) => {
+export const RichEditorField: FC<RichEditorFieldProps> = ({ rich, placeholder }) => {
+  const editor = rich.editor
   useEditorRerender(editor)
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
@@ -282,10 +414,11 @@ export const RichEditorField: FC<RichEditorFieldProps> = ({ editor, placeholder 
             style={{ left: pos.left, top: pos.top }}
             onMouseDown={(e) => e.preventDefault()}
           >
-            <FormatButtons editor={editor} />
+            <FormatButtons rich={rich} />
           </div>,
           document.body,
         )}
+      <LinkDialog rich={rich} />
     </div>
   )
 }

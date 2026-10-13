@@ -78,6 +78,25 @@ class MessageEntityService
         return $clean;
     }
 
+    /**
+     * Preview (daftar chat, kutipan reply) hanya menampilkan spoiler; format
+     * lain dibuang supaya payload kecil dan perilakunya tidak bisa menyimpang.
+     *
+     * @param  mixed  $entities  Biasanya `$message->metadata['entities']`.
+     * @return array<int, array{type: string, offset: int, length: int}>
+     */
+    public function spoilersOnly(mixed $entities): array
+    {
+        if (! is_array($entities)) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            $entities,
+            fn ($entity) => is_array($entity) && ($entity['type'] ?? null) === 'spoiler',
+        ));
+    }
+
     /** Panjang string dalam UTF-16 code unit (emoji di luar BMP = 2). */
     public function utf16Length(string $text): int
     {

@@ -212,3 +212,19 @@ img {
     border-radius: 3px;
     background: rgba(255, 255, 255, 0.18);
 }
+
+/* Preview (daftar chat, kutipan reply): spoiler tetap tertutup dan tidak bisa diketuk. */
+.spoiler-text.is-static {
+    pointer-events: none;
+}
+
+/* Gambar/video spoiler: kabur sampai diketuk. Dipotong oleh overflow-hidden milik pembungkusnya. */
+.spoiler-media {
+    filter: blur(28px);
+    transform: scale(1.25);
+}
+
+.spoiler-thumb {
+    filter: blur(8px);
+    transform: scale(1.3);
+}

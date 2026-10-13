@@ -8,7 +8,7 @@ import MessageItem from '../../Components/discuss/MessageItem'
 import type { GroupedReaction } from '../../Components/discuss/ReactionBar'
 import { apiFetch } from '../../api/fetch'
 import client from '../../api/client'
-import type { EditAttachment } from '../../Components/discuss/MessageInput'
+import type { EditAttachment, MediaSendOptions } from '../../Components/discuss/MessageInput'
 import type { TextEntity } from '../../lib/rich-text'
 import type { VideoMeta } from '../../lib/media'
 import { putBlob } from '../../lib/mediaCache'
@@ -96,6 +96,19 @@ function appendEntities(formData: FormData, entities?: TextEntity[]) {
     formData.append(`entities[${i}][length]`, String(e.length))
     if (e.url) formData.append(`entities[${i}][url]`, e.url)
   })
+}
+
+// Opsi gambar/video (format caption + tanda spoiler) → metadata pesan optimistik.
+function mediaOptionsMetadata(options?: MediaSendOptions): { entities?: TextEntity[]; spoiler?: boolean } | undefined {
+  const md: { entities?: TextEntity[]; spoiler?: boolean } = {}
+  if (options?.entities?.length) md.entities = options.entities
+  if (options?.spoiler) md.spoiler = true
+  return Object.keys(md).length ? md : undefined
+}
+
+function appendMediaOptions(formData: FormData, options?: MediaSendOptions) {
+  appendEntities(formData, options?.entities)
+  if (options?.spoiler) formData.append('spoiler', '1')
 }
 
 function appendVideoFields(formData: FormData, file: File, meta?: VideoMeta) {
@@ -249,7 +262,7 @@ export default function DiscussRoom(props: PageProps) {
   // message id, so a failed upload can be retried (the server never got it).
   const pendingUploads = useRef(new Map<string, { kind: 'image' | 'file' | 'video'; file: File; meta?: VideoMeta }>())
 
-  const handleSendImage = useCallback(async (file: File, caption: string, replyToId?: string): Promise<boolean> => {
+  const handleSendImage = useCallback(async (file: File, caption: string, replyToId?: string, options?: MediaSendOptions): Promise<boolean> => {
     const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
     pendingUploads.current.set(tempId, { kind: 'image', file })
     const localPreviewUrl = URL.createObjectURL(file)
@@ -264,6 +277,7 @@ export default function DiscussRoom(props: PageProps) {
       },
       reply_count: 0,
       attachments: [localPreviewUrl],
+      metadata: mediaOptionsMetadata(options),
       reactions: [],
       is_edited: false,
       is_deleted: false,
@@ -279,6 +293,7 @@ export default function DiscussRoom(props: PageProps) {
       const formData = new FormData()
       formData.append('image', file)
       if (caption) formData.append('body', caption)
+      appendMediaOptions(formData, options)
       if (replyToId) formData.append('reply_to_id', replyToId)
       const res = await client.post(`/rooms/${room.slug}/messages`, formData)
       const message: Message = res.data.message
@@ -352,7 +367,7 @@ export default function DiscussRoom(props: PageProps) {
     }
   }, [room.slug, currentUserId, props.user?.display_name])
 
-  const handleSendVideo = useCallback(async (file: File, caption: string, replyToId?: string, meta?: VideoMeta): Promise<boolean> => {
+  const handleSendVideo = useCallback(async (file: File, caption: string, replyToId?: string, meta?: VideoMeta, options?: MediaSendOptions): Promise<boolean> => {
     const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
     pendingUploads.current.set(tempId, { kind: 'video', file, meta })
     // Show the poster frame right away, while the upload is still running.
@@ -378,6 +393,7 @@ export default function DiscussRoom(props: PageProps) {
           height: meta?.height ?? null,
           thumbnail: localThumb,
         },
+        ...mediaOptionsMetadata(options),
       },
       reactions: [],
       is_edited: false,
@@ -394,6 +410,7 @@ export default function DiscussRoom(props: PageProps) {
       const formData = new FormData()
       appendVideoFields(formData, file, meta)
       if (caption) formData.append('body', caption)
+      appendMediaOptions(formData, options)
       if (replyToId) formData.append('reply_to_id', replyToId)
       // Videos are big — allow far longer than the client's default 15s.
       const res = await client.post(`/rooms/${room.slug}/messages`, formData, { timeout: 600000 })
@@ -467,6 +484,7 @@ export default function DiscussRoom(props: PageProps) {
         formData.append('_method', 'PUT')
         formData.append('body', newBody)
         appendEntities(formData, entities)
+        if (attachment.spoiler) formData.append('spoiler', '1')
         if (attachment.kind === 'video') appendVideoFields(formData, attachment.file, attachment.meta)
         else formData.append(attachment.kind, attachment.file)
         const res = await client.post(`/rooms/${room.slug}/messages/${messageId}`, formData, {
@@ -510,9 +528,10 @@ export default function DiscussRoom(props: PageProps) {
       setMessages((prev) => prev.filter((m) => m.id !== failedMsg.id))
       const caption = failedMsg.body ?? ''
       const replyToId = failedMsg.reply_to?.id
-      if (pending.kind === 'video') await handleSendVideo(pending.file, caption, replyToId, pending.meta)
+      const options: MediaSendOptions = { entities: failedMsg.metadata?.entities, spoiler: failedMsg.metadata?.spoiler }
+      if (pending.kind === 'video') await handleSendVideo(pending.file, caption, replyToId, pending.meta, options)
       else if (pending.kind === 'file') await handleSendFile(pending.file, caption, replyToId, failedMsg.metadata?.entities)
-      else await handleSendImage(pending.file, caption, replyToId)
+      else await handleSendImage(pending.file, caption, replyToId, options)
       return
     }
 

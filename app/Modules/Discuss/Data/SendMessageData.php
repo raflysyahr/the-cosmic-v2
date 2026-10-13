@@ -14,5 +14,7 @@ class SendMessageData
         public readonly array $metadata,
         /** Format teks mentah (belum divalidasi) — disaring MessageEntityService. */
         public readonly array $entities = [],
+        /** Gambar/video ditandai spoiler (tampil blur sampai diketuk). */
+        public readonly bool $spoiler = false,
     ) {}
 }

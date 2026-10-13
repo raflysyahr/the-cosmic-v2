@@ -6,7 +6,7 @@ import EmojiText from '../../lib/emoji-renderer'
 import RichText from './RichText'
 import type { TextEntity } from '../../lib/rich-text'
 import type { GroupedReaction } from './ReactionBar'
-import { ShieldBan, CheckCheck, UserPlus, LogOut, Loader2, AlertTriangle, X, Undo2, Reply, Download, FileText, Play, MoreVertical, Save } from 'lucide-react'
+import { ShieldBan, CheckCheck, UserPlus, LogOut, Loader2, AlertTriangle, X, Undo2, Reply, Download, FileText, Play, MoreVertical, Save, EyeOff } from 'lucide-react'
 import Crest from '../cultivation/Crest'
 import { usePopup } from '../../contexts/PopupContext'
 import VideoPlayer from './VideoPlayer'
@@ -29,6 +29,10 @@ interface ReplyTo {
   /** Poster/preview for photo & video replies (resolved by the server). */
   thumbnail?: string | null
   file_name?: string | null
+  /** Hanya spoiler (preview kutipan tidak menampilkan format lain). */
+  entities?: TextEntity[]
+  /** Media yang dikutip adalah spoiler → thumbnail di-blur. */
+  spoiler?: boolean
   user: { id?: string; display_name: string; avatar_url?: string | null }
 }
 
@@ -40,7 +44,7 @@ interface Message {
   reply_to?: ReplyTo
   reply_count: number
   attachments: string[]
-  metadata?: { file?: { name?: string; size?: number; mime?: string }; video?: VideoInfo; thumbnail?: string | null; entities?: TextEntity[] } | null
+  metadata?: { file?: { name?: string; size?: number; mime?: string }; video?: VideoInfo; thumbnail?: string | null; entities?: TextEntity[]; spoiler?: boolean } | null
   reactions: GroupedReaction[]
   /** Helpful / Best Answer. Opsional: pesan optimistik belum punya. */
   marks?: MessageMarks
@@ -84,6 +88,8 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
   const [menu, setMenu] = useState<{ x: number; y: number; align: 'left' | 'right' } | null>(null)
   const [dragX, setDragX] = useState(0)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+  // Media spoiler: kabur sampai diketuk; sesudahnya tetap terbuka selama pesan ini tampil.
+  const [spoilerRevealed, setSpoilerRevealed] = useState(false)
   const [lightboxCaptionHidden, setLightboxCaptionHidden] = useState(false)
   const [captionH, setCaptionH] = useState(0)
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -295,6 +301,15 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
   // Foto/video: bubble tanpa padding (media menempel ke tepi bubble, sudut ikut radius bubble).
   // Reply quote dan caption tetap diberi padding sendiri supaya teks tidak menempel ke tepi.
   const isMedia = isVideo || imageAttachments.length > 0
+  const spoilerHidden = isMedia && !!message.metadata?.spoiler && !spoilerRevealed
+  const spoilerOverlay = spoilerHidden ? (
+    <span className="absolute inset-0 z-[1] flex items-center justify-center">
+      <span className="flex items-center gap-1.5 rounded-full bg-black/55 px-3 py-1.5 font-label-md text-label-md text-white">
+        <EyeOff className="h-4 w-4" />
+        Spoiler
+      </span>
+    </span>
+  ) : null
   const fileUrl = message.attachments[0]
   const fileName = message.metadata?.file?.name || decodeURIComponent(fileUrl?.split('/').pop() ?? 'file')
   const fileSize = formatFileSize(message.metadata?.file?.size)
@@ -378,8 +393,14 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
   const videoCard = isVideo ? (
     <button
       type="button"
-      onClick={() => videoUrl && videoReady && openLightbox(videoUrl, true)}
-      disabled={!videoReady}
+      onClick={() => {
+        if (spoilerHidden) {
+          setSpoilerRevealed(true)
+          return
+        }
+        if (videoUrl && videoReady) openLightbox(videoUrl, true)
+      }}
+      disabled={!videoReady && !spoilerHidden}
       className="relative block w-[200px] max-w-full overflow-hidden bg-black/40 disabled:cursor-default"
       style={{
         aspectRatio: video?.width && video?.height ? `${video.width} / ${video.height}` : '16 / 9',
@@ -387,12 +408,13 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
       }}
     >
       {video?.thumbnail ? (
-        <img src={video.thumbnail} alt="" className="h-full w-full object-cover" draggable={false} />
+        <img src={video.thumbnail} alt="" className={`h-full w-full object-cover ${spoilerHidden ? 'spoiler-media' : ''}`} draggable={false} />
       ) : videoUrl ? (
         // No poster frame (generation failed): let the browser paint the first frame.
-        <video src={`${videoUrl}#t=0.1`} preload="metadata" muted playsInline className="pointer-events-none h-full w-full object-cover" />
+        <video src={`${videoUrl}#t=0.1`} preload="metadata" muted playsInline className={`pointer-events-none h-full w-full object-cover ${spoilerHidden ? 'spoiler-media' : ''}`} />
       ) : null}
-      <span className="absolute inset-0 flex items-center justify-center">
+      {spoilerOverlay}
+      <span className={`absolute inset-0 flex items-center justify-center ${spoilerHidden ? 'hidden' : ''}`}>
         <span className="flex h-11 w-11 items-center justify-center rounded-full bg-black/55 text-white">
           {!videoReady && message.sendStatus === 'sending' ? (
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -401,7 +423,7 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
           )}
         </span>
       </span>
-      {videoInfoLine && (
+      {videoInfoLine && !spoilerHidden && (
         <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 font-label-sm text-label-sm text-white">
           {videoInfoLine}
         </span>
@@ -433,7 +455,7 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
     >
       {replyThumb && (
         <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded bg-black/30">
-          {replyThumb.url && <img src={replyThumb.url} alt="" loading="lazy" className="h-full w-full object-cover" draggable={false} />}
+          {replyThumb.url && <img src={replyThumb.url} alt="" loading="lazy" className={`h-full w-full object-cover ${replyThumb.spoiler ? 'spoiler-thumb' : ''}`} draggable={false} />}
           {replyThumb.isVideo && (
             <span className="absolute inset-0 flex items-center justify-center">
               <Play className="h-4 w-4 text-white/90" fill="currentColor" />
@@ -444,7 +466,13 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
       <div className="min-w-0 flex-1">
         <p className={`text-[10px] font-medium text-[#aaa] leading-none ${replyThumb ? '' : 'mb-0.5'}`}>{message.reply_to.user.display_name}</p>
         {!replyThumb && (
-          <p className="text-[10px] text-[#777] leading-tight truncate">{message.reply_to.body || message.reply_to.file_name}</p>
+          <p className="text-[10px] text-[#777] leading-tight truncate">
+            {message.reply_to.body ? (
+              <RichText preview text={message.reply_to.body} entities={message.reply_to.entities} />
+            ) : (
+              message.reply_to.file_name
+            )}
+          </p>
         )}
       </div>
     </button>
@@ -556,18 +584,19 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
                         <button
                           key={i}
                           type="button"
-                          onClick={() => openLightbox(url, false)}
-                          className={`block overflow-hidden ${isMedia ? '' : 'rounded-lg'}`}
+                          onClick={() => (spoilerHidden ? setSpoilerRevealed(true) : openLightbox(url, false))}
+                          className={`relative block overflow-hidden ${isMedia ? '' : 'rounded-lg'}`}
                           style={{ WebkitTouchCallout: 'none' }}
                         >
                           <img
                             src={message.metadata?.thumbnail || url}
                             alt={`attachment ${i + 1}`}
                             loading="lazy"
-                            className=" w-auto h-auto object-cover"
+                            className={`w-auto h-auto object-cover ${spoilerHidden ? 'spoiler-media' : ''}`}
                             draggable={false}
                             style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
                           />
+                        {spoilerOverlay}
                         </button>
                       ))}
                     </div>
@@ -726,18 +755,19 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
                       <button
                         key={i}
                         type="button"
-                        onClick={() => openLightbox(url, false)}
-                        className={`block overflow-hidden ${isMedia ? '' : 'rounded-lg'}`}
+                        onClick={() => (spoilerHidden ? setSpoilerRevealed(true) : openLightbox(url, false))}
+                        className={`relative block overflow-hidden ${isMedia ? '' : 'rounded-lg'}`}
                         style={{ WebkitTouchCallout: 'none' }}
                       >
                         <img
                           src={message.metadata?.thumbnail || url}
                           alt={`attachment ${i + 1}`}
                           loading="lazy"
-                          className=" w-auto h-auto object-cover"
+                          className={`w-auto h-auto object-cover ${spoilerHidden ? 'spoiler-media' : ''}`}
                           draggable={false}
                           style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
                         />
+                      {spoilerOverlay}
                       </button>
                     ))}
                   </div>

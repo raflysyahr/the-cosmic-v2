@@ -138,4 +138,17 @@ class MessageEntityServiceTest extends TestCase
 
         $this->assertCount(MessageEntityService::MAX_ENTITIES, $this->service->sanitize($body, $entities));
     }
+
+    public function test_spoilers_only_filters_everything_else(): void
+    {
+        $result = $this->service->spoilersOnly([
+            ['type' => 'bold', 'offset' => 0, 'length' => 2],
+            ['type' => 'spoiler', 'offset' => 3, 'length' => 4],
+            'junk',
+        ]);
+
+        $this->assertSame([['type' => 'spoiler', 'offset' => 3, 'length' => 4]], $result);
+        $this->assertSame([], $this->service->spoilersOnly(null));
+        $this->assertSame([], $this->service->spoilersOnly('nope'));
+    }
 }

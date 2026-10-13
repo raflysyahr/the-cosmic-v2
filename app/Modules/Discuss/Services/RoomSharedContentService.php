@@ -96,6 +96,8 @@ class RoomSharedContentService
                         ? ($m->metadata['video']['thumbnail'] ?? null)
                         : ($m->metadata['thumbnail'] ?? $url),
                     'duration'  => $isVideo ? ($m->metadata['video']['duration'] ?? null) : null,
+                    // Media spoiler: thumbnail di galeri ditampilkan blur.
+                    'spoiler'   => (bool) ($m->metadata['spoiler'] ?? false),
                     'createdAt' => $m->created_at?->toIso8601String(),
                 ];
             })

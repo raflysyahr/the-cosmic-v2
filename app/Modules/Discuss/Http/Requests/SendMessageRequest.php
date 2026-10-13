@@ -55,6 +55,8 @@ class SendMessageRequest extends FormRequest
             'reply_to_id' => ['nullable', 'string', 'max:26'],
             'type' => ['nullable', 'string', 'in:text,image,file,video,sticker,system'],
             'metadata' => ['nullable', 'array'],
+            // Gambar/video yang dikirim sebagai spoiler (blur sampai diketuk).
+            'spoiler' => ['nullable', 'boolean'],
             ...self::ENTITIES_RULES,
         ];
     }
