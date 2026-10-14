@@ -144,7 +144,7 @@ export default function Leaderboard({ isAdmin }: { isAdmin: boolean }) {
             )}
 
             {board && board.me !== null && (
-              <div className="mt-4 rounded-[999px] bg-surface-container-high px-3 py-2 font-label-md border border-outline-variant/30 text-label-md text-on-surface-variant w-fit rounded-[99px]">
+              <div className="mt-4 rounded-[999px] bg-surface-container-high/30 px-3 py-2 font-label-md border border-outline-variant/30 text-label-md text-on-surface-variant w-fit rounded-[99px] backdrop-blur-[50px] backdrop-brightness-200">
                 Your points: <span className="font-semibold text-amber-300">{board.me} CP</span>
               </div>
             )}

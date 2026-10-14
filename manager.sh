@@ -3,10 +3,12 @@
 # ============================================================
 # THE COSMIC DEV MANAGER
 #
-# npm       -> Termux
-# reverb    -> Termux
-# queue     -> Termux
-# server    -> Ubuntu / proot-distro
+# npm        -> Termux
+# reverb     -> Termux
+# queue      -> Termux
+# mariadb    -> Termux
+# wake-lock  -> Termux
+# server     -> Ubuntu / proot-distro
 # ============================================================
 
 # Folder tempat manager.sh berada
@@ -15,8 +17,7 @@ PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PID_DIR="$HOME/.the-cosmic-pids"
 LOG_DIR="$HOME/.the-cosmic-logs"
 
-mkdir -p "$PID_DIR"
-mkdir -p "$LOG_DIR"
+mkdir -p "$PID_DIR" "$LOG_DIR"
 
 # ============================================================
 # COLORS
@@ -42,6 +43,56 @@ log_file() {
 }
 
 # ============================================================
+# WAKE LOCK
+# ============================================================
+
+start_wake_lock() {
+
+    if ! command -v termux-wake-lock >/dev/null 2>&1; then
+        echo -e "${RED}[wake-lock] termux-wake-lock tidak ditemukan.${NC}"
+        echo "Pastikan paket termux-tools tersedia."
+        return 1
+    fi
+
+    echo -e "${CYAN}[wake-lock] mengaktifkan wake lock...${NC}"
+
+    if termux-wake-lock; then
+        touch "$PID_DIR/wake-lock.active"
+        echo -e "${GREEN}[wake-lock] perintah berhasil dijalankan.${NC}"
+    else
+        echo -e "${RED}[wake-lock] gagal mengaktifkan wake lock.${NC}"
+        return 1
+    fi
+}
+
+stop_wake_lock() {
+
+    if ! command -v termux-wake-unlock >/dev/null 2>&1; then
+        echo -e "${RED}[wake-lock] termux-wake-unlock tidak ditemukan.${NC}"
+        return 1
+    fi
+
+    echo -e "${CYAN}[wake-lock] menonaktifkan wake lock...${NC}"
+
+    if termux-wake-unlock; then
+        rm -f "$PID_DIR/wake-lock.active"
+        echo -e "${GREEN}[wake-lock] dinonaktifkan.${NC}"
+    else
+        echo -e "${RED}[wake-lock] gagal menonaktifkan wake lock.${NC}"
+        return 1
+    fi
+}
+
+status_wake_lock() {
+
+    if [[ -f "$PID_DIR/wake-lock.active" ]]; then
+        echo -e "${GREEN}● wake-lock${NC} : ACTIVE (dicatat manager)"
+    else
+        echo -e "${YELLOW}● wake-lock${NC} : INACTIVE / UNKNOWN"
+    fi
+}
+
+# ============================================================
 # CHECK PROCESS
 # ============================================================
 
@@ -59,6 +110,11 @@ is_running() {
     local pid
     pid="$(cat "$file")"
 
+    if [[ ! "$pid" =~ ^[0-9]+$ ]]; then
+        rm -f "$file"
+        return 1
+    fi
+
     if kill -0 "$pid" 2>/dev/null; then
         return 0
     fi
@@ -69,6 +125,167 @@ is_running() {
 }
 
 # ============================================================
+# MARIADB - TERMUX
+# ============================================================
+
+start_mariadb() {
+
+    if ! command -v mariadbd >/dev/null 2>&1; then
+        echo -e "${RED}[mariadb] mariadbd tidak ditemukan.${NC}"
+        echo "Install MariaDB terlebih dahulu."
+        return 1
+    fi
+
+    # Cegah menjalankan instance kedua.
+    if pgrep -x mariadbd >/dev/null 2>&1; then
+        echo -e "${YELLOW}[mariadb] instance MariaDB sudah berjalan.${NC}"
+        return 0
+    fi
+
+    echo -e "${CYAN}[mariadb] starting...${NC}"
+
+    # Jalankan MariaDB di background.
+    mariadbd >> "$(log_file mariadb)" 2>&1 &
+
+    local pid=$!
+
+    echo "$pid" > "$(pid_file mariadb)"
+
+    # Tunggu proses memulai server.
+    local i=0
+
+    while (( i < 10 )); do
+
+        if ! kill -0 "$pid" 2>/dev/null; then
+            break
+        fi
+
+        if mariadb-admin ping --silent >/dev/null 2>&1; then
+            echo -e "${GREEN}[mariadb] RUNNING (PID $pid)${NC}"
+            return 0
+        fi
+
+        sleep 1
+        ((i++))
+
+    done
+
+    # Periksa kembali apakah server sudah menerima koneksi.
+    if kill -0 "$pid" 2>/dev/null &&
+       mariadb-admin ping --silent >/dev/null 2>&1; then
+
+        echo -e "${GREEN}[mariadb] RUNNING (PID $pid)${NC}"
+        return 0
+
+    fi
+
+    echo -e "${RED}[mariadb] belum siap atau gagal dijalankan.${NC}"
+    echo
+    echo -e "${YELLOW}===== MARIADB LOG =====${NC}"
+
+    tail -30 "$(log_file mariadb)" 2>/dev/null
+
+    # Jangan menghapus PID jika proses masih hidup.
+    # Pengguna perlu memeriksa log dan konfigurasi terlebih dahulu.
+    if ! kill -0 "$pid" 2>/dev/null; then
+        rm -f "$(pid_file mariadb)"
+    fi
+
+    return 1
+}
+
+stop_mariadb() {
+
+    if ! pgrep -x mariadbd >/dev/null 2>&1; then
+
+        rm -f "$(pid_file mariadb)"
+
+        echo -e "${YELLOW}[mariadb] tidak berjalan.${NC}"
+
+        return 0
+    fi
+
+    echo -e "${CYAN}[mariadb] stopping...${NC}"
+
+    # Prioritaskan shutdown yang bersih melalui mariadb-admin.
+    if command -v mariadb-admin >/dev/null 2>&1; then
+
+        if mariadb-admin shutdown >/dev/null 2>&1; then
+
+            local i=0
+
+            while (( i < 15 )); do
+
+                if ! pgrep -x mariadbd >/dev/null 2>&1; then
+                    break
+                fi
+
+                sleep 1
+                ((i++))
+
+            done
+
+        fi
+
+    fi
+
+    # Jika masih berjalan, kirim SIGTERM hanya kepada PID
+    # yang disimpan manager dan masih valid.
+    if pgrep -x mariadbd >/dev/null 2>&1; then
+
+        if [[ -f "$(pid_file mariadb)" ]]; then
+
+            local pid
+            pid="$(cat "$(pid_file mariadb)")"
+
+            if [[ "$pid" =~ ^[0-9]+$ ]] &&
+               kill -0 "$pid" 2>/dev/null; then
+
+                echo -e "${YELLOW}[mariadb] mengirim SIGTERM ke PID $pid...${NC}"
+
+                kill -TERM "$pid" 2>/dev/null
+
+            fi
+
+        else
+
+            echo -e "${RED}[mariadb] PID manager tidak tersedia.${NC}"
+            echo "Tidak menghentikan proses yang tidak dikelola manager."
+            return 1
+
+        fi
+
+        local i=0
+
+        while (( i < 10 )); do
+
+            if ! pgrep -x mariadbd >/dev/null 2>&1; then
+                break
+            fi
+
+            sleep 1
+            ((i++))
+
+        done
+
+    fi
+
+    if pgrep -x mariadbd >/dev/null 2>&1; then
+
+        echo -e "${RED}[mariadb] masih berjalan.${NC}"
+        echo "Periksa konfigurasi dan log MariaDB."
+        echo "Tidak melakukan kill -9 secara otomatis."
+
+        return 1
+
+    fi
+
+    rm -f "$(pid_file mariadb)"
+
+    echo -e "${GREEN}[mariadb] STOPPED${NC}"
+}
+
+# ============================================================
 # START PROCESS
 # ============================================================
 
@@ -76,9 +293,20 @@ start_process() {
 
     local name="$1"
 
+    case "$name" in
+        wake-lock)
+            start_wake_lock
+            return $?
+            ;;
+        mariadb)
+            start_mariadb
+            return $?
+            ;;
+    esac
+
     if is_running "$name"; then
         echo -e "${YELLOW}[$name] sudah berjalan.${NC}"
-        return
+        return 0
     fi
 
     echo -e "${CYAN}[$name] starting...${NC}"
@@ -91,7 +319,7 @@ start_process() {
 
         npm)
 
-            cd "$PROJECT_DIR" || exit 1
+            cd "$PROJECT_DIR" || return 1
 
             setsid npm run dev \
                 >> "$(log_file npm)" 2>&1 &
@@ -104,7 +332,7 @@ start_process() {
 
         reverb)
 
-            cd "$PROJECT_DIR" || exit 1
+            cd "$PROJECT_DIR" || return 1
 
             setsid php artisan reverb:start \
                 >> "$(log_file reverb)" 2>&1 &
@@ -117,7 +345,7 @@ start_process() {
 
         queue)
 
-            cd "$PROJECT_DIR" || exit 1
+            cd "$PROJECT_DIR" || return 1
 
             setsid php artisan queue:listen \
                 >> "$(log_file queue)" 2>&1 &
@@ -168,6 +396,8 @@ start_process() {
 
         rm -f "$(pid_file "$name")"
 
+        return 1
+
     fi
 }
 
@@ -178,20 +408,41 @@ start_process() {
 stop_process() {
 
     local name="$1"
-    local file
 
+    case "$name" in
+        wake-lock)
+            stop_wake_lock
+            return $?
+            ;;
+        mariadb)
+            stop_mariadb
+            return $?
+            ;;
+    esac
+
+    local file
     file="$(pid_file "$name")"
 
     if [[ ! -f "$file" ]]; then
 
         echo -e "${YELLOW}[$name] tidak berjalan.${NC}"
 
-        return
+        return 0
 
     fi
 
     local pid
     pid="$(cat "$file")"
+
+    if [[ ! "$pid" =~ ^[0-9]+$ ]]; then
+
+        rm -f "$file"
+
+        echo -e "${RED}[$name] PID tidak valid.${NC}"
+
+        return 1
+
+    fi
 
     if ! kill -0 "$pid" 2>/dev/null; then
 
@@ -199,23 +450,33 @@ stop_process() {
 
         echo -e "${YELLOW}[$name] sudah berhenti.${NC}"
 
-        return
+        return 0
 
     fi
 
     echo -e "${CYAN}[$name] stopping PID $pid...${NC}"
 
-    # Matikan process group
+    # Matikan process group untuk layanan yang dijalankan
+    # menggunakan setsid.
     kill -- "-$pid" 2>/dev/null
 
     sleep 2
 
-    # Force kill jika masih hidup
     if kill -0 "$pid" 2>/dev/null; then
 
         echo -e "${YELLOW}[$name] forcing stop...${NC}"
 
-        kill -9 -- "-$pid" 2>/dev/null
+        kill -TERM -- "-$pid" 2>/dev/null
+
+        sleep 2
+
+    fi
+
+    if kill -0 "$pid" 2>/dev/null; then
+
+        echo -e "${RED}[$name] gagal dihentikan.${NC}"
+
+        return 1
 
     fi
 
@@ -233,6 +494,13 @@ restart_process() {
     local name="$1"
 
     stop_process "$name"
+
+    local result=$?
+
+    if [[ $result -ne 0 ]]; then
+        echo -e "${RED}[$name] restart dibatalkan karena gagal berhenti.${NC}"
+        return 1
+    fi
 
     sleep 1
 
@@ -261,6 +529,28 @@ status_process() {
     fi
 }
 
+status_mariadb() {
+
+    if pgrep -x mariadbd >/dev/null 2>&1; then
+
+        if command -v mariadb-admin >/dev/null 2>&1 &&
+           mariadb-admin ping --silent >/dev/null 2>&1; then
+
+            echo -e "${GREEN}● mariadb${NC} : RUNNING (database menerima koneksi)"
+
+        else
+
+            echo -e "${YELLOW}● mariadb${NC} : PROCESS RUNNING, belum terverifikasi menerima koneksi"
+
+        fi
+
+    else
+
+        echo -e "${RED}● mariadb${NC} : STOPPED"
+
+    fi
+}
+
 status_all() {
 
     echo
@@ -268,6 +558,8 @@ status_all() {
     echo -e "${BLUE}       THE COSMIC PROCESS STATUS       ${NC}"
     echo -e "${BLUE}========================================${NC}"
 
+    status_wake_lock
+    status_mariadb
     status_process npm
     status_process reverb
     status_process queue
@@ -286,6 +578,8 @@ start_all() {
     echo -e "${CYAN}Starting The Cosmic...${NC}"
     echo
 
+    start_wake_lock
+    start_process mariadb
     start_process npm
     start_process reverb
     start_process queue
@@ -306,10 +600,12 @@ stop_all() {
     echo -e "${CYAN}Stopping The Cosmic...${NC}"
     echo
 
-    stop_process npm
-    stop_process reverb
-    stop_process queue
     stop_process server
+    stop_process queue
+    stop_process reverb
+    stop_process npm
+    stop_process mariadb
+    stop_wake_lock
 
     echo
 
@@ -323,6 +619,14 @@ stop_all() {
 restart_all() {
 
     stop_all
+
+    local result=$?
+
+    if [[ $result -ne 0 ]]; then
+        echo -e "${RED}Ada layanan yang gagal dihentikan.${NC}"
+        echo "Periksa status sebelum memulai ulang."
+        return 1
+    fi
 
     sleep 2
 
@@ -398,6 +702,14 @@ menu() {
         echo
         echo "16) Lihat Log"
         echo "17) Status"
+        echo
+        echo "18) Start MariaDB"
+        echo "19) Stop MariaDB"
+        echo "20) Restart MariaDB"
+        echo
+        echo "21) Aktifkan Wake Lock"
+        echo "22) Nonaktifkan Wake Lock"
+        echo
         echo "0)  Keluar"
         echo
 
@@ -487,6 +799,7 @@ menu() {
                 echo "2) reverb"
                 echo "3) queue"
                 echo "4) server"
+                echo "5) mariadb"
                 echo
 
                 read -rp "Pilih log: " logchoice
@@ -496,8 +809,11 @@ menu() {
                     2) show_log reverb ;;
                     3) show_log queue ;;
                     4) show_log server ;;
+                    5) show_log mariadb ;;
                     *) echo "Tidak valid." ;;
                 esac
+
+                read -rp "Enter..."
 
                 ;;
 
@@ -507,6 +823,31 @@ menu() {
 
                 read -rp "Enter..."
 
+                ;;
+
+            18)
+                start_process mariadb
+                read -rp "Enter..."
+                ;;
+
+            19)
+                stop_process mariadb
+                read -rp "Enter..."
+                ;;
+
+            20)
+                restart_process mariadb
+                read -rp "Enter..."
+                ;;
+
+            21)
+                start_wake_lock
+                read -rp "Enter..."
+                ;;
+
+            22)
+                stop_wake_lock
+                read -rp "Enter..."
                 ;;
 
             0)
@@ -572,7 +913,12 @@ case "$1" in
 
     logs)
 
-        show_log "$2"
+        if [[ -n "$2" ]]; then
+            show_log "$2"
+        else
+            echo "Penggunaan: $0 logs <npm|reverb|queue|server|mariadb>"
+            exit 1
+        fi
 
         ;;
 
