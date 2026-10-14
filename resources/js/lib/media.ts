@@ -97,18 +97,21 @@ export function formatDuration(seconds?: number | null): string {
 interface ThumbSource {
   type?: string
   attachments?: string[]
-  metadata?: { video?: VideoInfo; thumbnail?: string | null } | null
+  metadata?: { video?: VideoInfo; thumbnail?: string | null; spoiler?: boolean } | null
   /** Already resolved by the server for `reply_to` payloads. */
   thumbnail?: string | null
+  /** Media spoiler — `reply_to` payloads carry it at the top level. */
+  spoiler?: boolean
 }
 
 /**
  * Small preview for a replied-to photo/video message, or null for anything else.
  * `url` may be null for a video whose poster frame couldn't be generated.
  */
-export function getReplyThumb(m?: ThumbSource | null): { url: string | null; isVideo: boolean } | null {
+export function getReplyThumb(m?: ThumbSource | null): { url: string | null; isVideo: boolean; spoiler: boolean } | null {
   if (!m) return null
-  if (m.type === 'image') return { url: m.thumbnail ?? m.metadata?.thumbnail ?? m.attachments?.[0] ?? null, isVideo: false }
-  if (m.type === 'video') return { url: m.thumbnail ?? m.metadata?.video?.thumbnail ?? null, isVideo: true }
+  const spoiler = !!(m.spoiler ?? m.metadata?.spoiler)
+  if (m.type === 'image') return { url: m.thumbnail ?? m.metadata?.thumbnail ?? m.attachments?.[0] ?? null, isVideo: false, spoiler }
+  if (m.type === 'video') return { url: m.thumbnail ?? m.metadata?.video?.thumbnail ?? null, isVideo: true, spoiler }
   return null
 }

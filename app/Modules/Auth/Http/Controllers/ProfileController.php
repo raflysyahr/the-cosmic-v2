@@ -7,6 +7,7 @@ use App\Modules\Auth\Data\UserData;
 use App\Modules\Auth\Http\Requests\UpdateProfileRequest;
 use App\Modules\Auth\Models\User;
 use App\Modules\Auth\Models\UserProfile;
+use App\Modules\Auth\Services\PublicProfileActivityService;
 use App\Modules\Discuss\Models\Message;
 use App\Modules\Discuss\Models\Member;
 use Illuminate\Http\JsonResponse;
@@ -91,9 +92,18 @@ class ProfileController
             stats: $stats,
         );
 
+        // Tab Media / Links / Voice dipisah per Group vs Private chat; tab Groups
+        // berisi daftar group. Aturan privasi ada di PublicProfileActivityService.
+        $activity = app(PublicProfileActivityService::class)
+            ->forUser($user->id, $request->user()?->id);
+
         return Inertia::render('Profile/Show', [
             'profile' => $publicProfile,
             'isSelf' => $request->user()?->id === $user->id,
+            'media' => $activity['media'],
+            'links' => $activity['links'],
+            'voices' => $activity['voices'],
+            'groups' => $activity['groups'],
         ]);
     }
 }

@@ -1,6 +1,7 @@
 import { type FC } from 'react'
 import { Link } from '@inertiajs/react'
-import EmojiText from '../../lib/emoji-renderer'
+import RichText from './RichText'
+import type { TextEntity } from '../../lib/rich-text'
 import { Users } from 'lucide-react'
 
 interface LastMessageUser {
@@ -10,6 +11,8 @@ interface LastMessageUser {
 
 interface LastMessage {
   body: string | null
+  /** Hanya spoiler — preview tidak menampilkan format lain. */
+  entities?: TextEntity[]
   created_at: string
   user: LastMessageUser | null
 }
@@ -75,7 +78,7 @@ const DiscussRoomCard: FC<DiscussRoomCardProps> = ({ room }) => {
         {room.last_message ? (
           <p className="mt-0.5 truncate font-body-sm text-body-sm text-on-surface-variant">
             <span className="text-on-surface-variant">{room.last_message.user?.display_name ?? 'Unknown'}</span>
-            : <EmojiText text={room.last_message.body || ''} />
+            : <RichText preview text={room.last_message.body || ''} entities={room.last_message.entities} />
           </p>
         ) : (
           <p className="mt-0.5 truncate font-body-sm text-body-sm text-on-surface-variant italic">No messages yet</p>

@@ -73,7 +73,7 @@ function Shell({ children }: { children: React.ReactNode }) {
             <div className="mx-auto flex h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-surface">
                 {showNav
                     ? <TabHeader />
-                    : <DetailHeader path={path} title={chrome.title ?? defaultTitle(path)} onBack={chrome.onBack} />}
+                    : <DetailHeader path={path} title={chrome.title ?? defaultTitle(path)} onBack={chrome.onBack} right={chrome.right} />}
                 <CpEventBanner />
                 {/* scroll-region: Inertia mengembalikan scroll ke atas saat pindah halaman */}
                 <main scroll-region="" className="min-h-0 flex-1 overflow-y-auto overscroll-contain">

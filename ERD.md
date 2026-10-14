@@ -293,7 +293,7 @@ discuss_notifications.payload → room_id, message_id, rank_name, dll (per type)
 |---|---|---|
 | `id` 🔑 | `ULID` | Primary key |
 | `room_id` ⟶ | `ULID` | → `discuss_rooms.id` *(logis)*, null = rank global |
-| `name` | `VARCHAR(50)` | Newcomer, Regular, Veteran, Legend, dll |
+| `name` | `VARCHAR(50)` | Outer Disciple, Inner Disciple, Core Disciple, … Celestial Disciple (12 level bawaan), dll |
 | `label_color` | `VARCHAR(7)` | Hex color badge (misal `#6c8ef5`) |
 | `icon_url` | `TEXT` | Ikon pangkat, nullable |
 | `min_xp` | `INT` | Minimum XP untuk naik ke rank ini |
@@ -542,20 +542,34 @@ Direct message tidak menambah tabel baru — sepenuhnya reuse `discuss_rooms` + 
 **Index:** `UNIQUE(message_id, reporter_id)`, `INDEX(room_id, status, created_at)`, `INDEX(reporter_id, created_at)`
 
 ### `discuss_announcements`
-*Pemberitahuan dari admin untuk halaman Story. Dibuat/diubah hanya oleh admin platform.*
+*Post dari admin untuk halaman Story (teks, foto, atau video + caption). Dibuat/diubah hanya oleh admin platform.*
 
 | Kolom | Tipe | Catatan |
 |---|---|---|
 | `id` | `ULID` | PK |
-| `title` | `VARCHAR(120)` | |
-| `body` | `TEXT` | Teks biasa (dirender tanpa HTML) |
+| `title` | `VARCHAR(120)` | Boleh string kosong pada post bermedia |
+| `body` | `TEXT` | Teks / caption, teks biasa (dirender tanpa HTML); boleh string kosong pada post bermedia |
 | `link_url` | `VARCHAR(500)` | Nullable; hanya http/https |
+| `media_items` | `JSON` | Nullable; carousel berurutan, maks. 10 item. Tiap item: `id` (ULID, stabil untuk edit), `type` (`image` \| `video`), `url`, `thumbnail` (foto: JPEG ≤1080px buatan server, null untuk GIF; video: poster dari browser), `width`, `height`, `duration`, `name`, `size`, `mime`, `path` & `thumb_path` (lokasi file di disk `public`, tidak dikirim ke client; dipakai untuk menghapus file) |
 | `is_pinned` | `BOOLEAN` | Disematkan di atas |
 | `published_at` | `TIMESTAMP` | Nullable; masa depan = terjadwal, null = draf (tidak tampil) |
 | `created_by` ⟶ | `ULID` | → `users.id` *(logis)* |
 | `created_at` / `updated_at` | `TIMESTAMP` | |
 
 **Index:** `INDEX(published_at)`, `INDEX(is_pinned, published_at)`
+
+### `discuss_announcement_reactions`
+*Reaksi user pada post Story. Satu reaksi per user per post; emoji berasal dari palet tetap (`AnnouncementReaction::PALETTE`).*
+
+| Kolom | Tipe | Catatan |
+|---|---|---|
+| `id` | `ULID` | PK |
+| `announcement_id` ⟶ | `ULID` | → `discuss_announcements.id` *(logis; dihapus manual saat post dihapus)* |
+| `user_id` ⟶ | `ULID` | → `users.id` *(logis)* |
+| `emoji` | `VARCHAR(16)` | Salah satu dari palet: ❤️ 👍 😂 😮 😢 🔥 |
+| `created_at` | `TIMESTAMP` | |
+
+**Index:** `UNIQUE(announcement_id, user_id)`, `INDEX(announcement_id, emoji)`
 
 ### `discuss_story_seen`
 *Satu baris per user: kapan terakhir membuka halaman Story (dasar badge "belum dibaca").*

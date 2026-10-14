@@ -98,19 +98,22 @@ class RoomService
     public function roomsForUser(?string $userId): array
     {
         $rooms = Room::where('is_active', true)
+            ->where('type','public')
             ->where(function ($q) use ($userId) {
-                $q->where('type', 'public');
+
                 if ($userId) {
                     $q->orWhereIn('id', function ($sub) use ($userId) {
                         $sub->select('room_id')
                             ->from('discuss_members')
                             ->where('user_id', $userId)
                             ->where('is_banned', false);
+
                     });
                 }
             })
             ->orderBy('created_at', 'desc')
             ->get();
+
 
         return $rooms->map(fn($room) => [
                 'id' => $room->id,
@@ -138,6 +141,14 @@ class RoomService
         sort($ids);
 
         return implode('_', $ids);
+    }
+
+    /**
+     * Find the existing direct chat room between two users WITHOUT creating one.
+     */
+    public function findDirectChat(string $user1Id, string $user2Id): ?Room
+    {
+        return $this->findByContext('direct', $this->generateDirectContextId($user1Id, $user2Id));
     }
 
     /**
@@ -281,6 +292,8 @@ class RoomService
 
         return [
             'body' => $message->body,
+            // Preview daftar chat hanya menampilkan spoiler.
+            'entities' => app(MessageEntityService::class)->spoilersOnly($message->metadata['entities'] ?? null),
             'created_at' => $message->created_at,
             'user' => $user ? [
                 'id' => $user->id,

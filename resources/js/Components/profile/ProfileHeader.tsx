@@ -1,4 +1,4 @@
-import { ChartNoAxesColumn, Cloud, Crown } from 'lucide-react'
+import { ChartNoAxesColumn, Cloud, Crown , Book } from 'lucide-react'
 import Crest from '../cultivation/Crest'
 
 export interface CultivationStatus {
@@ -60,8 +60,9 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
         <div className="min-w-0 flex-1">
           <div className="flex  items-center gap-x-2 gap-y-1">
             <h1 className="truncate text-md font-bold leading-tight text-white">{displayName}</h1>
-            <span className="inline-flex items-center gap-1 rounded-[999px] border border-outline-variant bg-surface-container-high px-2.5 py-0.5 text-[11px] font-semibold text-on-surface">
-              <Crown className="h-3 w-3" />
+            <span className="inline-flex items-center gap-1 rounded-[999px] border border-outline-variant bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-on-surface backdrop-blur-[50px] backdrop-bright-200">
+            { roleLabel == "Reader" && <Book className="h-3 w-3" /> }
+            { roleLabel == "Admin" && <Crown className="h-3 w-3" /> }
               {roleLabel}
             </span>
           </div>

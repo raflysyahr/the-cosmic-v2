@@ -25,6 +25,8 @@ class UpdateMessageRequest extends FormRequest
             'duration' => ['nullable', 'numeric', 'min:0', 'max:86400'],
             'width' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'height' => ['nullable', 'integer', 'min:1', 'max:10000'],
+            'spoiler' => ['nullable', 'boolean'],
+            ...SendMessageRequest::ENTITIES_RULES,
         ];
     }
 }

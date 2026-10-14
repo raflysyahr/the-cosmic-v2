@@ -30,7 +30,7 @@ const ProfileStoragePanel: FC = () => {
 
   return (
     <PanelShell>
-      <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low px-4 py-5">
+      <div className="rounded-[15px] border border-outline-variant/30 bg-surface-container-low px-4 py-5">
         <p className="text-xs text-on-surface-variant">Cached media on this device</p>
         <p className="mt-1 text-3xl font-bold text-white">{formatBytes(usage.bytes)}</p>
         <p className="mt-1 text-sm text-on-surface-variant">

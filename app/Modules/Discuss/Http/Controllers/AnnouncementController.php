@@ -45,15 +45,39 @@ class AnnouncementController
     public function store(AnnouncementRequest $request): JsonResponse
     {
         return response()->json(
-            ['announcement' => $this->announcements->create($request->user(), $request->validated())],
+            ['announcement' => $this->announcements->create(
+                $request->user(),
+                $request->validated(),
+                (array) $request->file('media', []),
+                (array) $request->file('thumbnails', []),
+            )],
             201,
         );
     }
 
+    /**
+     * Update parsial. Untuk mengubah media kirim multipart lewat POST + `_method=PUT`
+     * (PHP tidak mem-parse multipart pada request PUT asli).
+     */
     public function update(AnnouncementRequest $request, string $id): JsonResponse
     {
         return response()->json(
-            ['announcement' => $this->announcements->update($request->user(), $id, $request->validated())]
+            ['announcement' => $this->announcements->update(
+                $request->user(),
+                $id,
+                $request->validated(),
+                (array) $request->file('media', []),
+                (array) $request->file('thumbnails', []),
+            )]
+        );
+    }
+
+    public function react(Request $request, string $id): JsonResponse
+    {
+        $data = $request->validate(['emoji' => ['required', 'string', 'max:16']]);
+
+        return response()->json(
+            $this->announcements->react((string) $request->user()->id, $id, $data['emoji'])
         );
     }
 

@@ -11,6 +11,7 @@ use App\Modules\Discuss\Services\MessageService;
 use App\Modules\Discuss\Services\NotificationService;
 use App\Modules\Discuss\Services\PinnedMessageService;
 use App\Modules\Discuss\Services\RoomService;
+use App\Modules\Discuss\Services\RoomSharedContentService;
 use App\Modules\Auth\Models\User;
 use App\Modules\Auth\Enums\UserRole;
 use App\Modules\Discuss\Models\Member;
@@ -130,7 +131,7 @@ class PageController
     }
 
     /**
-     * "Discuss About" page: room avatar/name header with Member/Media tabs.
+     * "Discuss About" page: room identity, stats and Members/Media/Links/Voice tabs.
      * Same membership guard as room() — private rooms (including direct
      * chats) are only visible to members.
      */
@@ -148,11 +149,19 @@ class PageController
 
         $room->cover_url = $this->roomService->freshCover($room);
 
+        // Media / Links / Voice hanya dari room ini (tanpa pemisahan group vs private).
+        $shared = app(RoomSharedContentService::class);
+        $content = $shared->forRoom($room->id);
+
         return Inertia::render('Discuss/About', [
             'room'          => $room,
             'directRecipient' => $this->roomService->getDirectRecipient($room, $userId),
             'members'       => $this->memberService->listForRoom($room->id),
             'currentUserId' => $userId,
+            'stats'         => $shared->statsForRoom($room->id),
+            'media'         => $content['media'],
+            'links'         => $content['links'],
+            'voices'        => $content['voices'],
         ]);
     }
 

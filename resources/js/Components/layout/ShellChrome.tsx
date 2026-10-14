@@ -14,6 +14,11 @@ export interface ShellChrome {
   title?: string
   /** Aksi tombol back. Default: naik ke halaman induk (lihat shellRoutes.ts). */
   onBack?: () => void
+  /**
+   * Slot kanan di header mode detail (mis. menu titik tiga). Elemen harus
+   * stabil antar render (useMemo) dan memegang state-nya sendiri.
+   */
+  right?: ReactNode
 }
 
 interface ShellChromeContextValue {
@@ -52,6 +57,7 @@ export function useShellChrome(override: ShellChrome | null) {
   const hideNav = override?.hideNav
   const title = override?.title
   const hasOnBack = Boolean(override?.onBack)
+  const right = override?.right
 
   useEffect(() => {
     if (!active) return
@@ -59,7 +65,8 @@ export function useShellChrome(override: ShellChrome | null) {
       hideNav,
       title,
       onBack: hasOnBack ? () => onBackRef.current?.() : undefined,
+      right,
     })
     return () => setChrome({})
-  }, [active, hideNav, title, hasOnBack, setChrome])
+  }, [active, hideNav, title, hasOnBack, right, setChrome])
 }

@@ -133,6 +133,73 @@ class ReportControllerTest extends TestCase
             ->assertOk()->assertJsonCount(0, 'reports');
     }
 
+    public function test_queue_includes_the_reported_photo_video_and_file(): void
+    {
+        $author = $this->member();
+        $reporter = $this->member();
+        $moderator = $this->member('moderator');
+
+        $image = Message::factory()->create([
+            'room_id' => $this->room->id, 'user_id' => $author->id, 'type' => 'image', 'body' => 'nice pic',
+            'attachments' => ['/storage/a.jpg'], 'metadata' => ['thumbnail' => '/storage/a_thumb.jpg'],
+        ]);
+        $video = Message::factory()->create([
+            'room_id' => $this->room->id, 'user_id' => $author->id, 'type' => 'video', 'body' => '',
+            'attachments' => ['/storage/v.mp4'],
+            'metadata' => ['video' => ['thumbnail' => '/storage/v.jpg', 'duration' => 12.5, 'width' => 1280, 'height' => 720]],
+        ]);
+        $file = Message::factory()->create([
+            'room_id' => $this->room->id, 'user_id' => $author->id, 'type' => 'file', 'body' => '',
+            'attachments' => ['/storage/doc.pdf'],
+            'metadata' => ['file' => ['name' => 'doc.pdf', 'size' => 2048, 'mime' => 'application/pdf']],
+        ]);
+
+        foreach ([$image, $video, $file] as $message) {
+            $this->report($reporter, $message)->assertStatus(201);
+            // Batas harian laporan: ganti pelapor untuk tiap laporan.
+            $reporter = $this->member();
+        }
+
+        $rows = collect($this->actingAs($moderator)->getJson("/api/rooms/{$this->room->slug}/reports")
+            ->assertOk()->json('reports'))->keyBy('message.id');
+
+        $this->assertSame('image', $rows[$image->id]['message']['media']['type']);
+        $this->assertSame('/storage/a_thumb.jpg', $rows[$image->id]['message']['media']['thumbnail']);
+        $this->assertSame('nice pic', $rows[$image->id]['message']['body']);
+
+        $this->assertSame('video', $rows[$video->id]['message']['media']['type']);
+        $this->assertSame('/storage/v.mp4', $rows[$video->id]['message']['media']['url']);
+        $this->assertSame(12.5, $rows[$video->id]['message']['media']['duration']);
+
+        $this->assertSame('file', $rows[$file->id]['message']['media']['type']);
+        $this->assertSame('doc.pdf', $rows[$file->id]['message']['media']['name']);
+    }
+
+    public function test_plain_text_report_has_no_media_and_deleted_messages_hide_theirs(): void
+    {
+        $author = $this->member();
+        $reporter = $this->member();
+        $moderator = $this->member('moderator');
+
+        $text = $this->message($author);
+        $image = Message::factory()->create([
+            'room_id' => $this->room->id, 'user_id' => $author->id, 'type' => 'image',
+            'attachments' => ['/storage/a.jpg'],
+        ]);
+
+        $this->report($reporter, $text)->assertStatus(201);
+        $imageReportId = $this->report($this->member(), $image)->json('report.id');
+
+        $this->actingAs($moderator)->getJson("/api/rooms/{$this->room->slug}/reports")
+            ->assertOk()->assertJsonPath('reports.0.message.media', null);
+
+        // Setelah pesan dihapus lewat laporan valid, media tidak lagi dikirim.
+        $this->resolve($moderator, $imageReportId, ['outcome' => 'valid', 'penalty' => 'none', 'delete_message' => true])
+            ->assertOk()
+            ->assertJsonPath('report.message.is_deleted', true)
+            ->assertJsonPath('report.message.media', null);
+    }
+
     public function test_valid_report_pays_reporter_penalizes_author_and_removes_the_message(): void
     {
         $author = $this->member('member', 30);
