@@ -10,6 +10,9 @@ use App\Modules\Discuss\Models\Message;
 use App\Modules\Discuss\Models\Room;
 use App\Services\KomikcastService;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class RoomService
@@ -160,10 +163,17 @@ class RoomService
     {
         $contextId = $this->generateDirectContextId($user1Id, $user2Id);
 
-        $room = $this->findByContext('direct', $contextId);
+        $existing = $this->findByContext('direct', $contextId);
 
-        if ($room) {
-            return $room;
+        if ($existing) {
+            if ($this->isGenuineDirectRoom($existing, $user1Id, $user2Id)) {
+                return $existing;
+            }
+
+            // Room ini mengaku sebagai DM kedua user ini padahal bukan (mis. dibuat lewat celah
+            // lama yang menerima context dari klien). Jangan pernah dipakai sebagai DM: lepaskan
+            // klaim "direct"-nya supaya DM asli bisa dibuat. Room-nya sendiri tidak dihapus.
+            $this->neutralizeImpostorDirectRoom($existing);
         }
 
         $user1 = User::select('id', 'display_name')->findOrFail($user1Id);
@@ -184,20 +194,57 @@ class RoomService
             ],
         );
 
-        // create() already adds $user1Id as an admin member; add the second participant.
-        $room = $this->create($data);
+        try {
+            // Room dan kedua anggotanya dibuat atomik: tidak ada DM yang tersisa dengan satu anggota.
+            return DB::transaction(function () use ($data, $user2Id) {
+                // create() already adds $user1Id as an admin member; add the second participant.
+                $room = $this->create($data);
 
-        Member::create([
+                Member::create([
+                    'room_id' => $room->id,
+                    'user_id' => $user2Id,
+                    'role' => 'member',
+                    'xp_points' => 0,
+                    'is_banned' => false,
+                    'joined_at' => now(),
+                    'last_read_at' => now(),
+                ]);
+
+                return $room;
+            });
+        } catch (UniqueConstraintViolationException $e) {
+            // Dua request membuka DM yang sama bersamaan: yang kalah memakai room milik pemenang.
+            $room = $this->findByContext('direct', $contextId);
+
+            if ($room && $this->isGenuineDirectRoom($room, $user1Id, $user2Id)) {
+                return $room;
+            }
+
+            throw $e;
+        }
+    }
+
+    /**
+     * DM asli selalu private dan dibuat oleh salah satu pesertanya (lihat
+     * findOrCreateDirectChat). Keanggotaan sengaja tidak diperiksa karena salah satu
+     * peserta bisa saja sudah keluar dari DM.
+     */
+    private function isGenuineDirectRoom(Room $room, string $user1Id, string $user2Id): bool
+    {
+        return $room->type === RoomType::Private
+            && in_array($room->owner_user_id, [$user1Id, $user2Id], true);
+    }
+
+    private function neutralizeImpostorDirectRoom(Room $room): void
+    {
+        Log::warning('Discuss: impostor direct room neutralized', [
             'room_id' => $room->id,
-            'user_id' => $user2Id,
-            'role' => 'member',
-            'xp_points' => 0,
-            'is_banned' => false,
-            'joined_at' => now(),
-            'last_read_at' => now(),
+            'owner_user_id' => $room->owner_user_id,
+            'type' => $room->type->value,
+            'context_id' => $room->context_id,
         ]);
 
-        return $room;
+        $room->update(['context_type' => null, 'context_id' => null]);
     }
 
     /**

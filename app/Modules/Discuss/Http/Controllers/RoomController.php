@@ -77,9 +77,10 @@ class RoomController
             coverUrl: $request->input('cover_url'),
             type: $request->input('type', 'public'),
             ownerUserId: $request->user()->id,
-            contextType: $request->input('context_type'),
-            contextId: $request->input('context_id'),
-            settings: $request->input('settings', []),
+            // Konteks room (direct/comic) hanya dibuat server, tidak pernah dari klien.
+            contextType: null,
+            contextId: null,
+            settings: $request->validated('settings') ?? [],
         );
 
         $room = $this->roomService->create($data);
