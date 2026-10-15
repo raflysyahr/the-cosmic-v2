@@ -8,6 +8,7 @@ use App\Modules\Discuss\Models\Room;
 use App\Modules\Discuss\Services\MessageService;
 use App\Modules\Discuss\Data\SendMessageData;
 use App\Modules\Discuss\Services\RoomService;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -156,5 +157,90 @@ class RoomServiceTest extends TestCase
         $recipient = $this->roomService->getDirectRecipient($room, $user1->id);
 
         $this->assertNull($recipient);
+    }
+
+    private function directContextId(User $a, User $b): string
+    {
+        $ids = [$a->id, $b->id];
+        sort($ids);
+
+        return implode('_', $ids);
+    }
+
+    public function test_public_room_impersonating_a_dm_is_neutralized_and_a_real_dm_is_created(): void
+    {
+        $alice = User::factory()->create();
+        $bob = User::factory()->create();
+        $mallory = User::factory()->create();
+
+        // Room yang dibuat penyerang lewat celah lama: publik, tapi mengaku DM Alice & Bob.
+        $impostor = Room::factory()->create([
+            'type' => 'public',
+            'owner_user_id' => $mallory->id,
+            'context_type' => 'direct',
+            'context_id' => $this->directContextId($alice, $bob),
+        ]);
+
+        $room = $this->roomService->findOrCreateDirectChat($alice->id, $bob->id);
+
+        $this->assertNotEquals($impostor->id, $room->id);
+        $this->assertSame('private', $room->type->value);
+        $this->assertDatabaseHas('discuss_members', ['room_id' => $room->id, 'user_id' => $alice->id]);
+        $this->assertDatabaseHas('discuss_members', ['room_id' => $room->id, 'user_id' => $bob->id]);
+        $this->assertDatabaseMissing('discuss_members', ['room_id' => $room->id, 'user_id' => $mallory->id]);
+
+        // Penyerang tidak kehilangan room-nya, hanya klaim "direct"-nya.
+        $impostor->refresh();
+        $this->assertNull($impostor->context_type);
+        $this->assertNull($impostor->context_id);
+    }
+
+    public function test_private_room_owned_by_a_stranger_is_also_neutralized(): void
+    {
+        $alice = User::factory()->create();
+        $bob = User::factory()->create();
+        $mallory = User::factory()->create();
+
+        $impostor = Room::factory()->create([
+            'type' => 'private',
+            'owner_user_id' => $mallory->id,
+            'context_type' => 'direct',
+            'context_id' => $this->directContextId($alice, $bob),
+        ]);
+
+        $room = $this->roomService->findOrCreateDirectChat($alice->id, $bob->id);
+
+        $this->assertNotEquals($impostor->id, $room->id);
+        $this->assertNull($impostor->fresh()->context_type);
+    }
+
+    public function test_genuine_direct_room_is_reused_even_after_a_participant_left(): void
+    {
+        $alice = User::factory()->create();
+        $bob = User::factory()->create();
+
+        $original = $this->roomService->findOrCreateDirectChat($alice->id, $bob->id);
+        Member::where('room_id', $original->id)->where('user_id', $bob->id)->delete();
+
+        $again = $this->roomService->findOrCreateDirectChat($bob->id, $alice->id);
+
+        $this->assertSame($original->id, $again->id);
+        $this->assertSame('direct', $again->fresh()->context_type);
+    }
+
+    public function test_context_is_unique_at_the_database_level(): void
+    {
+        Room::factory()->create(['context_type' => 'direct', 'context_id' => 'a_b']);
+
+        $this->expectException(UniqueConstraintViolationException::class);
+
+        Room::factory()->create(['context_type' => 'direct', 'context_id' => 'a_b']);
+    }
+
+    public function test_rooms_without_context_do_not_collide(): void
+    {
+        Room::factory()->count(2)->create(['context_type' => null, 'context_id' => null]);
+
+        $this->assertSame(2, Room::whereNull('context_type')->count());
     }
 }
