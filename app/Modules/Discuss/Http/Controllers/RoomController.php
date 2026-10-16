@@ -108,10 +108,20 @@ class RoomController
         $room = Room::where('slug', $slug)->firstOrFail();
 
         $this->assertCanManageRoom($room, $request->user()->id);
+        $this->assertNotDirectRoom($room);
 
-        $room->update($request->only([
-            'name', 'description', 'cover_url', 'type', 'is_active', 'settings',
-        ]));
+        $attributes = $request->safe()->only(['name', 'description', 'cover_url', 'type', 'is_active']);
+
+        // Gabungkan dengan settings lama: tanpa ini, mengirim settings baru akan menimpa dan
+        // menghapus kunci yang dikelola server (mis. invite_link).
+        if ($request->has('settings')) {
+            $attributes['settings'] = array_merge(
+                $room->settings ?? [],
+                $request->validated('settings') ?? [],
+            );
+        }
+
+        $room->update($attributes);
 
         $room = $room->fresh();
         $room->cover_url = $this->roomService->freshCover($room);
@@ -133,7 +143,7 @@ class RoomController
     }
 
     /**
-     * Generate (or rotate) the room's invite link. Only a moderator/admin
+     * Generate (or rotate) the room's invite link. Only the owner or a moderator/admin
      * of the room may do this — anyone with the link can join an
      * invite_only room, so issuing it is a privileged action.
      */
@@ -142,6 +152,8 @@ class RoomController
         $room = Room::where('slug', $slug)->firstOrFail();
 
         $this->assertCanManageRoom($room, $request->user()->id);
+        // Invite link ke DM = membuka pintu bagi pihak ketiga ke percakapan dua orang.
+        $this->assertNotDirectRoom($room);
 
         $token = $this->roomService->generateInviteLink($room);
 
@@ -152,14 +164,21 @@ class RoomController
     }
 
     /**
-     * Ensure the user is a moderator or admin of the room.
+     * DM dikelola penuh oleh server (nama, tipe, anggota). Peserta tidak boleh mengubah
+     * tipenya jadi publik/invite-only atau menerbitkan invite link ke percakapannya.
+     */
+    private function assertNotDirectRoom(Room $room): void
+    {
+        abort_if($room->context_type === 'direct', 403, 'Direct chats cannot be modified.');
+    }
+
+    /**
+     * Ensure the user is the room owner, or a moderator/admin of the room.
      * Used by update, destroy, and generateInvite.
      */
     private function assertCanManageRoom(Room $room, string $userId): void
     {
-        $role = $this->memberService->roleOf($room->id, $userId);
-
-        if (! in_array($role, ['moderator', 'admin'], true)) {
+        if (! $this->roomService->canManageRoom($room, $userId)) {
             throw ValidationException::withMessages([
                 'room' => ['You do not have permission to manage this room.'],
             ]);

@@ -58,6 +58,25 @@ class RoomService
     }
 
     /**
+     * Owner room, admin room, dan moderator room boleh mengubah/mengarsipkan room serta
+     * menerbitkan invite link. Member biasa dan orang luar tidak. Member yang sudah di-ban
+     * kehilangan hak ini walaupun dia owner/moderator/admin.
+     */
+    public function canManageRoom(Room $room, string $userId): bool
+    {
+        $member = Member::where('room_id', $room->id)
+            ->where('user_id', $userId)
+            ->first();
+
+        if ($member && $member->is_banned) {
+            return false;
+        }
+
+        return $room->owner_user_id === $userId
+            || in_array($member?->role?->value, ['moderator', 'admin'], true);
+    }
+
+    /**
      * Generate (or rotate) the room's invite token, stored in settings.
      * Any previously-shared invite link stops working once rotated.
      */
@@ -98,25 +117,18 @@ class RoomService
             ->get();
     }
 
+    /**
+     * Daftar room untuk halaman discover: hanya room publik, sama untuk tamu dan user login.
+     * DM (private) dan room privat/invite-only tidak pernah muncul di sini; DM tampil lewat
+     * getDirectChatsForUser, sedangkan RoomController::index melayani daftar API milik member.
+     * $userId dipertahankan supaya signature pemanggil tidak berubah.
+     */
     public function roomsForUser(?string $userId): array
     {
-        $rooms = Room::where('is_active', true)
-            ->where('type','public')
-            ->where(function ($q) use ($userId) {
-
-                if ($userId) {
-                    $q->orWhereIn('id', function ($sub) use ($userId) {
-                        $sub->select('room_id')
-                            ->from('discuss_members')
-                            ->where('user_id', $userId)
-                            ->where('is_banned', false);
-
-                    });
-                }
-            })
+        $rooms = Room::active()
+            ->where('type', RoomType::Public->value)
             ->orderBy('created_at', 'desc')
             ->get();
-
 
         return $rooms->map(fn($room) => [
                 'id' => $room->id,

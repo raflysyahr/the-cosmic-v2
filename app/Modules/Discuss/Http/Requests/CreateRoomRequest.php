@@ -2,6 +2,8 @@
 
 namespace App\Modules\Discuss\Http\Requests;
 
+use App\Modules\Auth\Enums\UserRole;
+use App\Modules\Auth\Enums\UserStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -13,14 +15,38 @@ class CreateRoomRequest extends FormRequest
      */
     public const RESERVED_SLUGS = ['story', 'leaderboard', 'invite', 'admin', 'api', 'direct', 'comic'];
 
+    /**
+     * Membuat room hanya boleh dilakukan user dengan role platform `admin` (users.role)
+     * yang akunnya aktif. Pembuatnya otomatis menjadi owner sekaligus admin room-nya
+     * (lihat RoomService::create). User biasa tidak bisa membuat room lewat API.
+     */
     public function authorize(): bool
     {
-        return true;
+        $user = $this->user();
+
+        return $user !== null
+            && $user->role === UserRole::Admin
+            && $user->status === UserStatus::Active;
+    }
+
+    /**
+     * Aturan `settings` yang dibagi dengan UpdateRoomSettingsRequest, supaya keduanya
+     * tidak bisa saling menyimpang. Hanya kunci yang dikenal; `invite_link`, `is_direct`,
+     * dst. dikelola server.
+     */
+    public static function settingsRules(): array
+    {
+        return [
+            'settings' => ['nullable', 'array:slow_mode_seconds,max_members,xp_per_message'],
+            'settings.slow_mode_seconds' => ['nullable', 'integer', 'min:0', 'max:3600'],
+            'settings.max_members' => ['nullable', 'integer', 'min:2', 'max:5000'],
+            'settings.xp_per_message' => ['nullable', 'integer', 'min:0', 'max:100'],
+        ];
     }
 
     public function rules(): array
     {
-        return [
+        return array_merge([
             'name' => ['required', 'string', 'max:100'],
             'slug' => [
                 'required',
@@ -40,11 +66,6 @@ class CreateRoomRequest extends FormRequest
             // lain dan membaca percakapan mereka.
             'context_type' => ['prohibited'],
             'context_id' => ['prohibited'],
-            // Hanya kunci yang dikenal; `invite_link`, `is_direct`, dst. dikelola server.
-            'settings' => ['nullable', 'array:slow_mode_seconds,max_members,xp_per_message'],
-            'settings.slow_mode_seconds' => ['nullable', 'integer', 'min:0', 'max:3600'],
-            'settings.max_members' => ['nullable', 'integer', 'min:2', 'max:5000'],
-            'settings.xp_per_message' => ['nullable', 'integer', 'min:0', 'max:100'],
-        ];
+        ], self::settingsRules());
     }
 }
