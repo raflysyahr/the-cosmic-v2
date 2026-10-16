@@ -19,6 +19,12 @@ class MemberController
     {
         $room = Room::where('slug', $slug)->firstOrFail();
 
+        // Room non-publik (privat, invite-only, DM) hanya boleh dilihat anggotanya; daftar
+        // member membocorkan siapa saja yang ada di dalamnya. Sama dengan MessageController::index.
+        if ($room->type->value !== 'public') {
+            abort_unless($this->memberService->isMember($room->id, request()->user()->id), 403);
+        }
+
         return $this->memberService->listForRoom($room->id);
     }
 

@@ -37,6 +37,28 @@ class MessageService implements MessageServiceContract
             ]);
         }
 
+        // Pesan sistem hanya dibuat server. Request sudah menolaknya; ini lapisan kedua
+        // kalau ada pemanggil lain yang lupa memfilter.
+        if ($data->type === MessageType::System->value) {
+            throw ValidationException::withMessages([
+                'type' => ['This message type cannot be sent by users.'],
+            ]);
+        }
+
+        // Pesan yang dibalas harus ada di room yang sama. Tanpa ini, kutipan balasan
+        // (MessageResource) bisa menampilkan isi pesan dari room privat/DM lain.
+        if ($data->replyToId !== null && $data->replyToId !== '') {
+            $parentInRoom = Message::where('id', $data->replyToId)
+                ->where('room_id', $data->roomId)
+                ->exists();
+
+            if (! $parentInRoom) {
+                throw ValidationException::withMessages([
+                    'reply_to_id' => ['The message you are replying to was not found in this room.'],
+                ]);
+            }
+        }
+
         // Format teks hanya diterima lewat input `entities` yang divalidasi —
         // tidak pernah langsung dari `metadata` kiriman klien.
         $metadata = $data->metadata;
@@ -82,6 +104,14 @@ class MessageService implements MessageServiceContract
         if ((string) $message->user_id !== (string) $byUserId) {
             throw ValidationException::withMessages([
                 'message' => ['You are not allowed to edit this message.'],
+            ]);
+        }
+
+        // Pesan yang sudah dihapus tidak boleh "dihidupkan" lagi lewat edit: edit akan
+        // menyiarkan MessageEdited berisi isi baru dan mengubah baris yang sudah dihapus.
+        if ($message->is_deleted) {
+            throw ValidationException::withMessages([
+                'message' => ['This message has been deleted.'],
             ]);
         }
 
@@ -159,6 +189,10 @@ class MessageService implements MessageServiceContract
         event(new MessageDeleted($message));
     }
 
+    /**
+     * Pesan terhapus sengaja tetap ikut (sebagai penanda "dihapus" di timeline), tapi isinya
+     * dikosongkan oleh MessageResource, jadi jangan kirim hasil ini ke klien tanpa resource.
+     */
     public function paginate(string $roomId, int $limit = 50): Collection
     {
         return Message::where('room_id', $roomId)

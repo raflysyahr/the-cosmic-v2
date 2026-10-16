@@ -88,6 +88,22 @@ class MemberService
             ->where('user_id', $userId)
             ->firstOrFail();
 
+        // Baris member adalah satu-satunya catatan ban/mute. Kalau member yang di-ban atau
+        // sedang di-mute boleh keluar, barisnya terhapus dan dia bisa join ulang ke room
+        // publik dengan status bersih, jadi sanksinya hilang. Kick sengaja tidak termasuk:
+        // kick memang hanya mengeluarkan, bukan melarang kembali.
+        if ($member->is_banned) {
+            throw ValidationException::withMessages([
+                'room' => ['You are banned from this room.'],
+            ]);
+        }
+
+        if ($member->muted_until && $member->muted_until->isFuture()) {
+            throw ValidationException::withMessages([
+                'room' => ['You cannot leave this room while you are muted.'],
+            ]);
+        }
+
         $member->delete();
 
         event(new MemberLeft($member));

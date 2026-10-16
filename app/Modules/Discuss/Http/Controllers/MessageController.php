@@ -84,7 +84,7 @@ class MessageController
 
     public function update(UpdateMessageRequest $request, string $slug, string $messageId): JsonResponse
     {
-        $message = \App\Modules\Discuss\Models\Message::findOrFail($messageId);
+        $message = $this->findMessageInRoom($slug, $messageId);
 
         // Optional new attachment (multipart). Same storage layout as store().
         $upload = $this->storeAttachment($request);
@@ -112,9 +112,20 @@ class MessageController
         ]);
     }
 
+    /**
+     * Pesan harus milik room di URL; kalau tidak, 404. Mencegah /rooms/A/messages/{id pesan B}
+     * memproses pesan room lain.
+     */
+    private function findMessageInRoom(string $slug, string $messageId): \App\Modules\Discuss\Models\Message
+    {
+        $room = Room::where('slug', $slug)->firstOrFail();
+
+        return \App\Modules\Discuss\Models\Message::where('room_id', $room->id)->findOrFail($messageId);
+    }
+
     public function destroy(string $slug, string $messageId): JsonResponse
     {
-        $message = \App\Modules\Discuss\Models\Message::findOrFail($messageId);
+        $message = $this->findMessageInRoom($slug, $messageId);
         $this->messageService->delete($message, request()->user()->id);
 
         return response()->json(['message' => 'Message deleted.']);

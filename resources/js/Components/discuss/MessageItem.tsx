@@ -24,7 +24,9 @@ interface MessageUser {
 
 interface ReplyTo {
   id: string
-  body: string
+  /** null bila pesan yang dikutip sudah dihapus (isi disaring server). */
+  body: string | null
+  is_deleted?: boolean
   type?: string
   /** Poster/preview for photo & video replies (resolved by the server). */
   thumbnail?: string | null
@@ -469,6 +471,8 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
           <p className="text-[10px] text-[#777] leading-tight truncate">
             {message.reply_to.body ? (
               <RichText preview text={message.reply_to.body} entities={message.reply_to.entities} />
+            ) : message.reply_to.is_deleted ? (
+              <span className="italic">Message deleted</span>
             ) : (
               message.reply_to.file_name
             )}

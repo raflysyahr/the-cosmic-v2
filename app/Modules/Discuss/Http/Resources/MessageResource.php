@@ -73,27 +73,33 @@ class MessageResource extends JsonResource
 
         $replyTo = null;
         if ($this->reply_to_id) {
-            $replyToMsg = Message::select('id', 'user_id', 'body', 'type', 'attachments', 'metadata')
+            $replyToMsg = Message::select('id', 'user_id', 'body', 'type', 'attachments', 'metadata', 'is_deleted')
                 ->where('id', $this->reply_to_id)
+                // Jangan pernah mengutip pesan dari room lain, walau data lama sudah terlanjur salah.
+                ->where('room_id', $this->room_id)
                 ->first();
             if ($replyToMsg) {
                 $replyToUser = User::select('id', 'display_name', 'avatar_url')
                     ->where('id', $replyToMsg->user_id)
                     ->first();
+                // Pesan yang dikutip sudah dihapus: kirim kerangka kosong saja. Isi (teks,
+                // thumbnail, nama file, entity) tidak boleh ikut keluar lewat kutipan.
+                $parentDeleted = (bool) $replyToMsg->is_deleted;
                 $replyTo = [
                     'id' => $replyToMsg->id,
-                    'body' => $replyToMsg->body,
-                    'type' => $replyToMsg->type->value,
+                    'body' => $parentDeleted ? null : $replyToMsg->body,
+                    'type' => $parentDeleted ? 'text' : $replyToMsg->type->value,
+                    'is_deleted' => $parentDeleted,
                     // Small preview image for photo/video replies (video: its poster frame).
-                    'thumbnail' => match ($replyToMsg->type->value) {
+                    'thumbnail' => $parentDeleted ? null : match ($replyToMsg->type->value) {
                         'image' => $replyToMsg->metadata['thumbnail'] ?? $replyToMsg->attachments[0] ?? null,
                         'video' => $replyToMsg->metadata['video']['thumbnail'] ?? null,
                         default => null,
                     },
-                    'file_name' => $replyToMsg->type->value === 'file' ? ($replyToMsg->metadata['file']['name'] ?? null) : null,
+                    'file_name' => ! $parentDeleted && $replyToMsg->type->value === 'file' ? ($replyToMsg->metadata['file']['name'] ?? null) : null,
                     // Kutipan hanya menampilkan spoiler; media spoiler → thumbnail di-blur.
-                    'entities' => app(MessageEntityService::class)->spoilersOnly($replyToMsg->metadata['entities'] ?? null),
-                    'spoiler' => (bool) ($replyToMsg->metadata['spoiler'] ?? false),
+                    'entities' => $parentDeleted ? [] : app(MessageEntityService::class)->spoilersOnly($replyToMsg->metadata['entities'] ?? null),
+                    'spoiler' => ! $parentDeleted && (bool) ($replyToMsg->metadata['spoiler'] ?? false),
                     'user' => $replyToUser ? [
                         'id' => $replyToUser->id,
                         'display_name' => $replyToUser->display_name,
@@ -103,17 +109,23 @@ class MessageResource extends JsonResource
             }
         }
 
+        // Pesan terhapus hanya soft-delete di database; baris dan isinya masih ada. Resource ini
+        // dipakai SSR halaman room, HTTP, dan broadcast, jadi semua isi disaring di satu titik
+        // ini. Yang tersisa hanya kerangka (id, pengirim, waktu, is_deleted) supaya frontend
+        // bisa menampilkan penanda "pesan dihapus" tanpa membocorkan teks/lampirannya.
+        $deleted = (bool) $this->is_deleted;
+
         return [
             'id' => $this->id,
-            'body' => $this->body,
-            'type' => $this->type->value,
+            'body' => $deleted ? null : $this->body,
+            'type' => $deleted ? 'text' : $this->type->value,
             'user' => $user ? [
                 'id' => $user->id,
                 'display_name' => $user->display_name,
                 'avatar_url' => $user->avatar_url,
                 'realm' => $realmBadge,
             ] : null,
-            'attachments' => $this->attachments,
+            'attachments' => $deleted ? [] : $this->attachments,
             'reply_to' => $replyTo,
             'reply_to_id' => $this->reply_to_id,
             'reply_count' => Message::where('reply_to_id', $this->id)
@@ -125,7 +137,7 @@ class MessageResource extends JsonResource
                 'helpful_user_ids' => $helpfulUserIds,
                 'is_best_answer' => $markRows->contains(fn ($row) => $row->kind === MarkKind::BestAnswer),
             ],
-            'metadata' => $this->metadata,
+            'metadata' => $deleted ? null : $this->metadata,
             'is_edited' => $this->is_edited,
             'is_deleted' => $this->is_deleted,
             'created_at' => $this->created_at,
