@@ -19,32 +19,32 @@ use App\Modules\Discuss\Http\Controllers\LeaderboardController;
 Route::prefix('api')->middleware(['web', 'auth:sanctum'])->group(function () {
     // Rooms
     Route::get('/rooms', [RoomController::class, 'index']);
-    Route::post('/rooms', [RoomController::class, 'store']);
+    Route::post('/rooms', [RoomController::class, 'store'])->middleware('throttle:discuss-write');
     Route::get('/rooms/{slug}', [RoomController::class, 'show']);
-    Route::put('/rooms/{slug}', [RoomController::class, 'update']);
-    Route::delete('/rooms/{slug}', [RoomController::class, 'destroy']);
-    Route::post('/rooms/{slug}/invite', [RoomController::class, 'generateInvite']);
+    Route::put('/rooms/{slug}', [RoomController::class, 'update'])->middleware('throttle:discuss-write');
+    Route::delete('/rooms/{slug}', [RoomController::class, 'destroy'])->middleware('throttle:discuss-write');
+    Route::post('/rooms/{slug}/invite', [RoomController::class, 'generateInvite'])->middleware('throttle:discuss-write');
 
     // Members
     Route::get('/rooms/{slug}/members', [MemberController::class, 'index']);
-    Route::post('/rooms/{slug}/join', [MemberController::class, 'store']);
-    Route::delete('/rooms/{slug}/leave', [MemberController::class, 'destroy']);
-    Route::post('/rooms/{slug}/members/{userId}/kick', [MemberController::class, 'kick']);
-    Route::post('/rooms/{slug}/members/{userId}/mute', [MemberController::class, 'mute']);
-    Route::post('/rooms/{slug}/members/{userId}/ban', [MemberController::class, 'ban']);
+    Route::post('/rooms/{slug}/join', [MemberController::class, 'store'])->middleware('throttle:discuss-write');
+    Route::delete('/rooms/{slug}/leave', [MemberController::class, 'destroy'])->middleware('throttle:discuss-write');
+    Route::post('/rooms/{slug}/members/{userId}/kick', [MemberController::class, 'kick'])->middleware('throttle:discuss-write');
+    Route::post('/rooms/{slug}/members/{userId}/mute', [MemberController::class, 'mute'])->middleware('throttle:discuss-write');
+    Route::post('/rooms/{slug}/members/{userId}/ban', [MemberController::class, 'ban'])->middleware('throttle:discuss-write');
 
     // Messages
     Route::get('/rooms/{slug}/messages', [MessageController::class, 'index']);
-    Route::post('/rooms/{slug}/messages', [MessageController::class, 'store']);
-    Route::put('/rooms/{slug}/messages/{messageId}', [MessageController::class, 'update']);
-    Route::delete('/rooms/{slug}/messages/{messageId}', [MessageController::class, 'destroy']);
+    Route::post('/rooms/{slug}/messages', [MessageController::class, 'store'])->middleware('throttle:discuss-send');
+    Route::put('/rooms/{slug}/messages/{messageId}', [MessageController::class, 'update'])->middleware('throttle:discuss-send');
+    Route::delete('/rooms/{slug}/messages/{messageId}', [MessageController::class, 'destroy'])->middleware('throttle:discuss-write');
 
     // Reactions
-    Route::post('/rooms/{slug}/messages/{messageId}/reactions', [ReactionController::class, 'store']);
+    Route::post('/rooms/{slug}/messages/{messageId}/reactions', [ReactionController::class, 'store'])->middleware('throttle:discuss-write');
 
     // Helpful & Best Answer (toggle)
-    Route::post('/rooms/{slug}/messages/{messageId}/helpful', [MarkController::class, 'helpful']);
-    Route::post('/rooms/{slug}/messages/{messageId}/best-answer', [MarkController::class, 'bestAnswer']);
+    Route::post('/rooms/{slug}/messages/{messageId}/helpful', [MarkController::class, 'helpful'])->middleware('throttle:discuss-write');
+    Route::post('/rooms/{slug}/messages/{messageId}/best-answer', [MarkController::class, 'bestAnswer'])->middleware('throttle:discuss-write');
 
     // Story = post dari admin (teks/foto/video + caption); user membaca & memberi reaksi
     Route::get('/discuss/story', [AnnouncementController::class, 'index']);
@@ -57,14 +57,14 @@ Route::prefix('api')->middleware(['web', 'auth:sanctum'])->group(function () {
     Route::delete('/admin/story/{id}', [AnnouncementController::class, 'destroy']);
 
     // Reports (moderasi) & achievements
-    Route::post('/rooms/{slug}/messages/{messageId}/report', [ReportController::class, 'store']);
+    Route::post('/rooms/{slug}/messages/{messageId}/report', [ReportController::class, 'store'])->middleware('throttle:discuss-report');
     Route::get('/rooms/{slug}/reports', [ReportController::class, 'index']);
     Route::post('/rooms/{slug}/reports/{reportId}/resolve', [ReportController::class, 'resolve']);
     Route::get('/discuss/achievements', [AchievementController::class, 'index']);
 
     // Pinned Messages
-    Route::post('/rooms/{slug}/pin', [PinnedMessageController::class, 'store']);
-    Route::delete('/rooms/{slug}/pin', [PinnedMessageController::class, 'destroy']);
+    Route::post('/rooms/{slug}/pin', [PinnedMessageController::class, 'store'])->middleware('throttle:discuss-write');
+    Route::delete('/rooms/{slug}/pin', [PinnedMessageController::class, 'destroy'])->middleware('throttle:discuss-write');
 
     // Emotes
     Route::get('/emotes', [EmoteController::class, 'index']);

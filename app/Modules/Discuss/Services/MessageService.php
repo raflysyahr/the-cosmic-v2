@@ -10,7 +10,9 @@ use App\Modules\Discuss\Events\MessageEdited;
 use App\Modules\Discuss\Events\MessageSent;
 use App\Modules\Discuss\Models\Member;
 use App\Modules\Discuss\Models\Message;
+use App\Modules\Discuss\Models\Room;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
 
 class MessageService implements MessageServiceContract
@@ -72,6 +74,10 @@ class MessageService implements MessageServiceContract
             $metadata['spoiler'] = true;
         }
 
+        // Dicek terakhir, setelah semua validasi lain lolos, supaya request yang gagal tidak
+        // menghabiskan jatah slow mode user.
+        $this->enforceSlowMode($data, $member);
+
         $message = Message::create([
             'room_id' => $data->roomId,
             'user_id' => $data->userId,
@@ -87,6 +93,37 @@ class MessageService implements MessageServiceContract
         event(new MessageSent($message));
 
         return $message;
+    }
+
+    /**
+     * Terapkan `settings.slow_mode_seconds` room: satu pesan per user per jeda itu.
+     * Owner room, moderator, dan admin dikecualikan. Memakai Cache::add (atomik) supaya
+     * request paralel tidak bisa lolos bersamaan, dan menghapus pesan tidak mengosongkan jeda.
+     */
+    private function enforceSlowMode(SendMessageData $data, Member $member): void
+    {
+        $room = Room::find($data->roomId);
+        $seconds = (int) ($room?->settings['slow_mode_seconds'] ?? 0);
+
+        if ($seconds <= 0) {
+            return;
+        }
+
+        if ((string) $room->owner_user_id === (string) $data->userId
+            || in_array($member->role?->value, ['moderator', 'admin'], true)) {
+            return;
+        }
+
+        $key = "discuss:slow-mode:{$data->roomId}:{$data->userId}";
+        $now = now()->timestamp;
+
+        if (! Cache::add($key, $now, $seconds)) {
+            $wait = max(1, $seconds - ($now - (int) Cache::get($key, $now)));
+
+            throw ValidationException::withMessages([
+                'message' => ["Slow mode is on. Please wait {$wait} seconds before sending another message."],
+            ]);
+        }
     }
 
     /**
