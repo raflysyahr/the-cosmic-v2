@@ -2,6 +2,7 @@
 
 namespace App\Modules\Auth\Http\Controllers;
 
+use App\Modules\Auth\Events\UserLoggedIn;
 use App\Modules\Auth\Services\SocialAuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,6 +35,8 @@ class SocialAuthController
             'refreshToken' => $socialUser->refreshToken,
             'expiresIn' => $socialUser->expiresIn,
         ]);
+
+        event(new UserLoggedIn($user));
 
         $token = $user->createToken('auth-token')->plainTextToken;
 

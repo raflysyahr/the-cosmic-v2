@@ -5,13 +5,15 @@ namespace App\Modules\Auth\Models;
 use App\Modules\Auth\Enums\UserRole;
 use App\Modules\Auth\Enums\UserStatus;
 use Database\Factories\UserFactory;
+use App\Modules\Auth\Notifications\VerifyEmailNotification;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasUlids, HasFactory, Notifiable, HasApiTokens;
 
@@ -34,6 +36,17 @@ class User extends Authenticatable
             'preferences' => 'array',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Wajib ada karena EmailVerificationService/EmailVerificationController memakai
+     * hasVerifiedEmail(), markEmailAsVerified() dan getEmailForVerification() (trait
+     * Illuminate\Auth\MustVerifyEmail, ikut diwarisi Authenticatable). Email dikirim lewat
+     * notifikasi buatan project ini, bukan bawaan Laravel.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerifyEmailNotification);
     }
 
     public function getAvatarUrlAttribute(?string $value): string
