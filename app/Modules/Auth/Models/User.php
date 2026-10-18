@@ -44,6 +44,11 @@ class User extends Authenticatable implements MustVerifyEmail
      * Illuminate\Auth\MustVerifyEmail, ikut diwarisi Authenticatable). Email dikirim lewat
      * notifikasi buatan project ini, bukan bawaan Laravel.
      */
+    public function socialAccounts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(UserSocialAccount::class);
+    }
+
     public function sendEmailVerificationNotification(): void
     {
         $this->notify(new VerifyEmailNotification);

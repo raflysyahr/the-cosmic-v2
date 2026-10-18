@@ -18,6 +18,9 @@ class UserSocialAccount extends Model
     protected function casts(): array
     {
         return [
+            // Token provider disimpan terenkripsi; kalau database bocor, token tidak bisa dipakai.
+            'access_token' => 'encrypted',
+            'refresh_token' => 'encrypted',
             'token_expires_at' => 'datetime',
             // $timestamps = false means Eloquent no longer auto-casts
             // created_at as a date the way it does when timestamps are
