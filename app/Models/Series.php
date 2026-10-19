@@ -15,6 +15,29 @@ class Series extends Model
 
     protected $table = 'series';
 
+    /**
+     * Cover lokal (storage privat, disajikan lewat /api/v1/series/{slug}/cover) untuk banyak
+     * slug sekaligus dalam satu query. Hanya slug yang punya cover terisi yang dikembalikan.
+     * Dipakai bookmark, riwayat baca, dan room komik sebagai pengganti refresh ke upstream.
+     *
+     * @param  iterable<int, string>  $slugs
+     * @return array<string, string> slug => url cover
+     */
+    public static function coversFor(iterable $slugs): array
+    {
+        $slugs = collect($slugs)->filter()->unique()->values()->all();
+
+        if ($slugs === []) {
+            return [];
+        }
+
+        return static::whereIn('slug', $slugs)
+            ->whereNotNull('cover')
+            ->where('cover', '!=', '')
+            ->pluck('cover', 'slug')
+            ->all();
+    }
+
     protected $fillable = [
         'slug', 'title', 'native_title', 'cover', 'rating', 'status',
         'type', 'is_hot', 'total_chapters', 'author', 'anime_adaptation',

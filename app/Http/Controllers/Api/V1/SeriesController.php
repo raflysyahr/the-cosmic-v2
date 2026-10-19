@@ -21,10 +21,16 @@ use Illuminate\Http\Request;
  */
 class SeriesController extends Controller
 {
+    /**
+     * Batas atas `take`. Frontend meminta 200 sekaligus saat memfilter berdasarkan genre
+     * (resources/js/hooks/useSeries.ts), jadi batasnya tidak boleh lebih kecil dari itu.
+     */
+    private const MAX_TAKE = 200;
+
     public function index(Request $request)
     {
-        $take = (int) $request->query('take', 20);
-        $page = (int) $request->query('page', 1);
+        $take = $this->take($request, 20);
+        $page = $this->page($request);
         $format = $request->query('format', '');
         $sort = $request->query('sort', '');
         // preset: belum ada logika khusus di sisi data (mis. "recommended"),
@@ -62,9 +68,9 @@ class SeriesController extends Controller
 
     public function search(Request $request)
     {
-        $q = trim((string) $request->query('q', ''));
-        $take = (int) $request->query('take', 12);
-        $page = (int) $request->query('page', 1);
+        $q = mb_substr(trim((string) $request->query('q', '')), 0, 100);
+        $take = $this->take($request, 12);
+        $page = $this->page($request);
 
         if (! $q) {
             return response()->json([
@@ -74,10 +80,14 @@ class SeriesController extends Controller
             ]);
         }
 
+        // % dan _ dari input user adalah wildcard LIKE; di-escape dengan "!" supaya dicari apa
+        // adanya. "!" dipilih karena ESCAPE '!' valid di MySQL maupun SQLite (backslash tidak).
+        $like = '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $q) . '%';
+
         $query = Series::query()
             ->with(['genres', 'latestChapter'])
-            ->where(fn ($w) => $w->where('title', 'like', "%{$q}%")
-                ->orWhere('native_title', 'like', "%{$q}%"))
+            ->where(fn ($w) => $w->whereRaw("title LIKE ? ESCAPE '!'", [$like])
+                ->orWhereRaw("native_title LIKE ? ESCAPE '!'", [$like]))
             ->orderByDesc('created_at');
 
         $paginator = $query->paginate($take, ['*'], 'page', $page);
@@ -166,6 +176,19 @@ class SeriesController extends Controller
             'success' => true,
             'data' => ['images' => $images],
         ]);
+    }
+
+    /** take selalu di antara 1 dan MAX_TAKE; take=0, negatif, atau non-angka tidak lagi memicu error. */
+    private function take(Request $request, int $default): int
+    {
+        $take = (int) $request->query('take', $default);
+
+        return $take < 1 ? $default : min($take, self::MAX_TAKE);
+    }
+
+    private function page(Request $request): int
+    {
+        return max(1, (int) $request->query('page', 1));
     }
 
     protected function toSeriesItem(Series $s): array

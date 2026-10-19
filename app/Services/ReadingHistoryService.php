@@ -3,14 +3,10 @@
 namespace App\Services;
 
 use App\Models\ReadingHistory;
-use Illuminate\Support\Facades\Log;
+use App\Models\Series;
 
 class ReadingHistoryService
 {
-    public function __construct(
-        private readonly KomikcastService $komikcastService,
-    ) {}
-
     public function readChapters(string $userId, string $slug): array
     {
         $entry = ReadingHistory::where('user_id', $userId)
@@ -28,50 +24,21 @@ class ReadingHistoryService
             ->limit($limit)
             ->get();
 
-        // Refresh cover URLs from upstream (CDN URLs expire over time)
-        $this->refreshCovers($entries);
+        // Cover diambil dari tabel series lokal (satu query, tanpa jaringan); bila series tidak
+        // ada, dipakai cover yang tersimpan di riwayat.
+        $covers = Series::coversFor($entries->pluck('slug'));
 
         return $entries
             ->map(fn(ReadingHistory $h) => [
                 'slug' => $h->slug,
                 'title' => $h->title,
-                'coverImage' => $h->cover_image ?? '',
+                'coverImage' => $covers[$h->slug] ?? $h->cover_image ?? '',
                 'chapterIndex' => $h->last_chapter_index,
                 'chapterTitle' => "Chapter {$h->last_chapter_index}",
                 'chapterUrl' => $h->last_chapter_url ?? "/series/{$h->slug}/chapter/{$h->last_chapter_index}",
                 'timestamp' => $h->updated_at->timestamp * 1000,
             ])
             ->toArray();
-    }
-
-    /**
-     * Refresh expired cover URLs by fetching fresh ones from upstream.
-     * Updates DB in-place (self-healing) so subsequent calls are fast.
-     */
-    private function refreshCovers(\Illuminate\Database\Eloquent\Collection $entries): void
-    {
-        $slugs = $entries->pluck('slug')->unique()->values()->all();
-        if (empty($slugs)) return;
-
-        foreach ($slugs as $slug) {
-            try {
-                $detail = $this->komikcastService->getDetail($slug);
-                if (($detail['success'] ?? false) && !empty($detail['data']['cover'])) {
-                    $freshCover = $detail['data']['cover'];
-                    // Update all entries with this slug
-                    $entries->where('slug', $slug)->each(function ($entry) use ($freshCover) {
-                        if ($entry->cover_image !== $freshCover) {
-                            $entry->update(['cover_image' => $freshCover]);
-                        }
-                    });
-                }
-            } catch (\Exception $e) {
-                Log::warning('Failed to refresh cover for slug: ' . $slug, [
-                    'error' => $e->getMessage(),
-                ]);
-                // Fall back to stored cover — no crash
-            }
-        }
     }
 
     /**

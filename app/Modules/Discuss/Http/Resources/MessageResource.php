@@ -2,53 +2,54 @@
 
 namespace App\Modules\Discuss\Http\Resources;
 
-use App\Modules\Auth\Models\User;
-use App\Modules\Cultivation\Services\CultivationService;
 use App\Modules\Discuss\Enums\MarkKind;
-use App\Modules\Discuss\Models\Emote;
-use App\Modules\Discuss\Models\Message;
-use App\Modules\Discuss\Models\MessageMark;
-use App\Modules\Discuss\Models\Reaction;
 use App\Modules\Discuss\Services\MessageEntityService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class MessageResource extends JsonResource
 {
+    /**
+     * Data pendukung hasil batch. Diisi oleh collection() untuk seluruh halaman sekaligus;
+     * kalau kosong (mis. satu pesan lewat broadcast/store), dimuat untuk pesan itu saja.
+     */
+    public ?MessageBatch $batch = null;
+
+    /**
+     * Muat data pendukung SEKALI untuk semua pesan di koleksi/paginator, supaya jumlah
+     * query tidak bertambah per pesan (N+1).
+     */
+    public static function collection($resource)
+    {
+        $collection = parent::collection($resource);
+
+        $resources = $collection->collection;
+        $batch = MessageBatch::load($resources->map(fn ($r) => $r->resource));
+        $resources->each(function ($r) use ($batch) {
+            $r->batch = $batch;
+        });
+
+        return $collection;
+    }
+
     public function toArray(Request $request): array
     {
-        $user = User::select('id', 'display_name', 'avatar_url')
-            ->where('id', $this->user_id)
-            ->first();
+        $batch = $this->batch ?? MessageBatch::load([$this->resource]);
 
-        // Badge realm cultivation — query manual lewat CultivationService
-        // (modul terpisah, tidak ada relasi Eloquent lintas modul per
-        // AGENTS.md §2). Dipanggil per-message (bukan batch di
-        // controller) karena resource ini juga dipakai di alur broadcast
-        // (MessageSent event) yang tidak lewat controller/collection.
-        $realmBadge = app(CultivationService::class)->getRealmBadgeData([$this->user_id])[$this->user_id] ?? null;
+        $user = $batch->users->get($this->user_id);
 
-        // Group reactions per emote, including the emote's code/url (resolved
-        // via a batched cross-table query, no Eloquent relation per AGENTS.md)
-        // and the list of reacting user_ids so the frontend can mark "reacted".
-        // Produces GroupedReaction[] ({emoteId, emoteCode, imageUrl, count,
-        // userIds}) — NOT a {emoteId: count} map, which the frontend can't read.
-        $reactionRows = Reaction::where('message_id', $this->id)
-            ->select('emote_id', 'user_id')
-            ->get();
+        // Badge realm cultivation (modul terpisah, tanpa relasi Eloquent lintas modul per
+        // AGENTS.md §2); sudah dimuat batch untuk semua pengirim.
+        $realmBadge = $batch->realmBadges[$this->user_id] ?? null;
 
-        $emoteIds = $reactionRows->pluck('emote_id')->filter()->unique()->values();
-        $emotes = $emoteIds->isEmpty()
-            ? collect()
-            : Emote::select('id', 'code', 'image_url', 'unicode')
-                ->whereIn('id', $emoteIds)
-                ->get()
-                ->keyBy('id');
-
-        $reactions = $reactionRows
+        // Group reactions per emote, including the emote's code/url and the list of reacting
+        // user_ids so the frontend can mark "reacted".
+        // Produces GroupedReaction[] ({emoteId, emoteCode, imageUrl, count, userIds}) — NOT a
+        // {emoteId: count} map, which the frontend can't read.
+        $reactions = ($batch->reactions->get($this->id) ?? collect())
             ->groupBy('emote_id')
-            ->map(function ($rows, $emoteId) use ($emotes) {
-                $emote = $emotes->get($emoteId);
+            ->map(function ($rows, $emoteId) use ($batch) {
+                $emote = $batch->emotes->get($emoteId);
 
                 return [
                     'emoteId'   => $emoteId,
@@ -62,9 +63,8 @@ class MessageResource extends JsonResource
             ->values()
             ->all();
 
-        // Helpful / Best Answer — satu query per pesan (pola sama dengan
-        // reaksi di atas; resource ini juga dipakai alur broadcast).
-        $markRows = MessageMark::where('message_id', $this->id)->select('kind', 'marked_by')->get();
+        // Helpful / Best Answer.
+        $markRows = $batch->marks->get($this->id) ?? collect();
         $helpfulUserIds = $markRows
             ->filter(fn ($row) => $row->kind === MarkKind::Helpful)
             ->pluck('marked_by')
@@ -73,15 +73,11 @@ class MessageResource extends JsonResource
 
         $replyTo = null;
         if ($this->reply_to_id) {
-            $replyToMsg = Message::select('id', 'user_id', 'body', 'type', 'attachments', 'metadata', 'is_deleted')
-                ->where('id', $this->reply_to_id)
-                // Jangan pernah mengutip pesan dari room lain, walau data lama sudah terlanjur salah.
-                ->where('room_id', $this->room_id)
-                ->first();
-            if ($replyToMsg) {
-                $replyToUser = User::select('id', 'display_name', 'avatar_url')
-                    ->where('id', $replyToMsg->user_id)
-                    ->first();
+            $replyToMsg = $batch->replyParents->get($this->reply_to_id);
+
+            // Jangan pernah mengutip pesan dari room lain, walau data lama sudah terlanjur salah.
+            if ($replyToMsg && $replyToMsg->room_id === $this->room_id) {
+                $replyToUser = $batch->users->get($replyToMsg->user_id);
                 // Pesan yang dikutip sudah dihapus: kirim kerangka kosong saja. Isi (teks,
                 // thumbnail, nama file, entity) tidak boleh ikut keluar lewat kutipan.
                 $parentDeleted = (bool) $replyToMsg->is_deleted;
@@ -128,9 +124,7 @@ class MessageResource extends JsonResource
             'attachments' => $deleted ? [] : $this->attachments,
             'reply_to' => $replyTo,
             'reply_to_id' => $this->reply_to_id,
-            'reply_count' => Message::where('reply_to_id', $this->id)
-    ->distinct('user_id')
-    ->count('user_id'),
+            'reply_count' => (int) ($batch->replyCounts->get($this->id) ?? 0),
             'reactions' => $reactions,
             'marks' => [
                 'helpful_count' => count($helpfulUserIds),

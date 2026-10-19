@@ -8,7 +8,7 @@ use App\Modules\Discuss\Enums\RoomType;
 use App\Modules\Discuss\Models\Member;
 use App\Modules\Discuss\Models\Message;
 use App\Modules\Discuss\Models\Room;
-use App\Services\KomikcastService;
+use App\Models\Series;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -17,9 +17,6 @@ use Illuminate\Support\Str;
 
 class RoomService
 {
-    public function __construct(
-        private readonly KomikcastService $komikcast,
-    ) {}
     public function create(CreateRoomData $data): Room
     {
         $room = Room::create([
@@ -179,6 +176,11 @@ class RoomService
 
         if ($existing) {
             if ($this->isGenuineDirectRoom($existing, $user1Id, $user2Id)) {
+                // "Keluar" dari DM hanya menghapus baris member, dan DM yang sama selalu dipakai
+                // ulang. Pulihkan kedua peserta supaya DM bisa dibuka lagi; peserta yang di-ban
+                // tetap punya barisnya sehingga tidak ikut terpulihkan.
+                $this->ensureDirectParticipants($existing, [$user1Id, $user2Id]);
+
                 return $existing;
             }
 
@@ -233,6 +235,35 @@ class RoomService
             }
 
             throw $e;
+        }
+    }
+
+    /**
+     * Pastikan kedua peserta DM punya baris member. Hanya menambah yang hilang; baris yang
+     * sudah ada (termasuk yang is_banned) tidak disentuh.
+     *
+     * @param  array<int, string>  $userIds
+     */
+    private function ensureDirectParticipants(Room $room, array $userIds): void
+    {
+        foreach ($userIds as $userId) {
+            if (Member::where('room_id', $room->id)->where('user_id', $userId)->exists()) {
+                continue;
+            }
+
+            try {
+                Member::create([
+                    'room_id' => $room->id,
+                    'user_id' => $userId,
+                    'role' => $room->owner_user_id === $userId ? 'admin' : 'member',
+                    'xp_points' => 0,
+                    'is_banned' => false,
+                    'joined_at' => now(),
+                    'last_read_at' => now(),
+                ]);
+            } catch (UniqueConstraintViolationException) {
+                // Request lain sudah memulihkannya bersamaan.
+            }
         }
     }
 
@@ -392,17 +423,17 @@ class RoomService
         return $this->create($data);
     }
 
+    /**
+     * Cover room komik diambil dari tabel series lokal (slug = context_id), bukan lagi dari
+     * upstream lewat Tor. Sebelumnya ini memanggil jaringan (timeout 20 detik) untuk setiap
+     * room komik di setiap tampilan daftar/halaman room.
+     */
     public function freshCover(Room $room): ?string
     {
-        if ($room->context_type !== 'comic' || !$room->context_id) {
+        if ($room->context_type !== 'comic' || ! $room->context_id) {
             return $room->cover_url;
         }
 
-        try {
-            $detail = $this->komikcast->getDetail($room->context_id);
-            return $detail['data']['cover'] ?? $room->cover_url;
-        } catch (\Throwable) {
-            return $room->cover_url;
-        }
+        return Series::coversFor([$room->context_id])[$room->context_id] ?? $room->cover_url;
     }
 }

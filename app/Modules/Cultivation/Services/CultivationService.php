@@ -7,7 +7,7 @@ use App\Modules\Cultivation\Models\CultivationEra;
 use App\Modules\Cultivation\Models\CultivationProgressLog;
 use App\Modules\Cultivation\Models\CultivationRealm;
 use App\Modules\Cultivation\Models\UserCultivation;
-use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 
@@ -97,19 +97,19 @@ class CultivationService
         return DB::transaction(function () use ($user, $source, $reference, $amount) {
             // Dedupe: kombinasi user+source+reference cuma boleh sekali.
             // Kalau insert gagal karena unique constraint, berarti sumber
-            // ini sudah pernah dipakai sebelumnya.
+            // ini sudah pernah dipakai sebelumnya. Yang ditangkap adalah
+            // TIPE exception-nya (bukan teks pesan), supaya jalan sama di
+            // MySQL/MariaDB/SQLite/Postgres. Insert dibungkus transaction
+            // bersarang (savepoint) agar transaksi luar tidak rusak.
             try {
-                CultivationProgressLog::create([
+                DB::transaction(fn () => CultivationProgressLog::create([
                     'user_id' => $user->id,
                     'source' => $source,
                     'reference' => $reference,
                     'amount' => $amount,
-                ]);
-            } catch (QueryException $e) {
-                if (str_contains($e->getMessage(), 'uq_cultivation_log_dedupe')) {
-                    return null;
-                }
-                throw $e;
+                ]));
+            } catch (UniqueConstraintViolationException) {
+                return null;
             }
 
             $cultivation = $this->getOrCreateForUser($user);

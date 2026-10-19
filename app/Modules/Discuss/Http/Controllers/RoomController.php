@@ -136,6 +136,8 @@ class RoomController
         $room = Room::where('slug', $slug)->firstOrFail();
 
         $this->assertCanManageRoom($room, $request->user()->id);
+        // Mengarsipkan DM akan mematikannya untuk kedua peserta tanpa bisa dibuka lagi.
+        $this->assertNotDirectRoom($room);
 
         $this->roomService->archive($room);
 

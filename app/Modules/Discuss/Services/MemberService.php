@@ -11,7 +11,9 @@ use App\Modules\Discuss\Models\Member;
 use App\Modules\Discuss\Models\Rank;
 use App\Modules\Discuss\Models\Room;
 use App\Modules\Auth\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class MemberService
@@ -31,7 +33,8 @@ class MemberService
      * Join a room. Public rooms can always be joined this way. Invite-only
      * rooms additionally require a valid, matching invite token (see
      * RoomService::generateInviteLink()/findByInviteToken()). Private rooms
-     * have no self-service join path at all.
+     * have no self-service join path at all. Rooms with `settings.max_members` stop
+     * accepting new members once that many non-banned members are in.
      */
     public function join(string $roomId, string $userId, ?string $inviteToken = null): Member
     {
@@ -67,15 +70,36 @@ class MemberService
             return $existing;
         }
 
-        $member = Member::create([
-            'room_id' => $roomId,
-            'user_id' => $userId,
-            'role' => 'member',
-            'xp_points' => 0,
-            'is_banned' => false,
-            'joined_at' => now(),
-            'last_read_at' => now(),
-        ]);
+        try {
+            $member = DB::transaction(function () use ($roomId, $userId) {
+                // Kunci baris room supaya join paralel diproses satu per satu; tanpa ini dua
+                // user bisa sama-sama lolos cek kapasitas dan melewati batas.
+                $room = Room::whereKey($roomId)->lockForUpdate()->firstOrFail();
+
+                $max = (int) ($room->settings['max_members'] ?? 0);
+
+                // Member yang di-ban tidak memakai slot.
+                if ($max > 0
+                    && Member::where('room_id', $roomId)->where('is_banned', false)->count() >= $max) {
+                    throw ValidationException::withMessages([
+                        'room' => ['This room is full.'],
+                    ]);
+                }
+
+                return Member::create([
+                    'room_id' => $roomId,
+                    'user_id' => $userId,
+                    'role' => 'member',
+                    'xp_points' => 0,
+                    'is_banned' => false,
+                    'joined_at' => now(),
+                    'last_read_at' => now(),
+                ]);
+            });
+        } catch (UniqueConstraintViolationException) {
+            // Request join ganda dari user yang sama: pakai baris yang sudah terbentuk.
+            return Member::where('room_id', $roomId)->where('user_id', $userId)->firstOrFail();
+        }
 
         event(new MemberJoined($member));
 

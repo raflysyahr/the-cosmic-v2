@@ -47,7 +47,7 @@ class SocialAuthTest extends TestCase
         Socialite::shouldReceive('driver')->with($provider)->andReturn($driver);
     }
 
-    private function callback(string $provider = 'google')
+    private function requestSocialCallback(string $provider = 'google')
     {
         return $this->get("/api/auth/{$provider}/callback");
     }
@@ -80,7 +80,7 @@ class SocialAuthTest extends TestCase
         Notification::fake();
         $this->fakeProviderUser();
 
-        $this->callback()->assertRedirect('/');
+        $this->requestSocialCallback()->assertRedirect('/');
 
         $user = User::where('email', 'budi@example.com')->firstOrFail();
         $this->assertAuthenticatedAs($user);
@@ -93,7 +93,7 @@ class SocialAuthTest extends TestCase
         Notification::fake();
         $this->fakeProviderUser();
 
-        $this->callback();
+        $this->requestSocialCallback();
 
         $user = User::where('email', 'budi@example.com')->firstOrFail();
         $this->assertNotNull($user->email_verified_at);
@@ -107,7 +107,7 @@ class SocialAuthTest extends TestCase
         Notification::fake();
         $this->fakeProviderUser(raw: ['email_verified' => false]);
 
-        $this->callback()->assertRedirect('/');
+        $this->requestSocialCallback()->assertRedirect('/');
 
         $user = User::where('email', 'budi@example.com')->firstOrFail();
         $this->assertNull($user->email_verified_at);
@@ -120,7 +120,7 @@ class SocialAuthTest extends TestCase
         UserSocialAccount::create(['user_id' => $user->id, 'provider' => 'google', 'provider_id' => 'g-1', 'access_token' => 'x']);
         $this->fakeProviderUser();
 
-        $this->callback()->assertRedirect('/');
+        $this->requestSocialCallback()->assertRedirect('/');
 
         $this->assertAuthenticatedAs($user);
         $this->assertSame(1, User::count());
@@ -134,7 +134,7 @@ class SocialAuthTest extends TestCase
         $existing = User::factory()->create(['email' => 'budi@example.com']);
         $this->fakeProviderUser();
 
-        $this->callback()->assertRedirect('/');
+        $this->requestSocialCallback()->assertRedirect('/');
 
         $this->assertAuthenticatedAs($existing);
         $this->assertSame(1, User::count());
@@ -146,7 +146,7 @@ class SocialAuthTest extends TestCase
         $victim = User::factory()->create(['email' => 'budi@example.com']);
         $this->fakeProviderUser(raw: ['email_verified' => false]);
 
-        $this->callback()->assertRedirect('/login?social_error=email_in_use');
+        $this->requestSocialCallback()->assertRedirect('/login?social_error=email_in_use');
 
         $this->assertGuest();
         $this->assertDatabaseMissing('user_social_accounts', ['user_id' => $victim->id]);
@@ -158,7 +158,7 @@ class SocialAuthTest extends TestCase
         $squatter = User::factory()->unverified()->create(['email' => 'budi@example.com']);
         $this->fakeProviderUser();
 
-        $this->callback()->assertRedirect('/login?social_error=email_in_use');
+        $this->requestSocialCallback()->assertRedirect('/login?social_error=email_in_use');
 
         $this->assertGuest();
         $this->assertDatabaseMissing('user_social_accounts', ['user_id' => $squatter->id]);
@@ -172,7 +172,7 @@ class SocialAuthTest extends TestCase
         UserSocialAccount::create(['user_id' => $banned->id, 'provider' => 'google', 'provider_id' => 'g-1', 'access_token' => 'x']);
         $this->fakeProviderUser();
 
-        $this->callback()->assertRedirect('/login?social_error=banned');
+        $this->requestSocialCallback()->assertRedirect('/login?social_error=banned');
 
         $this->assertGuest();
     }
@@ -182,7 +182,7 @@ class SocialAuthTest extends TestCase
         $banned = User::factory()->create(['email' => 'budi@example.com', 'status' => 'banned']);
         $this->fakeProviderUser();
 
-        $this->callback()->assertRedirect('/login?social_error=banned');
+        $this->requestSocialCallback()->assertRedirect('/login?social_error=banned');
 
         $this->assertGuest();
         $this->assertDatabaseMissing('user_social_accounts', ['user_id' => $banned->id]);
@@ -196,7 +196,7 @@ class SocialAuthTest extends TestCase
         $driver->shouldReceive('user')->andThrow(new InvalidStateException);
         Socialite::shouldReceive('driver')->with('google')->andReturn($driver);
 
-        $this->callback()->assertRedirect('/login?social_error=invalid_state');
+        $this->requestSocialCallback()->assertRedirect('/login?social_error=invalid_state');
 
         $this->assertGuest();
     }
@@ -207,7 +207,7 @@ class SocialAuthTest extends TestCase
         $driver->shouldReceive('user')->andThrow(new \RuntimeException('provider down'));
         Socialite::shouldReceive('driver')->with('google')->andReturn($driver);
 
-        $this->callback()->assertRedirect('/login?social_error=provider_error');
+        $this->requestSocialCallback()->assertRedirect('/login?social_error=provider_error');
 
         $this->assertGuest();
     }
@@ -217,7 +217,7 @@ class SocialAuthTest extends TestCase
     public function test_provider_tokens_are_encrypted_at_rest(): void
     {
         $this->fakeProviderUser();
-        $this->callback();
+        $this->requestSocialCallback();
 
         $rawRow = DB::table('user_social_accounts')->first();
         $this->assertNotSame('plain-access-token', $rawRow->access_token);

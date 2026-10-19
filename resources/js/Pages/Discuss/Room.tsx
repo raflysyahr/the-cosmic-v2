@@ -1081,13 +1081,13 @@ export default function DiscussRoom(props: PageProps) {
       {/* Bottom drawer: input + emoji picker, a mute notice, or a Join Room prompt */}
       <div className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-md">
         {!isMember ? (
-          <nav className="flex h-[72px] flex-col items-center justify-center gap-1 border-t border-outline-variant bg-surface-container-low px-gutter-md">
+          <nav className="flex h-[72px] flex-col items-center justify-center gap-1 bg-surface/20 backdrop-blur-md backdrop-bright-200 px-gutter-md">
             <button
               onClick={handleJoin}
               disabled={joining}
               className="w-full rounded-full bg-primary py-2.5 font-label-lg text-label-lg text-on-primary transition-opacity active:opacity-80 disabled:opacity-50"
             >
-              {joining ? 'Joining...' : 'Join Room'}
+              {joining ? 'Joining...' : 'Join'}
             </button>
           </nav>
         ) : isMuted && mutedUntilMs !== null ? (
