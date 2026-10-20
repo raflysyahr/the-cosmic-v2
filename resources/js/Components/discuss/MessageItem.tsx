@@ -266,6 +266,22 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
     openMenuAt(e.clientX, e.clientY)
   }
 
+  // ── Hooks harus dipanggil di SETIAP render, sebelum early return apa pun ──
+  // (pesan sistem / pesan terhapus). Kalau ditaruh setelah `return`, saat
+  // sebuah pesan berubah jadi "deleted" jumlah hook berkurang dan React
+  // melempar "Rendered fewer hooks than expected" (layar blank).
+  const isFile = message.type === 'file'
+  const fileUrl = message.attachments?.[0]
+
+  // Confirm the cache actually has it (covers a non-owner who downloaded it
+  // earlier, and corrects the owner's optimistic guess if it was evicted).
+  useEffect(() => {
+    if (!isFile || !fileUrl) return
+    let cancelled = false
+    isCached(fileUrl).then((yes) => { if (!cancelled) setFileDownloaded(yes) })
+    return () => { cancelled = true }
+  }, [isFile, fileUrl])
+
   if (message.type === 'system') {
     const isJoin = message.body?.toLowerCase().includes('added') || message.body?.toLowerCase().includes('joined')
     return (
@@ -297,7 +313,6 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
   const bodyText = message.body?.trim() || ''
 
   // ── File messages ──
-  const isFile = message.type === 'file'
   const isVideo = message.type === 'video'
   const imageAttachments = isFile || isVideo ? [] : message.attachments
   // Foto/video: bubble tanpa padding (media menempel ke tepi bubble, sudut ikut radius bubble).
@@ -312,19 +327,9 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
       </span>
     </span>
   ) : null
-  const fileUrl = message.attachments[0]
   const fileName = message.metadata?.file?.name || decodeURIComponent(fileUrl?.split('/').pop() ?? 'file')
   const fileSize = formatFileSize(message.metadata?.file?.size)
   const fileReady = !!fileUrl && (!message.sendStatus || message.sendStatus === 'sent')
-
-  // Confirm the cache actually has it (covers a non-owner who downloaded it
-  // earlier, and corrects the owner's optimistic guess if it was evicted).
-  useEffect(() => {
-    if (!isFile || !fileUrl) return
-    let cancelled = false
-    isCached(fileUrl).then((yes) => { if (!cancelled) setFileDownloaded(yes) })
-    return () => { cancelled = true }
-  }, [isFile, fileUrl])
 
   // Cache-first: a file is only ever fetched from the server once. First
   // download caches it; every download after that (including "Save" from the

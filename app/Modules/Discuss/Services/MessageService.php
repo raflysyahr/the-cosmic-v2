@@ -200,15 +200,22 @@ class MessageService implements MessageServiceContract
 
     public function delete(Message $message, string $byUserId): void
     {
+        $actor = Member::where('room_id', $message->room_id)
+            ->where('user_id', $byUserId)
+            ->first();
+
+        // Member yang di-ban tidak boleh menghapus apa pun di room ini, termasuk
+        // pesannya sendiri (kehilangan semua hak aksi, sama seperti kirim pesan & reaksi).
+        if ($actor && $actor->is_banned) {
+            throw ValidationException::withMessages([
+                'message' => ['You are banned from this room and cannot delete messages.'],
+            ]);
+        }
+
         $isOwner = (string) $message->user_id === (string) $byUserId;
 
         if (! $isOwner) {
-            $actor = Member::where('room_id', $message->room_id)
-                ->where('user_id', $byUserId)
-                ->first();
-
             $isModerator = $actor
-                && ! $actor->is_banned
                 && in_array($actor->role->value, ['moderator', 'admin'], true);
 
             if (! $isModerator) {

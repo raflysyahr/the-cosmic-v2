@@ -24,6 +24,7 @@ export default function Header() {
     }
 
     return (
+        <>
         <header className="sticky top-0 z-50 border-b border-[#2A2A2A] bg-black/95 backdrop-blur">
             <div className="mx-auto flex h-12 max-w-7xl items-center gap-4 px-4 pt-10 pb-5">
                 <Link href="/" className="shrink-0 group">
@@ -51,7 +52,7 @@ export default function Header() {
                     <NavLink href="/bookmarks">
                         <Bookmark className="h-3 w-3" />
                     </NavLink>
-                    <NavLink href="/discuss">
+                    <NavLink href="/discuss" className="fixed bottom-10">
                         <MessageCircle className="h-5 w-5" />
                     </NavLink>
                 </nav>
@@ -92,10 +93,8 @@ export default function Header() {
                     </div>
                 )}
 
+
                 <div className="flex items-center ml-auto">
-                <NavLink href="/discuss" className="md:hidden lg:hidden">
-                    <MessageCircle className="h-5 w-5" />
-                </NavLink>
                 <button
                     onClick={() => setMenuOpen(!menuOpen)}
                     className="md:hidden ml-auto p-2 text-[#555] transition-colors hover:text-white"
@@ -164,6 +163,14 @@ export default function Header() {
                 </div>
             )}
         </header>
+        <div className="fixed bottom-10 z-[999] bg-surface-container-highest  w-[50px] h-[50px] flex items-center justify-center rounded-[99px] right-7">
+            <NavLink href="/discuss" className="md:hidden lg:hidden">
+                <MessageCircle className="h-5 w-5" color="#ffffff" />
+
+            </NavLink>
+
+        </div>
+        </>
     )
 }
 

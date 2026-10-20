@@ -21,7 +21,14 @@ export default function Popup({ config, onClose }: PopupProps) {
         setTimeout(onClose, 200)
     }
 
+    const persistent = !!config.persistent
+
     const handleConfirm = () => {
+        if (persistent) {
+            // Popup tidak bisa ditutup: tombol hanya menjalankan aksi (mis. pindah halaman).
+            config.onConfirm?.()
+            return
+        }
         if (config.type === 'input') {
             config.onConfirm?.(inputValue)
         } else {
@@ -42,7 +49,7 @@ export default function Popup({ config, onClose }: PopupProps) {
         <div
             className={`fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-200 ${visible ? 'opacity-100' : 'opacity-0'}`}
             onClick={(e) => {
-                if (e.target === e.currentTarget && config.type !== 'confirm' && config.type !== 'input') {
+                if (!persistent && e.target === e.currentTarget && config.type !== 'confirm' && config.type !== 'input') {
                     handleClose()
                 }
             }}
@@ -55,12 +62,14 @@ export default function Popup({ config, onClose }: PopupProps) {
                         {Icon && <Icon className={`h-4 w-4 ${iconColor}`} />}
                         <span className="text-sm font-bold text-white">{config.title}</span>
                     </div>
-                    <button
-                        onClick={handleClose}
-                        className="text-[#555] transition-colors hover:text-white"
-                    >
-                        <X className="h-4 w-4" />
-                    </button>
+                    {!persistent && (
+                        <button
+                            onClick={handleClose}
+                            className="text-[#555] transition-colors hover:text-white"
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+                    )}
                 </div>
 
                 <div className="px-5 py-4">

@@ -127,6 +127,11 @@ class PageController
             'emotes'        => $this->emoteService->availableFor($room->id),
             'currentUserId' => $userId,
             'pinnedMessages' => $this->pinnedMessageService->getPinnedAll($room),
+            // Dipakai frontend untuk overlay blur + popup yang tidak bisa ditutup.
+            'isBanned'      => Member::where('room_id', $room->id)
+                ->where('user_id', $userId)
+                ->where('is_banned', true)
+                ->exists(),
         ]);
     }
 
