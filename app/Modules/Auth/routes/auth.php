@@ -12,13 +12,13 @@ use App\Modules\Auth\Http\Controllers\SocialAuthController;
 Route::prefix('api')->middleware('web')->group(function () {
     // Guest routes
     Route::middleware('guest')->group(function () {
-        Route::post('/register', [RegisterController::class, 'store']);
-        Route::post('/login', [LoginController::class, 'store']);
-        Route::post('/forgot-password', [PasswordResetController::class, 'sendLink']);
-        Route::post('/reset-password', [PasswordResetController::class, 'reset']);
+        Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:auth-register');
+        Route::post('/login', [LoginController::class, 'store'])->middleware('throttle:auth-login');
+        Route::post('/forgot-password', [PasswordResetController::class, 'sendLink'])->middleware('throttle:auth-forgot');
+        Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:auth-reset');
 
-        Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirect']);
-        Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback']);
+        Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirect'])->middleware('throttle:auth-social');
+        Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback'])->middleware('throttle:auth-social');
     });
 
     // Authenticated routes

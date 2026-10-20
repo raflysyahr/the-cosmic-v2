@@ -60,6 +60,8 @@ interface PageProps {
   emotes: { id: string; code: string; image_url: string | null; unicode: string | null }[]
   currentUserId: string
   pinnedMessages: PinnedMessage[]
+  /** true bila user login sedang di-ban dari room ini (dari server). */
+  isBanned?: boolean
 }
 
 
@@ -124,7 +126,12 @@ export default function DiscussRoom(props: PageProps) {
   // Balik dulu sebelum render pertama; kalau tidak, pesan terbaru sempat tampil di atas
   // sampai fetch di bawah menggantinya.
   const [messages, setMessages] = useState<Message[]>(() => [...(props.messages ?? [])].reverse())
+  // Selalu menunjuk ke state terbaru — dipakai untuk snapshot rollback reaksi.
+  const messagesRef = useRef(messages)
+  messagesRef.current = messages
   const [reactionAnimations, setReactionAnimations] = useState<Record<string, 'pop' | 'bump'>>({})
+  // Diisi saat event MemberBanned untuk diri sendiri masuk (ban terjadi saat room sedang dibuka).
+  const [bannedRoomId, setBannedRoomId] = useState<string | null>(null)
   const [members, setMembers] = useState<Member[]>(props.members ?? [])
   const [replyTo, setReplyTo] = useState<Message | undefined>(undefined)
   const [showEmoji, setShowEmoji] = useState(false)
@@ -136,9 +143,10 @@ export default function DiscussRoom(props: PageProps) {
   const [pinnedMessages, setPinnedMessages] = useState<PinnedMessage[]>(props.pinnedMessages)
   const [showPinnedModal, setShowPinnedModal] = useState(false)
   const currentUserId = props.currentUserId
-  const { popup, showPopup, closePopup } = usePopup()
+  const { popup, showPopup, closePopup, forceClosePopup } = usePopup()
 
   const room = props.room
+  const isBanned = !!props.isBanned || bannedRoomId === props.room.id
   const directRecipient = props.directRecipient
   const isDirectChat = room.context_type === 'direct'
 
@@ -169,6 +177,21 @@ export default function DiscussRoom(props: PageProps) {
     const interval = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(interval)
   }, [mutedUntilMs])
+
+  // User banned: popup yang tidak bisa ditutup (selain tombol kembali) di atas overlay blur.
+  useEffect(() => {
+    if (!isBanned) return
+    showPopup({
+      type: 'warning',
+      title: 'You have been banned',
+      message: 'You are banned from this room. You can no longer send messages, react, or delete messages here.',
+      confirmText: 'Back to Discuss',
+      persistent: true,
+      // Full reload (bukan router.visit) supaya state popup di provider ikut bersih.
+      onConfirm: () => { window.location.href = '/discuss' },
+    })
+    return () => forceClosePopup()
+  }, [isBanned, showPopup, forceClosePopup])
 
   const refreshMembers = useCallback(() => {
     apiFetch(`/api/rooms/${room.slug}/members`)
@@ -448,15 +471,20 @@ export default function DiscussRoom(props: PageProps) {
   }, [])
 
   const handleDelete = useCallback((messageId: string) => {
+    if (isBanned) return
     apiFetch(`/api/rooms/${room.slug}/messages/${messageId}`, { method: 'DELETE' })
-      .then((r) => { if (!r.ok) throw new Error('delete failed') })
+      .then(async (r) => {
+        if (!r.ok) throw new Error(await extractErrorMessage(r, 'Could not delete this message.'))
+      })
       .then(() => {
         setMessages((prev) =>
           prev.map((m) => (m.id === messageId ? { ...m, is_deleted: true } : m)),
         )
       })
-      .catch(() => {})
-  }, [room.slug])
+      .catch((err: Error) => {
+        showPopup({ type: 'warning', title: 'Not allowed', message: err.message || 'Could not delete this message.' })
+      })
+  }, [room.slug, isBanned, showPopup])
 
   // Editing happens in the bottom MessageInput (edit mode), not inline in the bubble.
   const [editingMessage, setEditingMessage] = useState<Message | undefined>()
@@ -562,7 +590,11 @@ export default function DiscussRoom(props: PageProps) {
   }, [room.slug, handleSendFile, handleSendImage, handleSendVideo])
 
   const handleReact = useCallback((messageId: string, emoteId: string) => {
+    if (isBanned) return
     const userId = currentUserId
+
+    // Simpan kondisi reaksi sebelum update optimistik, untuk di-rollback bila server menolak.
+    const previousReactions = messagesRef.current.find((m) => m.id === messageId)?.reactions
 
     // Optimistic update — mirror backend ReactionService::toggle() logic
     setMessages((prev) =>
@@ -611,19 +643,34 @@ export default function DiscussRoom(props: PageProps) {
       }),
     )
 
-    // Fire-and-forget API call; revert on failure
+    // Kembalikan UI ke kondisi sebelum klik: reaksi tidak boleh tampil seperti sukses
+    // kalau server menolaknya (user banned, bukan member, pesan sudah dihapus, dst).
+    const rollback = () => {
+      if (previousReactions) {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === messageId ? { ...m, reactions: previousReactions } : m)),
+        )
+      }
+      setReactionAnimations((prev) => {
+        const next = { ...prev }
+        delete next[`${messageId}:${emoteId}`]
+        return next
+      })
+    }
+
     apiFetch(`/api/rooms/${room.slug}/messages/${messageId}/reactions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ emote_id: emoteId }),
-    }).catch(() => {
-      // Revert optimistic update by re-fetching messages
-      apiFetch(`/api/rooms/${room.slug}/messages?take=50`)
-        .then((r) => { if (r.ok) return r.json() })
-        .then((res) => { if (res?.data) setMessages(res.data.reverse()) })
-        .catch(() => {})
     })
-  }, [room.slug, currentUserId, props.emotes])
+      .then(async (r) => {
+        if (r.ok) return
+        rollback()
+        const reason = await extractErrorMessage(r, 'Could not react to this message.')
+        showPopup({ type: 'warning', title: 'Not allowed', message: reason })
+      })
+      .catch(rollback) // network error
+  }, [room.slug, currentUserId, props.emotes, isBanned, showPopup])
 
   const clearReactionAnimation = useCallback((msgId: string, emoteId: string) => {
     setReactionAnimations(prev => {
@@ -906,13 +953,12 @@ export default function DiscussRoom(props: PageProps) {
       ])
       setMembers((prev) => prev.filter((m) => m.userId !== e.user_id))
 
-      // Kalau diri sendiri yang dibanned, keluar dari room segera —
-      // otorisasi channel juga akan ditolak server di percobaan
-      // subscribe berikutnya (Broadcast::channel di RoomChannel.php
-      // sudah mengecek is_banned), jadi redirect ini murni untuk UX
-      // instan tanpa nunggu error itu.
+      // Kalau diri sendiri yang dibanned: tampilkan overlay blur + popup yang
+      // tidak bisa ditutup (lihat efek `isBanned`), bukan redirect paksa.
+      // Server tetap menolak semua aksinya (kirim/reaksi/hapus), dan otorisasi
+      // channel (RoomChannel.php) menolak subscribe ulang untuk member banned.
       if (e.user_id === currentUserId) {
-        window.location.href = '/discuss'
+        setBannedRoomId(room.id)
       }
     })
 
@@ -1080,14 +1126,14 @@ export default function DiscussRoom(props: PageProps) {
 
       {/* Bottom drawer: input + emoji picker, a mute notice, or a Join Room prompt */}
       <div className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-md">
-        {!isMember ? (
-          <nav className="flex h-[72px] flex-col items-center justify-center gap-1 border-t border-outline-variant bg-surface-container-low px-gutter-md">
+        {isBanned ? null : !isMember ? (
+          <nav className="flex h-[72px] flex-col items-center justify-center gap-1 bg-surface/20 backdrop-blur-md backdrop-bright-200 px-gutter-md">
             <button
               onClick={handleJoin}
               disabled={joining}
               className="w-full rounded-full bg-primary py-2.5 font-label-lg text-label-lg text-on-primary transition-opacity active:opacity-80 disabled:opacity-50"
             >
-              {joining ? 'Joining...' : 'Join Room'}
+              {joining ? 'Joining...' : 'Join'}
             </button>
           </nav>
         ) : isMuted && mutedUntilMs !== null ? (
@@ -1129,6 +1175,15 @@ export default function DiscussRoom(props: PageProps) {
           </>
         )}
       </div>
+
+      {/* Overlay blur untuk user banned: menutup & memblokir seluruh room chat
+          (z di bawah popup yang z-[100]). */}
+      {isBanned && (
+        <div
+          aria-hidden="true"
+          className="fixed inset-y-0 left-1/2 z-[90] w-full max-w-md -translate-x-1/2 bg-black/40 backdrop-blur-md"
+        />
+      )}
 
       {/* Popup layer — Room.tsx doesn't use <Layout>, so it must render its own,
           same as Layout.tsx's PopupLayer does for pages that use Layout. */}

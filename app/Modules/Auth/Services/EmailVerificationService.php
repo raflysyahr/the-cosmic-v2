@@ -3,14 +3,12 @@
 namespace App\Modules\Auth\Services;
 
 use App\Modules\Auth\Models\User;
-use App\Modules\Auth\Notifications\VerifyEmailNotification;
-use Illuminate\Auth\Notifications\VerifyEmail;
 
 class EmailVerificationService
 {
     public function send(User $user): void
     {
-        $user->notify(new VerifyEmail);
+        $user->sendEmailVerificationNotification();
     }
 
     public function verify(User $user, string $hash): bool

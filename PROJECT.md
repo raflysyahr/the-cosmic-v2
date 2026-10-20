@@ -97,7 +97,7 @@ Semua terverifikasi ada di `app/Modules/Discuss/`. Real-time via Laravel Reverb 
 ### 5.2 Direct Message (1:1 chat)
 | Fitur | Status | Keterangan |
 |---|---|---|
-| Mulai/buka DM dengan user lain | ✅ Ada | `POST /direct/{username}` → `DirectController::open()`, reuse `Room` dengan `context_type=direct`, `context_id` deterministik dari 2 user id (detail desain: `ERD.md` §"Direct Message") |
+| Mulai/buka DM dengan user lain | ✅ Ada | `POST /direct/{username}` → `DirectController::open()`, reuse `Room` dengan `context_type=direct`, `context_id` deterministik dari 2 user id (context hanya bisa diset server, dijaga `UNIQUE(context_type, context_id)`; room penyamar DM dinetralkan otomatis — lihat `ERD.md` §"Strategi Uniqueness") (detail desain: `ERD.md` §"Direct Message") |
 | List semua DM | ✅ Ada | `GET /direct` → `Discuss/DirectList.tsx` |
 | Tab navigasi Chats/Groups | ✅ Ada | Di `Discuss/Index.tsx` dan `Discuss/DirectList.tsx` |
 | Halaman chat DM (reuse `Room.tsx`) | ✅ Ada | Header otomatis tampilkan nama & avatar lawan bicara, bukan nama room; header tidak bisa diklik ke halaman About (konsep "about" tidak relevan untuk chat 1:1) |

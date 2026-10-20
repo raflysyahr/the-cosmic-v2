@@ -80,8 +80,8 @@ Route::get('/403', function () {
     return Inertia::render('AccessDenied');
 });
 
-Route::fallback(function () {
-    return Inertia::render('NotFound');
+Route::fallback(function (\Illuminate\Http\Request $request) {
+    return Inertia::render('NotFound')->toResponse($request)->setStatusCode(404);
 });
 
 use App\Modules\Discuss\Http\Controllers\PageController;

@@ -29,7 +29,13 @@ class ToastDemoTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)->get('/dev/toast-demo')->assertStatus(404);
-        $this->actingAs($user)->postJson('/api/dev/toast-demo/push', ['source' => 'message', 'amount' => 1])->assertStatus(404);
+        // Route fallback Laravel hanya menangkap GET/HEAD, jadi POST ke path
+        // yang tidak terdaftar dijawab 405 (bukan 404). Intinya sama: route
+        // demo tidak ada, dan request tidak pernah berhasil (bukan 2xx).
+        $status = $this->actingAs($user)
+            ->postJson('/api/dev/toast-demo/push', ['source' => 'message', 'amount' => 1])
+            ->getStatusCode();
+        $this->assertContains($status, [404, 405]);
     }
 
     public function test_controller_refuses_to_run_outside_local_even_if_called_directly(): void

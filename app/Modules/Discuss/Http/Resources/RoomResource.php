@@ -27,7 +27,8 @@ class RoomResource extends JsonResource
                 'display_name' => $owner->display_name,
                 'avatar_url' => $owner->avatar_url,
             ] : null,
-            'settings' => $this->settings,
+            // Tanpa kunci rahasia (invite_link): token hanya diberikan lewat endpoint invite.
+            'settings' => $this->resource->clientSettings(),
             'is_active' => $this->is_active,
             'member_count' => Member::where('room_id', $this->id)->count(),
             'created_at' => $this->created_at,

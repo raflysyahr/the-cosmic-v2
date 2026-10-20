@@ -14,25 +14,36 @@ class MemberLeft implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(
-        public readonly Member $member,
-    ) {}
+    public readonly string $roomId;
+
+    public readonly string $userId;
+
+    /**
+     * Hanya nilai skalar yang disimpan, BUKAN model Member. Barisnya sudah
+     * dihapus saat event dikirim; kalau model ikut diserialisasi
+     * (SerializesModels), proses queue/broadcast gagal me-restore-nya
+     * (ModelNotFoundException).
+     */
+    public function __construct(Member $member)
+    {
+        $this->roomId = (string) $member->room_id;
+        $this->userId = (string) $member->user_id;
+    }
 
     public function broadcastOn(): PresenceChannel
     {
-        return new PresenceChannel('room.' . $this->member->room_id);
+        return new PresenceChannel('room.' . $this->roomId);
     }
 
     public function broadcastWith(): array
     {
-        // $this->member row sudah dihapus dari DB di titik ini (lihat
-        // MemberService::leave()), tapi object PHP-nya masih hold
-        // user_id lama, jadi query User berikut tetap valid.
-        $user = User::select('display_name')->where('id', $this->member->user_id)->first();
+        // Baris member sudah dihapus dari DB (lihat MemberService::leave()),
+        // tapi user_id disimpan di event, jadi query User berikut tetap valid.
+        $user = User::select('display_name')->where('id', $this->userId)->first();
 
         return [
-            'user_id' => $this->member->user_id,
-            'room_id' => $this->member->room_id,
+            'user_id' => $this->userId,
+            'room_id' => $this->roomId,
             'display_name' => $user?->display_name ?? 'Someone',
         ];
     }

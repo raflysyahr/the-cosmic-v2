@@ -93,7 +93,8 @@ class PublicProfileTest extends TestCase
         $response->assertInertia(fn ($page) => $page
             ->where('profile.stats.messages', 1)
             ->where('profile.stats.rooms', 1)
-            ->where('profile.stats.xp', 42)
+            // 42 XP awal + 1 poin dari pesan yang dikirim (sistem Contribution Points).
+            ->where('profile.stats.xp', 43)
         );
     }
 

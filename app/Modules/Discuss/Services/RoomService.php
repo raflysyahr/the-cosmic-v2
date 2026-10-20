@@ -8,15 +8,15 @@ use App\Modules\Discuss\Enums\RoomType;
 use App\Modules\Discuss\Models\Member;
 use App\Modules\Discuss\Models\Message;
 use App\Modules\Discuss\Models\Room;
-use App\Services\KomikcastService;
+use App\Models\Series;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class RoomService
 {
-    public function __construct(
-        private readonly KomikcastService $komikcast,
-    ) {}
     public function create(CreateRoomData $data): Room
     {
         $room = Room::create([
@@ -52,6 +52,25 @@ class RoomService
     public function archive(Room $room): void
     {
         $room->update(['is_active' => false]);
+    }
+
+    /**
+     * Owner room, admin room, dan moderator room boleh mengubah/mengarsipkan room serta
+     * menerbitkan invite link. Member biasa dan orang luar tidak. Member yang sudah di-ban
+     * kehilangan hak ini walaupun dia owner/moderator/admin.
+     */
+    public function canManageRoom(Room $room, string $userId): bool
+    {
+        $member = Member::where('room_id', $room->id)
+            ->where('user_id', $userId)
+            ->first();
+
+        if ($member && $member->is_banned) {
+            return false;
+        }
+
+        return $room->owner_user_id === $userId
+            || in_array($member?->role?->value, ['moderator', 'admin'], true);
     }
 
     /**
@@ -95,25 +114,18 @@ class RoomService
             ->get();
     }
 
+    /**
+     * Daftar room untuk halaman discover: hanya room publik, sama untuk tamu dan user login.
+     * DM (private) dan room privat/invite-only tidak pernah muncul di sini; DM tampil lewat
+     * getDirectChatsForUser, sedangkan RoomController::index melayani daftar API milik member.
+     * $userId dipertahankan supaya signature pemanggil tidak berubah.
+     */
     public function roomsForUser(?string $userId): array
     {
-        $rooms = Room::where('is_active', true)
-            ->where('type','public')
-            ->where(function ($q) use ($userId) {
-
-                if ($userId) {
-                    $q->orWhereIn('id', function ($sub) use ($userId) {
-                        $sub->select('room_id')
-                            ->from('discuss_members')
-                            ->where('user_id', $userId)
-                            ->where('is_banned', false);
-
-                    });
-                }
-            })
+        $rooms = Room::active()
+            ->where('type', RoomType::Public->value)
             ->orderBy('created_at', 'desc')
             ->get();
-
 
         return $rooms->map(fn($room) => [
                 'id' => $room->id,
@@ -160,10 +172,22 @@ class RoomService
     {
         $contextId = $this->generateDirectContextId($user1Id, $user2Id);
 
-        $room = $this->findByContext('direct', $contextId);
+        $existing = $this->findByContext('direct', $contextId);
 
-        if ($room) {
-            return $room;
+        if ($existing) {
+            if ($this->isGenuineDirectRoom($existing, $user1Id, $user2Id)) {
+                // "Keluar" dari DM hanya menghapus baris member, dan DM yang sama selalu dipakai
+                // ulang. Pulihkan kedua peserta supaya DM bisa dibuka lagi; peserta yang di-ban
+                // tetap punya barisnya sehingga tidak ikut terpulihkan.
+                $this->ensureDirectParticipants($existing, [$user1Id, $user2Id]);
+
+                return $existing;
+            }
+
+            // Room ini mengaku sebagai DM kedua user ini padahal bukan (mis. dibuat lewat celah
+            // lama yang menerima context dari klien). Jangan pernah dipakai sebagai DM: lepaskan
+            // klaim "direct"-nya supaya DM asli bisa dibuat. Room-nya sendiri tidak dihapus.
+            $this->neutralizeImpostorDirectRoom($existing);
         }
 
         $user1 = User::select('id', 'display_name')->findOrFail($user1Id);
@@ -184,20 +208,86 @@ class RoomService
             ],
         );
 
-        // create() already adds $user1Id as an admin member; add the second participant.
-        $room = $this->create($data);
+        try {
+            // Room dan kedua anggotanya dibuat atomik: tidak ada DM yang tersisa dengan satu anggota.
+            return DB::transaction(function () use ($data, $user2Id) {
+                // create() already adds $user1Id as an admin member; add the second participant.
+                $room = $this->create($data);
 
-        Member::create([
+                Member::create([
+                    'room_id' => $room->id,
+                    'user_id' => $user2Id,
+                    'role' => 'member',
+                    'xp_points' => 0,
+                    'is_banned' => false,
+                    'joined_at' => now(),
+                    'last_read_at' => now(),
+                ]);
+
+                return $room;
+            });
+        } catch (UniqueConstraintViolationException $e) {
+            // Dua request membuka DM yang sama bersamaan: yang kalah memakai room milik pemenang.
+            $room = $this->findByContext('direct', $contextId);
+
+            if ($room && $this->isGenuineDirectRoom($room, $user1Id, $user2Id)) {
+                return $room;
+            }
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Pastikan kedua peserta DM punya baris member. Hanya menambah yang hilang; baris yang
+     * sudah ada (termasuk yang is_banned) tidak disentuh.
+     *
+     * @param  array<int, string>  $userIds
+     */
+    private function ensureDirectParticipants(Room $room, array $userIds): void
+    {
+        foreach ($userIds as $userId) {
+            if (Member::where('room_id', $room->id)->where('user_id', $userId)->exists()) {
+                continue;
+            }
+
+            try {
+                Member::create([
+                    'room_id' => $room->id,
+                    'user_id' => $userId,
+                    'role' => $room->owner_user_id === $userId ? 'admin' : 'member',
+                    'xp_points' => 0,
+                    'is_banned' => false,
+                    'joined_at' => now(),
+                    'last_read_at' => now(),
+                ]);
+            } catch (UniqueConstraintViolationException) {
+                // Request lain sudah memulihkannya bersamaan.
+            }
+        }
+    }
+
+    /**
+     * DM asli selalu private dan dibuat oleh salah satu pesertanya (lihat
+     * findOrCreateDirectChat). Keanggotaan sengaja tidak diperiksa karena salah satu
+     * peserta bisa saja sudah keluar dari DM.
+     */
+    private function isGenuineDirectRoom(Room $room, string $user1Id, string $user2Id): bool
+    {
+        return $room->type === RoomType::Private
+            && in_array($room->owner_user_id, [$user1Id, $user2Id], true);
+    }
+
+    private function neutralizeImpostorDirectRoom(Room $room): void
+    {
+        Log::warning('Discuss: impostor direct room neutralized', [
             'room_id' => $room->id,
-            'user_id' => $user2Id,
-            'role' => 'member',
-            'xp_points' => 0,
-            'is_banned' => false,
-            'joined_at' => now(),
-            'last_read_at' => now(),
+            'owner_user_id' => $room->owner_user_id,
+            'type' => $room->type->value,
+            'context_id' => $room->context_id,
         ]);
 
-        return $room;
+        $room->update(['context_type' => null, 'context_id' => null]);
     }
 
     /**
@@ -333,17 +423,17 @@ class RoomService
         return $this->create($data);
     }
 
+    /**
+     * Cover room komik diambil dari tabel series lokal (slug = context_id), bukan lagi dari
+     * upstream lewat Tor. Sebelumnya ini memanggil jaringan (timeout 20 detik) untuk setiap
+     * room komik di setiap tampilan daftar/halaman room.
+     */
     public function freshCover(Room $room): ?string
     {
-        if ($room->context_type !== 'comic' || !$room->context_id) {
+        if ($room->context_type !== 'comic' || ! $room->context_id) {
             return $room->cover_url;
         }
 
-        try {
-            $detail = $this->komikcast->getDetail($room->context_id);
-            return $detail['data']['cover'] ?? $room->cover_url;
-        } catch (\Throwable) {
-            return $room->cover_url;
-        }
+        return Series::coversFor([$room->context_id])[$room->context_id] ?? $room->cover_url;
     }
 }

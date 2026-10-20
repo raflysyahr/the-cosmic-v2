@@ -53,7 +53,8 @@ class SendMessageRequest extends FormRequest
             'width' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'height' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'reply_to_id' => ['nullable', 'string', 'max:26'],
-            'type' => ['nullable', 'string', 'in:text,image,file,video,sticker,system'],
+            // `system` sengaja tidak ada: pesan sistem hanya boleh dibuat server.
+            'type' => ['nullable', 'string', 'in:text,image,file,video,sticker'],
             'metadata' => ['nullable', 'array'],
             // Gambar/video yang dikirim sebagai spoiler (blur sampai diketuk).
             'spoiler' => ['nullable', 'boolean'],

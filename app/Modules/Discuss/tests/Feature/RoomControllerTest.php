@@ -58,7 +58,7 @@ class RoomControllerTest extends TestCase
 
     public function test_can_create_room(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $response = $this->actingAs($user)->postJson('/api/rooms', [
             'name' => 'Test Room',
@@ -72,7 +72,11 @@ class RoomControllerTest extends TestCase
 
     public function test_client_cannot_set_room_context(): void
     {
+<<<<<<< HEAD
         $user = User::factory()->create();
+=======
+        $user = User::factory()->admin()->create();
+>>>>>>> bugfix/banned-users-can-delete-messages
 
         $this->actingAs($user)->postJson('/api/rooms', [
             'name' => 'Fake DM',
@@ -87,7 +91,11 @@ class RoomControllerTest extends TestCase
 
     public function test_created_room_never_has_a_context(): void
     {
+<<<<<<< HEAD
         $user = User::factory()->create();
+=======
+        $user = User::factory()->admin()->create();
+>>>>>>> bugfix/banned-users-can-delete-messages
 
         $this->actingAs($user)->postJson('/api/rooms', [
             'name' => 'Normal Room',
@@ -102,7 +110,11 @@ class RoomControllerTest extends TestCase
 
     public function test_reserved_and_server_owned_slugs_are_rejected(): void
     {
+<<<<<<< HEAD
         $user = User::factory()->create();
+=======
+        $user = User::factory()->admin()->create();
+>>>>>>> bugfix/banned-users-can-delete-messages
 
         $slugs = [
             'story', 'leaderboard', 'invite',          // bentrok dengan rute tetap
@@ -123,7 +135,11 @@ class RoomControllerTest extends TestCase
 
     public function test_settings_reject_unknown_keys(): void
     {
+<<<<<<< HEAD
         $user = User::factory()->create();
+=======
+        $user = User::factory()->admin()->create();
+>>>>>>> bugfix/banned-users-can-delete-messages
 
         $this->actingAs($user)->postJson('/api/rooms', [
             'name' => 'Sneaky',
@@ -135,7 +151,11 @@ class RoomControllerTest extends TestCase
 
     public function test_settings_values_are_bounded(): void
     {
+<<<<<<< HEAD
         $user = User::factory()->create();
+=======
+        $user = User::factory()->admin()->create();
+>>>>>>> bugfix/banned-users-can-delete-messages
 
         $this->actingAs($user)->postJson('/api/rooms', [
             'name' => 'Huge',
@@ -147,7 +167,11 @@ class RoomControllerTest extends TestCase
 
     public function test_known_settings_are_stored_on_top_of_defaults(): void
     {
+<<<<<<< HEAD
         $user = User::factory()->create();
+=======
+        $user = User::factory()->admin()->create();
+>>>>>>> bugfix/banned-users-can-delete-messages
 
         $this->actingAs($user)->postJson('/api/rooms', [
             'name' => 'Slow',

@@ -155,11 +155,12 @@ class CultivationServiceTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->cultivationService->addProgress($user, 'chapter_read', 'series-a:1', 50);
-        $this->cultivationService->addProgress($user, 'chapter_read', 'series-a:2', 50);
+        // 30 + 30 = 60 < stage_required (100), jadi tidak memicu breakthrough.
+        $this->cultivationService->addProgress($user, 'chapter_read', 'series-a:1', 30);
+        $this->cultivationService->addProgress($user, 'chapter_read', 'series-a:2', 30);
 
         $cultivation = UserCultivation::where('user_id', $user->id)->first();
-        $this->assertEquals(100, $cultivation->progress);
+        $this->assertEquals(60, $cultivation->progress);
     }
 
     public function test_add_progress_ignores_zero_or_negative_amount(): void

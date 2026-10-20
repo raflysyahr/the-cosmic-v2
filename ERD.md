@@ -164,7 +164,7 @@ discuss_notifications.payload → room_id, message_id, rank_name, dll (per type)
 | `created_at` | `TIMESTAMP` | |
 | `updated_at` | `TIMESTAMP` | |
 
-**Index:** `UNIQUE(slug)`, `INDEX(context_type, context_id)`, `INDEX(owner_user_id)`
+**Index:** `UNIQUE(slug)`, `UNIQUE(context_type, context_id)` *(baris dengan context NULL tidak dianggap duplikat)*, `INDEX(owner_user_id)`
 
 **Contoh `settings` JSON:**
 ```json
@@ -408,6 +408,8 @@ private function generateDirectContextId(string $user1Id, string $user2Id): stri
 ```
 
 Room dibuat dengan `type = private`, `context_type = direct`, kedua user langsung jadi member (`owner_user_id` = user yang memulai chat, tapi tidak ada hak admin ekstra untuk DM 1:1).
+
+**Keamanan:** `context_type` / `context_id` **hanya boleh ditentukan server**. `POST /api/rooms` menolak keduanya (`prohibited`), kalau tidak, user bisa membuat room publik yang menyamar sebagai DM dua orang lain dan membaca percakapan mereka. Pertahanan berlapis: (1) `UNIQUE(context_type, context_id)` di database; (2) `findOrCreateDirectChat()` hanya memakai room yang *asli* (`type = private` dan `owner_user_id` salah satu peserta) — room penyamar yang ditemukan dilepas klaim direct-nya (context di-NULL-kan, dicatat di log `Discuss: impostor direct room neutralized`) lalu DM asli dibuat; (3) pembuatan room + kedua member dibungkus transaksi, dan tabrakan unique akibat dua request bersamaan diselesaikan dengan memakai room pemenang.
 
 ### Endpoint
 
