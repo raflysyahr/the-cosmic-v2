@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react'
 import { Link, router } from '@inertiajs/react'
 import { Eye, EyeOff } from 'lucide-react'
 import Layout from '../Components/layout/Layout'
+import SocialLoginButtons from '../Components/auth/SocialLoginButtons'
 import { useAuth } from '../contexts/AuthContext'
 
-export default function Register() {
+export default function Register({ socialProviders = [] }: { socialProviders?: string[] }) {
   const { register, user, loading: authLoading } = useAuth()
   const [name, setName] = useState('')
   const [username, setUsername] = useState('')
@@ -131,6 +132,8 @@ export default function Register() {
             {loading ? 'Creating account…' : 'Create Account'}
           </button>
         </form>
+
+        <SocialLoginButtons providers={socialProviders} onError={setError} disabled={loading} />
 
         <p className="mt-6 text-center text-[10px] text-[#555]">
           Already have an account?{' '}

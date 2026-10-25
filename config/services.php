@@ -35,9 +35,11 @@ return [
         ],
     ],
     'google' => [
-      'client_id' => env('GOOGLE_CLIENT_ID'),
-      'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-      'redirect' => env('GOOGLE_REDIRECT_URI')
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        // Harus PERSIS sama dengan "Authorized redirect URI" di Google Cloud Console.
+        // Default: APP_URL + route callback; isi GOOGLE_REDIRECT_URI bila berbeda.
+        'redirect' => env('GOOGLE_REDIRECT_URI', rtrim((string) env('APP_URL', 'http://localhost'), '/') . '/api/auth/google/callback'),
     ],
 
 ];

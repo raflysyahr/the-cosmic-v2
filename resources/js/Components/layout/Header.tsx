@@ -163,9 +163,11 @@ export default function Header() {
                 </div>
             )}
         </header>
-        <div className="fixed bottom-10 z-[999] bg-surface-container-highest  w-[50px] h-[50px] flex items-center justify-center rounded-[99px] right-7">
+        <div className="fixed bottom-[5%] z-[999] bg-surface-container-highest  w-[45px] h-[45px] flex items-center justify-center animate-bounce duration-1000 right-7" >
+            <span className="absolute top-[5px] text-sm w-[30px] h-[20px] flex items-center bg-transparent font-bold text-red-500 before:content-[' '] before:w-[7px] before:h-[7px] before:bg-transparent before:block before:translate-y-[8px] before:rotate-[40deg] before:translate-x-[11px] ">200</span>
             <NavLink href="/discuss" className="md:hidden lg:hidden">
-                <MessageCircle className="h-5 w-5" color="#ffffff" />
+             <MessageCircle className="h-5 w-5" color="#ffffff" />
+
 
             </NavLink>
 

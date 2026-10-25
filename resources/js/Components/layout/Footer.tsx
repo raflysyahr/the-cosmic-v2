@@ -16,6 +16,8 @@ export default function Footer() {
                         <Link href="/dmca" className="transition-colors hover:text-[#999]">DMCA</Link>
                         <span className="text-[#2A2A2A]">·</span>
                         <Link href="/contact" className="transition-colors hover:text-[#999]">Contact</Link>
+                        <span className="text-[#2A2A2A]">·</span>
+                        <Link href="/cultivation-guide" className="transition-colors hover:text-[#999]">Cultivation</Link>
                     </div>
                 </div>
                 <div className="border-t border-[#2A2A2A] pt-4 text-center text-[10px] text-[#555]">

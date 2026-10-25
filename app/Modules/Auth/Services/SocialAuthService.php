@@ -15,6 +15,29 @@ use Illuminate\Support\Str;
 class SocialAuthService
 {
     /**
+     * Provider yang punya tombol di halaman login/register. Provider lain
+     * (github, discord) tetap dilayani controller bila dikonfigurasi, tapi
+     * belum punya tombol di frontend.
+     *
+     * @var list<string>
+     */
+    public const LOGIN_PROVIDERS = ['google'];
+
+    /**
+     * Provider yang sudah dikonfigurasi (services.<nama>.client_id terisi), supaya
+     * frontend hanya menampilkan tombol yang benar-benar bisa dipakai.
+     *
+     * @return list<string>
+     */
+    public function enabledProviders(): array
+    {
+        return array_values(array_filter(
+            self::LOGIN_PROVIDERS,
+            fn (string $provider) => filled(config("services.{$provider}.client_id")),
+        ));
+    }
+
+    /**
      * Cari atau buat user dari identitas provider.
      *
      * Aturan penautan ke akun yang sudah ada: email provider harus terverifikasi DAN akun
@@ -115,7 +138,8 @@ class SocialAuthService
     private function createUser(string $provider, array $socialUser, ?string $email, bool $emailVerified): User
     {
         $user = User::create([
-            'username' => Str::slug($socialUser['name'] ?? $socialUser['nickname'] ?? 'user') . '-' . Str::random(4),
+            // Nama yang seluruhnya simbol/emoji menghasilkan slug kosong -> pakai 'user' agar username tidak diawali '-'.
+            'username' => (Str::slug($socialUser['name'] ?? $socialUser['nickname'] ?? 'user') ?: 'user') . '-' . Str::random(4),
             'email' => $email ?? ($socialUser['id'] . '@' . $provider . '.oauth'),
             'password' => null,
             'display_name' => $socialUser['name'] ?? $socialUser['nickname'] ?? 'User',

@@ -2,16 +2,20 @@ import { useState, useEffect } from 'react'
 import { Link, router } from '@inertiajs/react'
 import { Eye, EyeOff } from 'lucide-react'
 import Layout from '../Components/layout/Layout'
+import SocialLoginButtons, { readSocialError, clearSocialErrorParam } from '../Components/auth/SocialLoginButtons'
 import { useAuth } from '../contexts/AuthContext'
 
-export default function Login() {
+export default function Login({ socialProviders = [] }: { socialProviders?: string[] }) {
   const { login, user, loading: authLoading } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [remember, setRemember] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  // Login social yang ditolak server kembali ke sini dengan ?social_error=<kode>.
+  const [error, setError] = useState(() => readSocialError() ?? '')
+
+  useEffect(() => { clearSocialErrorParam() }, [])
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -109,6 +113,8 @@ export default function Login() {
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
+
+        <SocialLoginButtons providers={socialProviders} onError={setError} disabled={loading} />
 
         <p className="mt-6 text-center text-[10px] text-[#555]">
           Don't have an account?{' '}

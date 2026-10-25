@@ -56,12 +56,12 @@ Route::get('/contact', function () {
     return Inertia::render('Contact');
 });
 
-Route::get('/login', function () {
-    return Inertia::render('Login');
+Route::get('/login', function (\App\Modules\Auth\Services\SocialAuthService $social) {
+    return Inertia::render('Login', ['socialProviders' => $social->enabledProviders()]);
 })->name('login');
 
-Route::get('/register', function () {
-    return Inertia::render('Register');
+Route::get('/register', function (\App\Modules\Auth\Services\SocialAuthService $social) {
+    return Inertia::render('Register', ['socialProviders' => $social->enabledProviders()]);
 });
 
 Route::get('/500', function () {
