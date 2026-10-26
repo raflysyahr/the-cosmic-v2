@@ -22,17 +22,29 @@ function GoogleIcon() {
   )
 }
 
-const PROVIDERS: Record<string, { label: string; icon: ReactNode }> = {
-  google: { label: 'Continue with Google', icon: <GoogleIcon /> },
+function FacebookIcon() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#1877F2"
+        d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+      />
+    </svg>
+  )
+}
+
+const PROVIDERS: Record<string, { name: string; icon: ReactNode }> = {
+  google: { name: 'Google', icon: <GoogleIcon /> },
+  facebook: { name: 'Facebook', icon: <FacebookIcon /> },
 }
 
 /** Kode `social_error` dari server -> pesan untuk user. */
 const SOCIAL_ERRORS: Record<string, string> = {
   email_in_use:
-    'This email is already registered and could not be verified for Google sign-in. Please sign in with your email and password (or reset your password).',
+    'This email is already registered and could not be verified for social sign-in. Please sign in with your email and password (or reset your password).',
   banned: 'This account has been banned.',
   invalid_state: 'Your sign-in session expired. Please try again.',
-  provider_error: 'Google sign-in failed. Please try again.',
+  provider_error: 'Social sign-in failed. Please try again.',
 }
 
 /**
@@ -66,7 +78,7 @@ interface Props {
 export default function SocialLoginButtons({ providers = [], onError, disabled = false }: Props) {
   const [pending, setPending] = useState<string | null>(null)
 
-  // Tombol "back" browser dari halaman Google mengembalikan halaman dari bfcache
+  // Tombol "back" browser dari halaman provider mengembalikan halaman dari bfcache
   // dengan state lama (tombol masih loading) — reset.
   useEffect(() => {
     const reset = (e: PageTransitionEvent) => { if (e.persisted) setPending(null) }
@@ -91,7 +103,7 @@ export default function SocialLoginButtons({ providers = [], onError, disabled =
       // Sengaja tidak reset `pending`: halaman sedang berpindah.
     } catch {
       setPending(null)
-      onError?.('Could not start Google sign-in. Please try again.')
+      onError?.(`Could not start ${PROVIDERS[provider].name} sign-in. Please try again.`)
     }
   }
 
@@ -113,7 +125,7 @@ export default function SocialLoginButtons({ providers = [], onError, disabled =
             className="flex h-9 w-full items-center justify-center gap-2 border border-[#2A2A2A] bg-[#111] text-xs font-semibold text-white transition-colors hover:border-white/30 disabled:opacity-50"
           >
             {PROVIDERS[provider].icon}
-            {pending === provider ? 'Redirecting…' : PROVIDERS[provider].label}
+            {pending === provider ? 'Redirecting…' : `Continue with ${PROVIDERS[provider].name}`}
           </button>
         ))}
       </div>

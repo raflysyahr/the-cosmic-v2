@@ -15,6 +15,12 @@ if (import.meta.env.DEV) {
   eruda.init()
 }
 
+// Facebook menambahkan fragmen "#_=_" ke URL callback setelah login, dan browser membawanya
+// lewat redirect server -> user mendarat di "/#_=_". Bersihkan sebelum React mount.
+if (window.location.hash === '#_=_') {
+  window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search);
+}
+
 // PWA: tangkap 'beforeinstallprompt' sebelum React mount, lalu daftarkan service worker.
 initInstallPrompt();
 registerServiceWorker();

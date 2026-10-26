@@ -47,7 +47,7 @@ const ProfileAccountPanel: FC<ProfileAccountPanelProps> = ({ emailVerified, role
       </div>
 
       {!emailVerified && (
-        <button type="button" onClick={resend} disabled={sending} className={`${subtleButton} mt-5 w-full`}>
+        <button type="button" onClick={resend} disabled={sending} className={`${subtleButton} mt-5 w-full !rounded-[10px]`}>
           {sending ? 'Sending...' : 'Resend verification email'}
         </button>
       )}
@@ -58,7 +58,7 @@ const ProfileAccountPanel: FC<ProfileAccountPanelProps> = ({ emailVerified, role
       <button
         type="button"
         onClick={signOut}
-        className="mt-5 w-full rounded-lg border border-error/40 px-4 py-2.5 text-sm font-semibold text-error transition-colors hover:bg-error/10"
+        className="mt-5 w-full   bg-red-500 text-white px-4 py-2.5 text-sm font-semibold text-error transition-colors hover:bg-red-600 rounded-[10px]"
       >
         Log out
       </button>

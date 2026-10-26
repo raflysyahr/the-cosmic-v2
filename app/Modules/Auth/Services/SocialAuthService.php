@@ -21,7 +21,7 @@ class SocialAuthService
      *
      * @var list<string>
      */
-    public const LOGIN_PROVIDERS = ['google'];
+    public const LOGIN_PROVIDERS = ['google', 'facebook'];
 
     /**
      * Provider yang sudah dikonfigurasi (services.<nama>.client_id terisi), supaya

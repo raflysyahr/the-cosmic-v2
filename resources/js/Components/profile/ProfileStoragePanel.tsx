@@ -42,7 +42,7 @@ const ProfileStoragePanel: FC = () => {
         Clearing the cache only affects this device.
       </p>
 
-      <button type="button" onClick={clear} disabled={busy || usage.count === 0} className={`${subtleButton} mt-5 w-full`}>
+      <button type="button" onClick={clear} disabled={busy || usage.count === 0} className={`${subtleButton} mt-5 w-full !bg-red-500 !rounded-[10px] !border-transparent !text-white`}>
         {busy ? 'Clearing...' : 'Clear media cache'}
       </button>
       {cleared && <p className="mt-3 text-sm text-green-400">Cache cleared.</p>}

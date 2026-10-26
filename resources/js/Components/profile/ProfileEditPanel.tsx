@@ -127,10 +127,10 @@ const ProfileEditPanel: FC<ProfileEditPanelProps> = ({ initial, onBack, onSaved 
         {saved && <p className="text-sm text-green-400">Profile saved.</p>}
 
         <div className="flex gap-3">
-          <button type="submit" disabled={saving} className={`${primaryButton} flex-1 rounded-[15px]`}>
+          <button type="submit" disabled={saving} className={`${primaryButton} flex-1 rounded-[15px] !rounded-[10px]`}>
             {saving ? 'Saving...' : 'Save'}
           </button>
-          <button type="button" onClick={onBack} className={`${subtleButton} flex-1 rounded-[15px]`}>
+          <button type="button" onClick={onBack} className={`${subtleButton} flex-1 !rounded-[10px]`}>
             Done
           </button>
         </div>

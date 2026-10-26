@@ -88,6 +88,24 @@ class SocialAuthTest extends TestCase
         $this->assertNotNull($user->last_login_at);
     }
 
+    public function test_social_login_is_remembered_like_the_remember_me_checkbox(): void
+    {
+        Notification::fake();
+        $this->fakeProviderUser();
+
+        $response = $this->requestSocialCallback()->assertRedirect('/');
+
+        // Cookie "remember_web_*" inilah yang membuat user tetap login setelah sesi berakhir.
+        $recaller = collect($response->headers->getCookies())
+            ->first(fn ($cookie) => str_starts_with($cookie->getName(), 'remember_web_'));
+
+        $this->assertNotNull($recaller, 'Social login must set the remember cookie.');
+        $this->assertGreaterThan(now()->addDays(30)->getTimestamp(), $recaller->getExpiresTime());
+
+        $user = User::where('email', 'budi@example.com')->firstOrFail();
+        $this->assertNotNull($user->remember_token);
+    }
+
     public function test_new_user_with_provider_verified_email_is_verified_and_not_emailed(): void
     {
         Notification::fake();

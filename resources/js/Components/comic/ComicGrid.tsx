@@ -7,7 +7,7 @@ interface ComicGridProps {
 
 export default function ComicGrid({ items = [] }: ComicGridProps) {
     return (
-        <div className="grid grid-cols-2 gap-px bg-[#2A2A2A] sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-pxsm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {items.map((item) => (
                 <ComicCard key={item.id} data={item} />
             ))}

@@ -12,7 +12,10 @@ class SocialLoginProvidersTest extends TestCase
 
     public function test_login_page_offers_google_when_it_is_configured(): void
     {
-        config(['services.google' => ['client_id' => 'id', 'client_secret' => 'secret', 'redirect' => 'http://localhost/cb']]);
+        config([
+            'services.google' => ['client_id' => 'id', 'client_secret' => 'secret', 'redirect' => 'http://localhost/cb'],
+            'services.facebook.client_id' => null,
+        ]);
 
         $this->get('/login')
             ->assertOk()
@@ -22,9 +25,36 @@ class SocialLoginProvidersTest extends TestCase
             );
     }
 
+    public function test_login_page_lists_google_and_facebook_in_order_when_both_are_configured(): void
+    {
+        config([
+            'services.google' => ['client_id' => 'id', 'client_secret' => 'secret', 'redirect' => 'http://localhost/cb'],
+            'services.facebook' => ['client_id' => 'id', 'client_secret' => 'secret', 'redirect' => 'http://localhost/cb'],
+        ]);
+
+        $this->get('/login')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('socialProviders', ['google', 'facebook']));
+    }
+
+    public function test_login_page_offers_only_facebook_when_google_is_not_configured(): void
+    {
+        config([
+            'services.google.client_id' => null,
+            'services.facebook' => ['client_id' => 'id', 'client_secret' => 'secret', 'redirect' => 'http://localhost/cb'],
+        ]);
+
+        $this->get('/login')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('socialProviders', ['facebook']));
+    }
+
     public function test_login_page_hides_google_when_it_is_not_configured(): void
     {
-        config(['services.google' => ['client_id' => null, 'client_secret' => null, 'redirect' => null]]);
+        config([
+            'services.google' => ['client_id' => null, 'client_secret' => null, 'redirect' => null],
+            'services.facebook' => ['client_id' => null, 'client_secret' => null, 'redirect' => null],
+        ]);
 
         $this->get('/login')
             ->assertOk()
@@ -33,7 +63,10 @@ class SocialLoginProvidersTest extends TestCase
 
     public function test_register_page_follows_the_same_provider_list(): void
     {
-        config(['services.google' => ['client_id' => 'id', 'client_secret' => 'secret', 'redirect' => 'http://localhost/cb']]);
+        config([
+            'services.google' => ['client_id' => 'id', 'client_secret' => 'secret', 'redirect' => 'http://localhost/cb'],
+            'services.facebook.client_id' => null,
+        ]);
         $this->get('/register')
             ->assertOk()
             ->assertInertia(fn ($page) => $page->component('Register')->where('socialProviders', ['google']));
@@ -48,6 +81,7 @@ class SocialLoginProvidersTest extends TestCase
     {
         config([
             'services.google' => ['client_id' => 'id'],
+            'services.facebook.client_id' => null,
             'services.github' => ['client_id' => 'id'],
         ]);
 

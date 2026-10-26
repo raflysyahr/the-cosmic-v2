@@ -60,7 +60,10 @@ class SocialAuthController
             return $this->failed('provider_error');
         }
 
-        auth()->login($user);
+        // remember = true: sama seperti login email dengan "Remember me" dicentang. Tanpa ini hanya
+        // ada cookie sesi, jadi user logout otomatis saat sesi habis (SESSION_LIFETIME) / browser
+        // ditutup. Halaman login social tidak punya checkbox "Remember me", jadi selalu diingat.
+        auth()->login($user, true);
         $request->session()->regenerate();
 
         event(new UserLoggedIn($user));
@@ -98,6 +101,10 @@ class SocialAuthController
             'discord' => filter_var($raw['verified'] ?? false, FILTER_VALIDATE_BOOLEAN),
             // Socialite hanya mengembalikan email GitHub yang primary dan terverifikasi.
             'github' => true,
+            // Facebook tidak memberi penanda email terverifikasi (field `verified` di payload-nya
+            // berarti AKUN terverifikasi, bukan email). Selalu dianggap tidak terverifikasi:
+            // tidak akan ditautkan ke akun yang sudah ada, dan akun baru diminta verifikasi email.
+            'facebook' => false,
             default => false,
         };
     }

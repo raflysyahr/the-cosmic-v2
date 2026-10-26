@@ -58,7 +58,7 @@ export default function Header() {
                 </nav>
 
                 {loading ? (
-                    <div className="h-5 w-16 animate-pulse rounded bg-[#2A2A2A]" />
+                    <div className="hidden md:flex lg:flex h-5 w-16 animate-pulse rounded bg-[#2A2A2A]" />
                 ) : user ? (
                     <div className="hidden md:flex items-center gap-2">
                         <NotificationDropdown />
@@ -163,8 +163,8 @@ export default function Header() {
                 </div>
             )}
         </header>
-        <div className="fixed bottom-[5%] z-[999] bg-surface-container-highest  w-[45px] h-[45px] flex items-center justify-center animate-bounce duration-1000 right-7" >
-            <span className="absolute top-[5px] text-sm w-[30px] h-[20px] flex items-center bg-transparent font-bold text-red-500 before:content-[' '] before:w-[7px] before:h-[7px] before:bg-transparent before:block before:translate-y-[8px] before:rotate-[40deg] before:translate-x-[11px] ">200</span>
+        <div className="fixed bottom-[5%] z-[999] bg-surface-container-highest  w-[45px] h-[45px] flex items-center justify-center right-7 rounded-xl" >
+            <span className="absolute top-[-10px] text-[10px] w-fit h-[20px] flex items-center bg-surface-container-highest font-bold text-white px-2 rounded-xl justify-center border-[1px] border-black ">200</span>
             <NavLink href="/discuss" className="md:hidden lg:hidden">
              <MessageCircle className="h-5 w-5" color="#ffffff" />
 
