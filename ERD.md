@@ -228,10 +228,12 @@ discuss_notifications.payload → room_id, message_id, rank_name, dll (per type)
 | `is_deleted` | `BOOLEAN` | Soft delete, pesan tampil sebagai *"Pesan dihapus"* |
 | `deleted_by_user_id` ⟶ | `ULID` | Siapa yang hapus (mod/owner), nullable |
 | `metadata` | `JSON` | Data extended pesan *(extensible)* |
+| `comment_series_slug` | `VARCHAR(191)` | Slug komik bila pesan dikirim lewat kolom komentar halaman baca, nullable. Hanya diisi server; harus sama dengan `discuss_rooms.context_id` room-nya (grup komik) |
+| `comment_chapter_index` | `INT UNSIGNED` | Index chapter untuk komentar tersebut, nullable. `NULL` = pesan chat biasa |
 | `created_at` | `TIMESTAMP` | |
 | `updated_at` | `TIMESTAMP` | |
 
-**Index:** `INDEX(room_id, created_at)`, `INDEX(user_id)`, `INDEX(reply_to_id)`
+**Index:** `INDEX(room_id, created_at)`, `INDEX(user_id)`, `INDEX(reply_to_id)`, `INDEX(room_id, comment_series_slug, comment_chapter_index, created_at)`
 
 **Contoh `metadata` JSON:**
 ```json

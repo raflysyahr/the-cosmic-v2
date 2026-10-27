@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from 'react'
 import { fetchChapters, fetchSeriesBySlug } from '../api/series'
 import client from '../api/client'
 import { useChapter } from '../hooks/useChapter'
+import ChapterReactions from '../Components/reader/ChapterReactions'
+import ChapterComments from '../Components/reader/ChapterComments'
 import { useReadingHistory } from '../hooks/useReadingHistory'
 import { ChevronLeft, ChevronRight, List, Play, Pause, Maximize, Minimize } from 'lucide-react'
 import type { ChapterItem } from '../types'
@@ -368,6 +370,19 @@ export default function Reader({ slug, chapterSlug }: { slug: string; chapterSlu
           />
         ))}
       </div>
+
+      {/* Reaksi halaman & komentar chapter. `key` memasang ulang komponen saat pindah chapter. */}
+      {images.length > 0 && (
+        <div className="mx-auto max-w-4xl pb-28">
+          <ChapterReactions key={`reactions:${slug}:${chapterIndex}`} slug={slug} chapterIndex={chapterIndex} />
+          <ChapterComments
+            key={`comments:${slug}:${chapterIndex}`}
+            slug={slug}
+            chapterIndex={chapterIndex}
+            seriesTitle={seriesMeta?.title}
+          />
+        </div>
+      )}
 
       {/* Bottom Navigation — floating when content overflows */}
       <div

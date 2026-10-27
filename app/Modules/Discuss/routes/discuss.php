@@ -15,6 +15,7 @@ use App\Modules\Discuss\Http\Controllers\ReportController;
 use App\Modules\Discuss\Http\Controllers\AchievementController;
 use App\Modules\Discuss\Http\Controllers\AnnouncementController;
 use App\Modules\Discuss\Http\Controllers\LeaderboardController;
+use App\Modules\Discuss\Http\Controllers\CommentController;
 
 Route::prefix('api')->middleware(['web', 'auth:sanctum'])->group(function () {
     // Rooms
@@ -41,6 +42,13 @@ Route::prefix('api')->middleware(['web', 'auth:sanctum'])->group(function () {
 
     // Reactions
     Route::post('/rooms/{slug}/messages/{messageId}/reactions', [ReactionController::class, 'store'])->middleware('throttle:discuss-write');
+
+    // Komentar halaman baca komik: pesan biasa di grup diskusi komik yang sama (lihat CommentService).
+    // Dikenali lewat slug komik + index chapter; room diturunkan server, bukan dari klien.
+    Route::get('/comics/{slug}/chapters/{index}/comments', [CommentController::class, 'index'])->whereNumber('index');
+    Route::get('/comics/{slug}/chapters/{index}/comments/{messageId}/replies', [CommentController::class, 'replies'])->whereNumber('index');
+    Route::post('/comics/{slug}/chapters/{index}/comments', [CommentController::class, 'store'])->whereNumber('index')->middleware('throttle:discuss-send');
+    Route::post('/comics/{slug}/chapters/{index}/comments/{messageId}/reactions', [CommentController::class, 'react'])->whereNumber('index')->middleware('throttle:discuss-write');
 
     // Helpful & Best Answer (toggle)
     Route::post('/rooms/{slug}/messages/{messageId}/helpful', [MarkController::class, 'helpful'])->middleware('throttle:discuss-write');

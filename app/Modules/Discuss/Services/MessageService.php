@@ -61,6 +61,26 @@ class MessageService implements MessageServiceContract
             }
         }
 
+        // Komentar chapter harus tinggal di grup diskusi komik yang sama dengan komiknya dan hanya
+        // berupa teks. CommentService sudah menurunkan room dari slug komik; ini lapisan kedua
+        // kalau ada pemanggil lain yang salah mengirim room.
+        $isComment = $data->commentSeriesSlug !== null || $data->commentChapterIndex !== null;
+        if ($isComment) {
+            $room = Room::find($data->roomId);
+            $inComicGroup = $room
+                && $room->context_type === 'comic'
+                && (string) $room->context_id === (string) $data->commentSeriesSlug;
+
+            if (! $inComicGroup
+                || $data->commentChapterIndex === null
+                || $data->type !== MessageType::Text->value
+                || ! empty($data->attachments)) {
+                throw ValidationException::withMessages([
+                    'comment' => ['A comment must be a text message in the discussion group of its own comic.'],
+                ]);
+            }
+        }
+
         // Format teks hanya diterima lewat input `entities` yang divalidasi —
         // tidak pernah langsung dari `metadata` kiriman klien.
         $metadata = $data->metadata;
@@ -88,6 +108,8 @@ class MessageService implements MessageServiceContract
             'metadata' => $metadata,
             'is_edited' => false,
             'is_deleted' => false,
+            'comment_series_slug' => $isComment ? $data->commentSeriesSlug : null,
+            'comment_chapter_index' => $isComment ? $data->commentChapterIndex : null,
         ]);
 
         event(new MessageSent($message));

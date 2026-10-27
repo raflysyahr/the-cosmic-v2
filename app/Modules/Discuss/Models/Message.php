@@ -17,7 +17,7 @@ class Message extends Model
     protected $fillable = [
         'room_id', 'user_id', 'reply_to_id', 'type', 'body',
         'attachments', 'is_edited', 'is_deleted', 'deleted_by_user_id',
-        'metadata',
+        'metadata', 'comment_series_slug', 'comment_chapter_index',
     ];
 
     protected function casts(): array
@@ -28,12 +28,19 @@ class Message extends Model
             'is_edited' => 'boolean',
             'is_deleted' => 'boolean',
             'metadata' => 'array',
+            'comment_chapter_index' => 'integer',
         ];
     }
 
     public function scopeNotDeleted($query)
     {
         return $query->where('is_deleted', false);
+    }
+
+    /** Pesan yang dikirim lewat kolom komentar halaman baca (bukan lewat chat Discuss). */
+    public function isComment(): bool
+    {
+        return $this->comment_chapter_index !== null;
     }
 
     protected static function newFactory(): MessageFactory

@@ -132,6 +132,12 @@ class MessageResource extends JsonResource
                 'is_best_answer' => $markRows->contains(fn ($row) => $row->kind === MarkKind::BestAnswer),
             ],
             'metadata' => $deleted ? null : $this->metadata,
+            // Penanda "dikirim lewat kolom komentar chapter" — dipakai Discuss untuk memberi label
+            // dan membuka chapter-nya. null = pesan chat biasa.
+            'comment' => $this->comment_chapter_index !== null ? [
+                'series_slug' => $this->comment_series_slug,
+                'chapter_index' => (int) $this->comment_chapter_index,
+            ] : null,
             'is_edited' => $this->is_edited,
             'is_deleted' => $this->is_deleted,
             'created_at' => $this->created_at,

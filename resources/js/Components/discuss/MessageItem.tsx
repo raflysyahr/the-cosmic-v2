@@ -6,7 +6,8 @@ import EmojiText from '../../lib/emoji-renderer'
 import RichText from './RichText'
 import type { TextEntity } from '../../lib/rich-text'
 import type { GroupedReaction } from './ReactionBar'
-import { ShieldBan, CheckCheck, UserPlus, LogOut, Loader2, AlertTriangle, X, Undo2, Reply, Download, FileText, Play, MoreVertical, Save, EyeOff } from 'lucide-react'
+import { MessageSquare, ShieldBan, CheckCheck, UserPlus, LogOut, Loader2, AlertTriangle, X, Undo2, Reply, Download, FileText, Play, MoreVertical, Save, EyeOff } from 'lucide-react'
+import { Link } from '@inertiajs/react'
 import Crest from '../cultivation/Crest'
 import { usePopup } from '../../contexts/PopupContext'
 import VideoPlayer from './VideoPlayer'
@@ -48,6 +49,8 @@ interface Message {
   attachments: string[]
   metadata?: { file?: { name?: string; size?: number; mime?: string }; video?: VideoInfo; thumbnail?: string | null; entities?: TextEntity[]; spoiler?: boolean } | null
   reactions: GroupedReaction[]
+  /** Dikirim lewat kolom komentar halaman baca (bukan chat). null/undefined = pesan chat biasa. */
+  comment?: { series_slug: string; chapter_index: number } | null
   /** Helpful / Best Answer. Opsional: pesan optimistik belum punya. */
   marks?: MessageMarks
   is_edited: boolean
@@ -487,6 +490,23 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
     </button>
   )
 
+  // Label untuk pesan yang berasal dari kolom komentar halaman baca; mengarah ke chapter-nya.
+  const commentTag = (mb: string) => {
+    if (!message.comment || message.is_deleted) return null
+    const { series_slug, chapter_index } = message.comment
+    const tag = (
+      <Link
+        href={`/series/${series_slug}/chapter/${chapter_index}`}
+        onClick={(e) => e.stopPropagation()}
+        className={`flex w-fit items-center gap-1 text-[10px] font-medium leading-none text-[#999] transition-opacity active:opacity-70 ${isMedia ? '' : mb}`}
+      >
+        <MessageSquare className="h-3 w-3 shrink-0" />
+        <span>Comment · {chapter_index === 0 ? 'Prologue' : `Chapter ${chapter_index}`}</span>
+      </Link>
+    )
+    return isMedia ? <div className="px-2 pt-2">{tag}</div> : tag
+  }
+
   const quoteInBubble = (cls: string, mb: string) => {
     const quote = replyQuote(isMedia ? cls : `${mb} ${cls}`)
     return quote && isMedia ? <div className="px-2 pb-1 pt-2">{quote}</div> : quote
@@ -580,6 +600,7 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
                 }}
               >
               {/* Reply preview inside bubble */}
+              {commentTag('mb-1.5')}
               {quoteInBubble('border-l-2 border-[#555] bg-[#2C2C2C] px-2 py-1', 'mb-2')}
 
               {/* Body */}
@@ -752,6 +773,7 @@ const MessageItem: FC<MessageItemProps> = ({ message, currentUserId, emotes, onR
                   }}
                 >
                 {/* Reply preview inside bubble */}
+                {commentTag('mb-1.5')}
                 {quoteInBubble('border-l-2 border-[#666] bg-[#343434] px-2 py-1', 'mb-1')}
 
 

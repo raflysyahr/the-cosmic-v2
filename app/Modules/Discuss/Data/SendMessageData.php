@@ -16,5 +16,11 @@ class SendMessageData
         public readonly array $entities = [],
         /** Gambar/video ditandai spoiler (tampil blur sampai diketuk). */
         public readonly bool $spoiler = false,
+        /**
+         * Hanya diisi CommentService. Menandai pesan sebagai komentar chapter; room-nya harus
+         * grup diskusi komik yang bersangkutan (dicek ulang di MessageService::send()).
+         */
+        public readonly ?string $commentSeriesSlug = null,
+        public readonly ?int $commentChapterIndex = null,
     ) {}
 }

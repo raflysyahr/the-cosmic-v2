@@ -89,6 +89,7 @@ use App\Modules\Discuss\Http\Controllers\DirectController;
 use App\Modules\Discuss\Http\Controllers\ToastDemoController;
 use App\Http\Controllers\Api\BookmarkController;
 use App\Http\Controllers\Api\ReadingHistoryController;
+use App\Http\Controllers\Api\ChapterReactionController;
 
 Route::middleware(['auth'])->prefix('discuss')->name('discuss.')->group(function () {
     Route::get('/', [PageController::class, 'index'])->name('index');
@@ -130,6 +131,18 @@ Route::prefix('api')->middleware(['web', 'auth:sanctum'])->group(function () {
     Route::get('/reading-history/recent', [ReadingHistoryController::class, 'recent']);
     Route::get('/reading-history/{slug}', [ReadingHistoryController::class, 'index']);
     Route::post('/reading-history', [ReadingHistoryController::class, 'store']);
+
+    // Reaksi halaman chapter (tabel `chapter_reactions`, terpisah dari reaksi pesan Discuss).
+    Route::post('/series/{slug}/chapters/{index}/reactions', [ChapterReactionController::class, 'toggle'])
+        ->whereNumber('index')
+        ->middleware('throttle:discuss-write');
+});
+
+// Jumlah reaksi chapter boleh dilihat tamu; `web` saja (sesi opsional) agar user login tetap
+// mendapat `my_reaction`.
+Route::prefix('api')->middleware('web')->group(function () {
+    Route::get('/series/{slug}/chapters/{index}/reactions', [ChapterReactionController::class, 'show'])
+        ->whereNumber('index');
 });
 
 Route::get('/images/avatar-border.png', function () {
